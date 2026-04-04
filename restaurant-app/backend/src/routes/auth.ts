@@ -1,0 +1,54 @@
+import { Router, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { q1 } from '../models/db';
+
+const router = Router();
+
+interface Mitarbeiter {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  email: string;
+  passwort_hash: string;
+  rolle: 'admin' | 'kellner' | 'kueche';
+  aktiv: boolean;
+}
+
+// POST /api/auth/login
+router.post('/login', async (req: Request, res: Response): Promise<void> => {
+  const { email, passwort } = req.body;
+  if (!email || !passwort) {
+    res.status(400).json({ fehler: 'Email und Passwort erforderlich' });
+    return;
+  }
+
+  const mitarbeiter = await q1<Mitarbeiter>(
+    'SELECT * FROM mitarbeiter WHERE email = $1 AND aktiv = true',
+    [email.toLowerCase()]
+  );
+
+  if (!mitarbeiter || !(await bcrypt.compare(passwort, mitarbeiter.passwort_hash))) {
+    res.status(401).json({ fehler: 'Ungültige Anmeldedaten' });
+    return;
+  }
+
+  const token = jwt.sign(
+    { mitarbeiterId: mitarbeiter.id, restaurantId: mitarbeiter.restaurant_id, rolle: mitarbeiter.rolle },
+    process.env.JWT_SECRET!,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+
+  res.json({
+    token,
+    mitarbeiter: {
+      id: mitarbeiter.id,
+      name: mitarbeiter.name,
+      email: mitarbeiter.email,
+      rolle: mitarbeiter.rolle,
+      restaurantId: mitarbeiter.restaurant_id,
+    },
+  });
+});
+
+export default router;

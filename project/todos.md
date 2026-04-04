@@ -1,8 +1,9 @@
 # Todo-Liste
 
 ## Jetzt dran
-- [ ] Node.js installieren (via nvm, Version 20)
-- [ ] PostgreSQL installieren & DB `restaurant_saas` anlegen
+- [x] Node.js installieren (via nvm, Version 20) ✅ erledigt 2026-04-04
+- [x] PostgreSQL installieren ✅ erledigt 2026-04-04
+- [ ] PostgreSQL: Datenbank `restaurant_saas` anlegen
 - [ ] `.env` konfigurieren und Backend starten (`npm run dev`)
 - [ ] Datenbank-Migration ausführen (`migration.sql`)
 

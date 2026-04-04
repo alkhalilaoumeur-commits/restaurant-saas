@@ -1,5 +1,16 @@
 # Restaurant SaaS – Projektzentrale
 
+## Schnellbefehl
+
+Tippe `/sync` gefolgt von deiner Änderung, und Claude ordnet alles automatisch in die richtigen Dateien ein:
+```
+/sync PostgreSQL Datenbank wurde angelegt
+/sync Neues Feature: Kellner kann Tische tauschen
+/sync Entscheidung: Wir nutzen Stripe statt Mollie
+```
+
+---
+
 ## Wie du eine neue Session startest
 
 Kopiere eine der folgenden Zeilen und schick sie am Anfang jeder Session:
@@ -19,6 +30,7 @@ Lies prompts/arbeiter.md und übernimm diese Rolle.
 |---|---|---|
 | Assistent | `prompts/assistent.md` | Planung, Todos, was als nächstes kommt |
 | Arbeiter | `prompts/arbeiter.md` | Code schreiben, Features bauen, Änderungen ausführen |
+| Sync | `prompts/sync.md` | Änderungen automatisch in die richtigen Dateien schreiben |
 
 ---
 
@@ -27,9 +39,12 @@ Lies prompts/arbeiter.md und übernimm diese Rolle.
 ```
 restaurant-saas/
 ├── LIES_MICH_ZUERST.md         ← diese Datei
+├── CLAUDE.md                   ← Automatische Regeln für Claude (wird immer gelesen)
+├── .claude/skills/sync/        ← /sync Skill (Änderungen automatisch einordnen)
 ├── prompts/
 │   ├── assistent.md            ← Projektmanager-Rolle
-│   └── arbeiter.md             ← Entwickler-Rolle
+│   ├── arbeiter.md             ← Entwickler-Rolle
+│   └── sync.md                 ← Sync-Regeln (Referenz)
 ├── project/
 │   ├── status.md               ← Aktueller Projektstand
 │   ├── todos.md                ← Aufgabenliste

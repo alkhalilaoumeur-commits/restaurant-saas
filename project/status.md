@@ -62,6 +62,8 @@ npm run dev
 ---
 
 ## Bekannte Probleme / Offene Fragen
-- Node.js noch nicht installiert
-- PostgreSQL noch nicht installiert/konfiguriert
+- ~~Node.js~~ ✅ installiert (2026-04-04)
+- ~~PostgreSQL~~ ✅ installiert (2026-04-04)
+- PostgreSQL: Datenbank `restaurant_saas` noch nicht angelegt
+- `.env`-Datei noch nicht konfiguriert
 - Hosting-Setup (Hetzner) steht noch aus

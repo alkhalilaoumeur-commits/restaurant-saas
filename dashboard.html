@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restaurant SaaS – Projekt-Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232734;
+    --border: #2e3347;
+    --text: #e4e6f0;
+    --text2: #8b90a5;
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --green: #00b894;
+    --green-bg: #00b89420;
+    --yellow: #fdcb6e;
+    --yellow-bg: #fdcb6e20;
+    --red: #e17055;
+    --red-bg: #e1705520;
+    --blue: #74b9ff;
+    --blue-bg: #74b9ff20;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .phase-badge {
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Layout */
+  .layout {
+    display: flex;
+    min-height: calc(100vh - 70px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding: 8px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text2);
+    margin-top: 8px;
+  }
+
+  .sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .sidebar a:hover, .sidebar a.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  .sidebar a .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* Main */
+  .main {
+    flex: 1;
+    padding: 28px 36px;
+    max-width: 1100px;
+    overflow-y: auto;
+  }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .section-sub {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 36px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-label {
+    color: var(--text2);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.accent { background: var(--accent); }
+
+  /* Todo Items */
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+
+  .todo-item:last-child { border-bottom: none; }
+
+  .todo-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .todo-check.done {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .todo-check.done::after {
+    content: '\2713';
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .todo-text.done {
+    text-decoration: line-through;
+    color: var(--text2);
+  }
+
+  .todo-phase {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .phase-jetzt { background: var(--red-bg); color: var(--red); }
+  .phase-1 { background: var(--green-bg); color: var(--green); }
+  .phase-2 { background: var(--blue-bg); color: var(--blue); }
+  .phase-3 { background: var(--yellow-bg); color: var(--yellow); }
+  .phase-4 { background: var(--accent); color: white; opacity: 0.7; }
+  .phase-5 { background: var(--surface2); color: var(--text2); }
+
+  /* Table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--surface2);
+    color: var(--text2);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table tr:hover td {
+    background: var(--surface2);
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tag-green { background: var(--green-bg); color: var(--green); }
+  .tag-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .tag-red { background: var(--red-bg); color: var(--red); }
+  .tag-blue { background: var(--blue-bg); color: var(--blue); }
+  .tag-purple { background: rgba(108,92,231,0.2); color: var(--accent2); }
+
+  /* File Tree */
+  .file-tree {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .file-tree .folder { color: var(--blue); font-weight: 600; }
+  .file-tree .file { color: var(--text2); }
+  .file-tree .desc { color: var(--text2); opacity: 0.6; font-style: italic; }
+
+  /* Collapsible */
+  .collapsible {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .collapsible::before {
+    content: '\25B6';
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  .collapsible.open::before {
+    transform: rotate(90deg);
+  }
+
+  .collapsible-content {
+    display: none;
+    padding-top: 12px;
+  }
+
+  .collapsible-content.open {
+    display: block;
+  }
+
+  /* Skills Grid */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .skill-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .skill-card:hover {
+    border-color: var(--accent);
+  }
+
+  .skill-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--accent2);
+  }
+
+  .skill-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  /* Decision Log */
+  .decision {
+    padding: 16px;
+    border-left: 3px solid var(--accent);
+    margin-bottom: 12px;
+    background: var(--surface2);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .decision-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .decision-detail {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* DSGVO */
+  .dsgvo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+
+  .dsgvo-status {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .dsgvo-ok { background: var(--green-bg); }
+  .dsgvo-warn { background: var(--yellow-bg); }
+  .dsgvo-open { background: var(--red-bg); }
+
+  /* Competitor Table */
+  .competitor-row {
+    display: grid;
+    grid-template-columns: 140px repeat(6, 1fr) 100px;
+    gap: 4px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    align-items: center;
+  }
+
+  .competitor-row.header {
+    font-weight: 700;
+    color: var(--text2);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .competitor-row .yes { color: var(--green); font-weight: 700; }
+  .competitor-row .no { color: var(--red); opacity: 0.6; }
+  .competitor-row .partial { color: var(--yellow); }
+  .competitor-row.highlight {
+    background: rgba(108,92,231,0.1);
+    border-radius: 8px;
+    padding: 8px;
+    font-weight: 600;
+  }
+
+  /* Search */
+  .search-box {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 20px;
+  }
+
+  .search-box:focus {
+    border-color: var(--accent);
+  }
+
+  .search-box::placeholder {
+    color: var(--text2);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .skills-grid { grid-template-columns: 1fr; }
+    .competitor-row { font-size: 10px; grid-template-columns: 80px repeat(6, 1fr) 60px; }
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section.active {
+    animation: fadeIn 0.25s ease;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Restaurant SaaS — Projekt-Dashboard</h1>
+  <div class="header-meta">
+    <span class="phase-badge">Phase 1</span>
+    <span>Stand: 04.04.2026</span>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-section">Ubersicht</div>
+  <a class="active" onclick="showSection('overview')" data-section="overview">
+    <span class="icon">&#9678;</span> Dashboard
+  </a>
+  <a onclick="showSection('todos')" data-section="todos">
+    <span class="icon">&#9745;</span> Todos
+  </a>
+
+  <div class="sidebar-section">Projekt</div>
+  <a onclick="showSection('vision')" data-section="vision">
+    <span class="icon">&#9733;</span> Vision & Grundlage
+  </a>
+  <a onclick="showSection('decisions')" data-section="decisions">
+    <span class="icon">&#8693;</span> Entscheidungen
+  </a>
+  <a onclick="showSection('market')" data-section="market">
+    <span class="icon">&#9881;</span> Marktanalyse
+  </a>
+  <a onclick="showSection('dsgvo')" data-section="dsgvo">
+    <span class="icon">&#128274;</span> DSGVO
+  </a>
+
+  <div class="sidebar-section">Technik</div>
+  <a onclick="showSection('structure')" data-section="structure">
+    <span class="icon">&#128193;</span> Projektstruktur
+  </a>
+  <a onclick="showSection('database')" data-section="database">
+    <span class="icon">&#128451;</span> Datenbank
+  </a>
+  <a onclick="showSection('api')" data-section="api">
+    <span class="icon">&#8644;</span> API-Endpunkte
+  </a>
+  <a onclick="showSection('roles')" data-section="roles">
+    <span class="icon">&#128101;</span> Rollen
+  </a>
+
+  <div class="sidebar-section">Werkzeuge</div>
+  <a onclick="showSection('skills')" data-section="skills">
+    <span class="icon">&#9889;</span> Claude Skills
+  </a>
+  <a onclick="showSection('prompts')" data-section="prompts">
+    <span class="icon">&#128172;</span> Prompt-Rollen
+  </a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- ==================== OVERVIEW ==================== -->
+<div class="section active" id="sec-overview">
+  <div class="section-title">Projekt-Ubersicht</div>
+  <div class="section-sub">Alles Wichtige auf einen Blick</div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">8</div>
+      <div class="stat-label">Frontend-Seiten</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">7</div>
+      <div class="stat-label">API-Routen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">7</div>
+      <div class="stat-label">DB-Tabellen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Rollen</div>
+    </div>
+  </div>
+
+  <!-- Fortschritt -->
+  <div class="card">
+    <div class="card-title">Gesamtfortschritt</div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); margin-bottom: 4px;">
+      <span>Phase 1 abgeschlossen, Phase 2-5 offen</span>
+      <span style="color: var(--green); font-weight: 600;">~30%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill green" style="width: 30%;"></div></div>
+
+    <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div>
+        <div style="font-size: 13px; color: var(--text2); margin-bottom: 4px;">Phase 1 – Grundstruktur</div>
+        <div class="progress-bar"><div class="progress-fill green" style="width: 100%;"></div></div>
+        <div style="font-size: 11px; color: var(--green); margin-top: 2px;">Fertig</div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--text2); margin-bottom: 4px;">Phase 2 – Admin-Dashboard</div>
+        <div class="progress-bar"><div class="progress-fill accent" style="width: 0%;"></div></div>
+        <div style="font-size: 11px; color: var(--text2); margin-top: 2px;">0% – Noch nicht gestartet</div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--text2); margin-bottom: 4px;">Phase 3 – Gaste-Seite</div>
+        <div class="progress-bar"><div class="progress-fill accent" style="width: 60%;"></div></div>
+        <div style="font-size: 11px; color: var(--blue); margin-top: 2px;">~60% – Grundfunktionen fertig</div>
+      </div>
+      <div>
+        <div style="font-size: 13px; color: var(--text2); margin-bottom: 4px;">Phase 4 – SaaS-Features</div>
+        <div class="progress-bar"><div class="progress-fill accent" style="width: 0%;"></div></div>
+        <div style="font-size: 11px; color: var(--text2); margin-top: 2px;">0% – Noch nicht gestartet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Was jetzt dran ist -->
+  <div class="card">
+    <div class="card-title" style="color: var(--red);">Jetzt dran</div>
+    <div class="todo-item">
+      <div class="todo-check"></div>
+      <div>Node.js installieren (via nvm, Version 20)</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check"></div>
+      <div>PostgreSQL installieren & Datenbank <code>restaurant_saas</code> anlegen</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check"></div>
+      <div><code>.env</code> konfigurieren und Backend starten</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check"></div>
+      <div>Datenbank-Migration ausfuhren (<code>migration.sql</code>)</div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="card">
+    <div class="card-title">Tech-Stack</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 13px;">
+      <div>
+        <div style="color: var(--text2); font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">Frontend</div>
+        <div>React + TypeScript</div>
+        <div style="color: var(--text2);">Tailwind CSS + Vite</div>
+      </div>
+      <div>
+        <div style="color: var(--text2); font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">Backend</div>
+        <div>Node.js + Express</div>
+        <div style="color: var(--text2);">TypeScript + Socket.io</div>
+      </div>
+      <div>
+        <div style="color: var(--text2); font-size: 11px; text-transform: uppercase; margin-bottom: 4px;">Datenbank</div>
+        <div>PostgreSQL</div>
+        <div style="color: var(--text2);">Multi-Tenant via UUID</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TODOS ==================== -->
+<div class="section" id="sec-todos">
+  <div class="section-title">Aufgaben</div>
+  <div class="section-sub">Alle Todos nach Phase sortiert – klicke um abzuhaken</div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--red);">Jetzt dran (Blocker)</div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Node.js installieren (via nvm, Version 20)</div>
+      <div class="todo-phase phase-jetzt">Jetzt</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">PostgreSQL installieren & DB <code>restaurant_saas</code> anlegen</div>
+      <div class="todo-phase phase-jetzt">Jetzt</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text"><code>.env</code> konfigurieren und Backend starten (<code>npm run dev</code>)</div>
+      <div class="todo-phase phase-jetzt">Jetzt</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Datenbank-Migration ausfuhren (<code>migration.sql</code>)</div>
+      <div class="todo-phase phase-jetzt">Jetzt</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--green);">Phase 1 – Grundstruktur (erledigt)</div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Backend-Grundstruktur (Node.js + Express + TypeScript)</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Datenbankschema in PostgreSQL-Migration erstellt</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Multi-Tenant-Logik (restaurant_id uberall)</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Authentifizierung (Login, JWT, Rollen)</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Alle 7 API-Routen implementiert</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Socket.io fur Live-Updates</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Frontend-Grundstruktur (React + TypeScript + Tailwind)</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Gaste-Bestellseite (QR-Code-basiert)</div>
+      <div class="todo-phase phase-1">Phase 1</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--blue);">Phase 2 – Admin-Dashboard</div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Dashboard Live-Stats (echte Daten nach DB-Setup)</div>
+      <div class="todo-phase phase-2">Phase 2</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Speisekarte verwalten (Kategorien + Gerichte CRUD)</div>
+      <div class="todo-phase phase-2">Phase 2</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Tischplan visuell (Drag & Drop, QR-Code drucken)</div>
+      <div class="todo-phase phase-2">Phase 2</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Reservierungsverwaltung mit Kalenderansicht</div>
+      <div class="todo-phase phase-2">Phase 2</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Mitarbeiterverwaltung (anlegen, Rollen, deaktivieren)</div>
+      <div class="todo-phase phase-2">Phase 2</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--yellow);">Phase 3 – Gaste-Seite</div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Offentliche Bestellseite mit QR-Code-Parameter</div>
+      <div class="todo-phase phase-3">Phase 3</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Speisekarte anzeigen (nach Kategorien)</div>
+      <div class="todo-phase phase-3">Phase 3</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check done"></div>
+      <div class="todo-text done">Warenkorb + Bestellung abschicken</div>
+      <div class="todo-phase phase-3">Phase 3</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">QR-Codes generieren & drucken pro Tisch</div>
+      <div class="todo-phase phase-3">Phase 3</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Bestellstatus fur Gaste (Socket.io)</div>
+      <div class="todo-phase phase-3">Phase 3</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--accent2);">Phase 4 – SaaS-Features</div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Restaurant-Registrierung & Onboarding</div>
+      <div class="todo-phase phase-4">Phase 4</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Lizenzcode-System (pro Restaurant, Mitarbeiteranzahl)</div>
+      <div class="todo-phase phase-4">Phase 4</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Design-Anpassung pro Restaurant</div>
+      <div class="todo-phase phase-4">Phase 4</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Abonnement-Verwaltung (Mollie)</div>
+      <div class="todo-phase phase-4">Phase 4</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--text2);">Phase 5 – Extras</div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Dienstplan</div>
+      <div class="todo-phase phase-5">Phase 5</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">WhatsApp-Bot (Twilio/360dialog)</div>
+      <div class="todo-phase phase-5">Phase 5</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Mehrsprachigkeit (DE/EN)</div>
+      <div class="todo-phase phase-5">Phase 5</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Statistiken & Berichte</div>
+      <div class="todo-phase phase-5">Phase 5</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--text2);">Irgendwann</div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Mobile App</div>
+      <div class="todo-phase phase-5">Spater</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Kundenbewertungen</div>
+      <div class="todo-phase phase-5">Spater</div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-check" onclick="toggleTodo(this)"></div>
+      <div class="todo-text">Wartezeit-Schatzung</div>
+      <div class="todo-phase phase-5">Spater</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VISION ==================== -->
+<div class="section" id="sec-vision">
+  <div class="section-title">Vision & Projektgrundlage</div>
+  <div class="section-sub">Das Fundament des gesamten Projekts</div>
+
+  <div class="card">
+    <div class="card-title">Vision</div>
+    <p style="font-size: 15px; line-height: 1.7;">
+      Eine <strong>All-in-One Restaurant-Management-Plattform</strong> als SaaS, die alles abdeckt was ein Restaurant braucht –
+      von Bestellungen uber Reservierungen bis zum Dienstplan. Die App ersetzt mehrere Einzellosungen durch eine einzige,
+      die auf jedem Gerat perfekt funktioniert.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Zielgruppe</div>
+    <p style="font-size: 14px; line-height: 1.6; color: var(--text2);">
+      Restaurants, Cafes, Bars – alle Grossen (von 2 bis 100+ Mitarbeiter). Verschiedene Abo-Pakete je nach Bedarf.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">USP – Was uns besonders macht</div>
+    <div style="display: grid; gap: 12px; margin-top: 8px;">
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <span class="tag tag-green">1</span>
+        <div>
+          <strong>Alles in einem</strong>
+          <div style="font-size: 13px; color: var(--text2);">Andere Anbieter decken nur Teilbereiche ab. Wir bieten POS + QR + KDS + Reservierungen in einer App.</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <span class="tag tag-blue">2</span>
+        <div>
+          <strong>Einfach & flexibel</strong>
+          <div style="font-size: 13px; color: var(--text2);">Durch das Onboarding wird die App auf jedes Restaurant zugeschnitten.</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <span class="tag tag-purple">3</span>
+        <div>
+          <strong>Gunstiger Preis</strong>
+          <div style="font-size: 13px; color: var(--text2);">Weil alles in einer Losung steckt, spart der Kunde mehrere Einzelabos (150-615 EUR/Monat gespart).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Kernfunktionen</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Dashboard</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Live-Ubersicht aller wichtigen Daten</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Bestellungen</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Echtzeit-Bestellungen via QR-Code</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>QR-Codes</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Pro Tisch ein QR-Code, Gast wird automatisch zugeordnet</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Speisekarte</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Gerichte verwalten, Kategorien, Verfugbarkeit</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Tischplan</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Visueller Plan mit Status pro Tisch</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Reservierungen</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Erstellen, stornieren, Ubersicht</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Dienstplan</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Schichten, Verfugbarkeit, Urlaub, Tausch</span>
+      </div>
+      <div style="padding: 12px; background: var(--surface2); border-radius: 8px;">
+        <strong>Mitarbeiter</strong><br>
+        <span style="color: var(--text2); font-size: 13px;">Rollen zuweisen, Berechtigungen anpassen</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Preismodell</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+      <div style="background: var(--surface2); border-radius: 10px; padding: 16px; text-align: center;">
+        <div style="font-size: 12px; color: var(--text2); text-transform: uppercase;">Starter</div>
+        <div style="font-size: 28px; font-weight: 800; color: var(--green); margin: 8px 0;">49 EUR</div>
+        <div style="font-size: 12px; color: var(--text2);">QR-Ordering + Tischmanagement + Bestellverwaltung</div>
+      </div>
+      <div style="background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; padding: 16px; text-align: center;">
+        <div style="font-size: 12px; color: var(--accent2); text-transform: uppercase; font-weight: 700;">Pro</div>
+        <div style="font-size: 28px; font-weight: 800; color: var(--accent2); margin: 8px 0;">89 EUR</div>
+        <div style="font-size: 12px; color: var(--text2);">+ KDS + Reservierungen + Mitarbeiterverwaltung</div>
+      </div>
+      <div style="background: var(--surface2); border-radius: 10px; padding: 16px; text-align: center;">
+        <div style="font-size: 12px; color: var(--text2); text-transform: uppercase;">Business</div>
+        <div style="font-size: 28px; font-weight: 800; color: var(--yellow); margin: 8px 0;">149 EUR</div>
+        <div style="font-size: 12px; color: var(--text2);">+ Multi-Tenant + erweitertes Reporting</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Ziel: 1 Jahr</div>
+    <div style="font-size: 14px; line-height: 1.7;">
+      <strong>5-10 zahlende Restaurants</strong> nutzen die App aktiv. App ist stabil und vollstandig nutzbar.
+      Feedback von echten Kunden eingearbeitet.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DECISIONS ==================== -->
+<div class="section" id="sec-decisions">
+  <div class="section-title">Entscheidungen</div>
+  <div class="section-sub">Alle wichtigen Entscheidungen, die getroffen wurden</div>
+
+  <div class="decision">
+    <div class="decision-title">Tech-Stack <span class="tag tag-green" style="margin-left: 8px;">04.04.2026</span></div>
+    <div class="decision-detail">
+      <strong>Frontend:</strong> React + TypeScript + Tailwind CSS<br>
+      <strong>Backend:</strong> Node.js + Express + TypeScript<br>
+      <strong>Datenbank:</strong> PostgreSQL<br>
+      <strong>Echtzeit:</strong> Socket.io (WebSockets)<br>
+      <strong>Hosting:</strong> Hetzner Cloud Frankfurt (DSGVO-konform)<br>
+      <strong>Auth:</strong> JWT + bcrypt<br>
+      <strong>Zahlungen:</strong> Mollie (NL, DSGVO-freundlich)
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-title">Geschaftsmodell <span class="tag tag-green" style="margin-left: 8px;">04.04.2026</span></div>
+    <div class="decision-detail">
+      SaaS Abo: 49 EUR/Monat Einstieg, spater 99-129 EUR Premium.<br>
+      Zielmarkt: DACH (Deutschland, Osterreich, Schweiz).<br>
+      Multi-Tenant: Jedes Restaurant bekommt eigene UUID + Lizenzcode.
+    </div>
+  </div>
+
+  <div class="decision">
+    <div class="decision-title">Plattform <span class="tag tag-yellow" style="margin-left: 8px;">Umstieg</span></div>
+    <div class="decision-detail">
+      Umstieg von <strong>Bubble.io</strong> auf <strong>Custom Code</strong>.<br>
+      Grund: DSGVO (Bubble-Server in USA), Flexibilitat, Kontrolle.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MARKET ==================== -->
+<div class="section" id="sec-market">
+  <div class="section-title">Marktanalyse</div>
+  <div class="section-sub">Wettbewerber und Marktlucken im DACH-Raum</div>
+
+  <div class="card">
+    <div class="card-title">Vergleichstabelle</div>
+    <div style="overflow-x: auto;">
+      <div class="competitor-row header">
+        <div>Anbieter</div><div>POS</div><div>QR</div><div>KDS</div><div>Reserv.</div><div>Multi-T.</div><div>DACH</div><div>Preis/Mo</div>
+      </div>
+      <div class="competitor-row">
+        <div>Toast</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="no">Nein</div><div class="yes">Ja</div><div class="no">Nein</div><div>$0-300+</div>
+      </div>
+      <div class="competitor-row">
+        <div>Square</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="no">Nein</div><div class="partial">Teilw.</div><div class="no">Nein</div><div>$0-60</div>
+      </div>
+      <div class="competitor-row">
+        <div>Lightspeed</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="no">Nein</div><div class="yes">Ja</div><div class="yes">Ja</div><div>69-399</div>
+      </div>
+      <div class="competitor-row">
+        <div>Orderbird</div><div class="yes">Ja</div><div class="no">Nein</div><div class="no">Nein</div><div class="partial">Add-on</div><div class="no">Nein</div><div class="yes">Ja</div><div>22-47</div>
+      </div>
+      <div class="competitor-row">
+        <div>Tillhub</div><div class="yes">Ja</div><div class="no">Nein</div><div class="no">Nein</div><div class="yes">Ja</div><div class="no">Nein</div><div class="yes">Ja</div><div>~80-200</div>
+      </div>
+      <div class="competitor-row">
+        <div>DISH/Metro</div><div class="yes">Ja</div><div class="no">Nein</div><div class="no">Nein</div><div class="yes">Ja</div><div class="no">Nein</div><div class="yes">Ja</div><div>~49</div>
+      </div>
+      <div class="competitor-row">
+        <div>Resmio</div><div class="no">Nein</div><div class="no">Nein</div><div class="no">Nein</div><div class="yes">Ja</div><div class="no">Nein</div><div class="yes">Ja</div><div>0-150</div>
+      </div>
+      <div class="competitor-row">
+        <div>me&u</div><div class="no">Nein</div><div class="yes">Ja</div><div class="no">Nein</div><div class="no">Nein</div><div class="no">Nein</div><div class="no">Nein</div><div>Anfrage</div>
+      </div>
+      <div class="competitor-row highlight">
+        <div style="color: var(--accent2);">Diese App</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div class="yes">Ja</div><div style="color: var(--green);">49-149</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--green);">Echte Marktlucken</div>
+    <div style="display: grid; gap: 16px;">
+      <div style="padding: 12px; background: var(--green-bg); border-radius: 8px; border-left: 3px solid var(--green);">
+        <strong>Lucke 1 – Kein bezahlbares All-in-One im DACH-SMB-Markt</strong>
+        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">Kein Anbieter kombiniert POS + QR + KDS + Reservierung + DACH-Compliance unter 150 EUR/Monat. Restaurants zahlen heute 150-615 EUR/Monat an 3-5 Anbieter.</div>
+      </div>
+      <div style="padding: 12px; background: var(--blue-bg); border-radius: 8px; border-left: 3px solid var(--blue);">
+        <strong>Lucke 2 – Echtzeit-Kommunikation fehlt komplett</strong>
+        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">Kein DACH-Anbieter hat native WebSocket-Architektur. Kellner/Kuche bekommen keine Live-Updates. Das ist der grosste technologische Vorsprung.</div>
+      </div>
+      <div style="padding: 12px; background: var(--yellow-bg); border-radius: 8px; border-left: 3px solid var(--yellow);">
+        <strong>Lucke 3 – Bezahlbares KDS existiert kaum</strong>
+        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">KDS bei Lightspeed nur im teuersten Plan ($399/Monat). Ein browserbasiertes KDS mit QR-Bestellungen gibt es fur 99% der deutschen Gastronomie nicht.</div>
+      </div>
+      <div style="padding: 12px; background: rgba(108,92,231,0.15); border-radius: 8px; border-left: 3px solid var(--accent);">
+        <strong>Lucke 4 – Multi-Tenant fur kleine Ketten (3-10 Standorte)</strong>
+        <div style="font-size: 13px; color: var(--text2); margin-top: 4px;">Lightspeed/Toast fur Enterprise, nichts fur kleine Ketten die zentrale Menuverwaltung + dezentrale Kassenfuhrung brauchen.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Go-to-Market</div>
+    <div style="font-size: 14px; line-height: 1.8;">
+      <strong>Phase 1:</strong> Kleine bis mittelgrosse Restaurants in Deutschland (50-200 Covers)<br>
+      <strong>Phase 2:</strong> Kleine Restaurantketten (3-10 Standorte)<br>
+      <strong>Phase 3:</strong> Osterreich und Schweiz
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DSGVO ==================== -->
+<div class="section" id="sec-dsgvo">
+  <div class="section-title">DSGVO-Prufprotokoll</div>
+  <div class="section-sub">Datenschutz-Status und offene Punkte</div>
+
+  <div class="card">
+    <div class="card-title">Custom Code (aktuelle Architektur)</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-ok">&#10003;</div> Hetzner Frankfurt – Server in Deutschland</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-ok">&#10003;</div> Volle Kontrolle uber alle Daten</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-ok">&#10003;</div> Loschfunktionen planbar von Anfang an</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#8226;</div> Datenschutzerklarung noch zu erstellen</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#8226;</div> Impressum noch zu erstellen</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#8226;</div> Cookie-Banner noch zu implementieren</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#8226;</div> Recht auf Auskunft (Art. 15) noch zu implementieren</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#8226;</div> Recht auf Loschung (Art. 17) noch zu implementieren</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color: var(--red);">Bubble.io (alt – warum gewechselt)</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#10007;</div> Server in USA (AWS us-east-1) – nicht DSGVO-konform</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-open">&#10007;</div> Wenig Kontrolle uber Datenspeicherung</div>
+    <div class="dsgvo-item"><div class="dsgvo-status dsgvo-warn">&#9888;</div> DPA vorhanden, aber US-Recht greift</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Offene DSGVO-Fragen</div>
+    <div style="font-size: 14px; line-height: 1.8; color: var(--text2);">
+      &#8226; Welche Gastedaten werden gespeichert? (Name/Telefon bei Reservierungen)<br>
+      &#8226; Wie lange werden Bestelldaten aufbewahrt?<br>
+      &#8226; Brauchen wir einen Datenschutzbeauftragten?
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Personenbezogene Daten im System</div>
+    <table class="data-table">
+      <tr><th>Feld</th><th>Tabelle</th><th>Risiko</th><th>Massnahme</th></tr>
+      <tr><td>telefon</td><td>reservierungen</td><td><span class="tag tag-yellow">DSGVO</span></td><td>Loschfrist 30 Tage</td></tr>
+      <tr><td>email</td><td>mitarbeiter</td><td><span class="tag tag-yellow">DSGVO</span></td><td>Loschfunktion geplant</td></tr>
+      <tr><td>passwort_hash</td><td>mitarbeiter</td><td><span class="tag tag-red">Sicherheit</span></td><td>bcrypt, nie in API-Response</td></tr>
+      <tr><td>name</td><td>reservierungen</td><td><span class="tag tag-blue">Niedrig</span></td><td>Loschbar</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== STRUCTURE ==================== -->
+<div class="section" id="sec-structure">
+  <div class="section-title">Projektstruktur</div>
+  <div class="section-sub">Alle Ordner und Dateien im Uberblick</div>
+
+  <div class="card">
+    <div class="card-title">Haupt-Repository</div>
+    <div class="file-tree">
+      <span class="folder">restaurant-saas/</span><br>
+      &nbsp;&nbsp;<span class="file">LIES_MICH_ZUERST.md</span> <span class="desc">– Einstiegspunkt</span><br>
+      &nbsp;&nbsp;<span class="file">dashboard.html</span> <span class="desc">– Diese Seite</span><br>
+      &nbsp;&nbsp;<span class="folder">prompts/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">assistent.md</span> <span class="desc">– Projektmanager-Rolle</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">arbeiter.md</span> <span class="desc">– Entwickler-Rolle</span><br>
+      &nbsp;&nbsp;<span class="folder">project/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">status.md</span> <span class="desc">– Aktueller Projektstand</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">todos.md</span> <span class="desc">– Aufgabenliste</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">entscheidungen.md</span> <span class="desc">– Getroffene Entscheidungen</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">dsgvo-log.md</span> <span class="desc">– DSGVO-Prufprotokoll</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">marktanalyse.md</span> <span class="desc">– Wettbewerber-Analyse</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">projektgrundlage.md</span> <span class="desc">– Vision & Grundlage</span><br>
+      &nbsp;&nbsp;<span class="folder">datenstruktur/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">datenbank-schema.md</span> <span class="desc">– Alle Tabellen</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">api-endpunkte.md</span> <span class="desc">– API-Routen</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">rollen.md</span> <span class="desc">– Berechtigungen</span><br>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">App (alter Code) – app/</div>
+    <div class="file-tree">
+      <span class="folder">app/</span><br>
+      &nbsp;&nbsp;<span class="folder">backend/</span> <span class="desc">– Express + TypeScript (Port 3001)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">src/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">index.ts</span> <span class="desc">– Einstiegspunkt</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">routes/</span> <span class="desc">– auth, restaurants, tische, gerichte, bestellungen, reservierungen, mitarbeiter</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">middleware/</span> <span class="desc">– tenant.ts, auth.ts</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">config/</span> <span class="desc">– database.ts</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">db/</span> <span class="desc">– migration.sql</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">socket/</span> <span class="desc">– index.ts (Socket.io)</span><br>
+      &nbsp;&nbsp;<span class="folder">frontend/</span> <span class="desc">– React + Tailwind + Vite (Port 5173)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">src/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">pages/admin/</span> <span class="desc">– Dashboard, Login, Bestellungen, Speisekarte, Tische, Reservierungen, Mitarbeiter</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">pages/gast/</span> <span class="desc">– BestellenPage</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">layouts/</span> <span class="desc">– AdminLayout</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">hooks/</span> <span class="desc">– useSocket</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">store/</span> <span class="desc">– auth.ts (Zustand)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">lib/</span> <span class="desc">– api.ts</span><br>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Restaurant App (neuer Code) – restaurant-app/</div>
+    <div class="file-tree">
+      <span class="folder">restaurant-app/</span><br>
+      &nbsp;&nbsp;<span class="folder">backend/</span> <span class="desc">– Express + TypeScript (Port 3001)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">src/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file">server.ts</span> <span class="desc">– Einstiegspunkt</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">models/</span> <span class="desc">– db.ts, Tisch, Bestellung, Reservierung, Gericht</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">routes/</span> <span class="desc">– auth, bestellungen, reservierungen, speisekarte, tische</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">middleware/</span> <span class="desc">– auth.ts, errorHandler.ts</span><br>
+      &nbsp;&nbsp;<span class="folder">frontend/</span> <span class="desc">– React + Tailwind + Vite (Port 5173)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">src/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">pages/</span> <span class="desc">– Dashboard, Login, Bestellungen, Speisekarte, Tischplan, Reservierungen, Statistiken, Bestellen</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">components/</span> <span class="desc">– bestellungen, dashboard, gaeste, layout, reservierungen, speisekarte</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">hooks/</span> <span class="desc">– useBestellungen, useSpeisekarte, useReservierungen, useTische, useSocket</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">types/</span> <span class="desc">– index.ts (zentrale Typen)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="folder">lib/</span> <span class="desc">– api.ts, utils.ts</span><br>
+      &nbsp;&nbsp;<span class="folder">database/</span> <span class="desc">– schema.sql, seed.sql</span><br>
+      &nbsp;&nbsp;<span class="folder">docs/</span> <span class="desc">– API.md, SETUP.md</span><br>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DATABASE ==================== -->
+<div class="section" id="sec-database">
+  <div class="section-title">Datenbank-Schema</div>
+  <div class="section-sub">7 Tabellen, Multi-Tenant via restaurant_id</div>
+
+  <div class="card">
+    <div class="card-title collapsible open" onclick="toggleCollapse(this)">restaurants</div>
+    <div class="collapsible-content open">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td>Tenant-ID</td></tr>
+        <tr><td>name</td><td>TEXT</td><td>Restaurantname</td></tr>
+        <tr><td>logo_url</td><td>TEXT</td><td>URL zum Logo</td></tr>
+        <tr><td>oeffnungszeiten</td><td>TEXT</td><td>Offnungszeiten</td></tr>
+        <tr><td>waehrung</td><td>TEXT</td><td>z.B. "EUR"</td></tr>
+        <tr><td>lizenz_code</td><td>TEXT UNIQUE</td><td>Einmaliger Code</td></tr>
+        <tr><td>max_mitarbeiter</td><td>INTEGER</td><td>Lizenz-Limit</td></tr>
+        <tr><td>abo_status</td><td>TEXT</td><td>active / expired / trial</td></tr>
+        <tr><td>erstellt_am</td><td>TIMESTAMP</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">kategorien</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>name</td><td>TEXT</td><td></td></tr>
+        <tr><td>reihenfolge</td><td>INTEGER</td><td>Sortierung</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">tische</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>nummer</td><td>INTEGER</td><td>Tischnummer</td></tr>
+        <tr><td>kapazitaet</td><td>INTEGER</td><td>Max. Personen</td></tr>
+        <tr><td>status</td><td>TEXT</td><td>frei / besetzt / wartet_auf_zahlung</td></tr>
+        <tr><td>qr_url</td><td>TEXT</td><td>QR-Code-Link</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">gerichte</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>kategorie_id</td><td>UUID (FK)</td><td></td></tr>
+        <tr><td>name</td><td>TEXT</td><td></td></tr>
+        <tr><td>beschreibung</td><td>TEXT</td><td></td></tr>
+        <tr><td>preis</td><td>DECIMAL(10,2)</td><td></td></tr>
+        <tr><td>bild_url</td><td>TEXT</td><td></td></tr>
+        <tr><td>verfuegbar</td><td>BOOLEAN</td><td>Ausverkauft-Toggle</td></tr>
+        <tr><td>allergene</td><td>TEXT</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">bestellungen</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>tisch_id</td><td>UUID (FK)</td><td></td></tr>
+        <tr><td>status</td><td>TEXT</td><td>offen / in_zubereitung / serviert / bezahlt</td></tr>
+        <tr><td>gesamtpreis</td><td>DECIMAL(10,2)</td><td></td></tr>
+        <tr><td>anmerkung</td><td>TEXT</td><td></td></tr>
+        <tr><td>erstellt_am</td><td>TIMESTAMP</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">bestellpositionen</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>bestellung_id</td><td>UUID (FK)</td><td></td></tr>
+        <tr><td>gericht_id</td><td>UUID (FK)</td><td></td></tr>
+        <tr><td>menge</td><td>INTEGER</td><td></td></tr>
+        <tr><td>einzelpreis</td><td>DECIMAL(10,2)</td><td>Preis zum Bestellzeitpunkt</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">reservierungen</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>tisch_id</td><td>UUID (FK)</td><td>Optional</td></tr>
+        <tr><td>name</td><td>TEXT</td><td>Gastname</td></tr>
+        <tr><td>telefon</td><td>TEXT</td><td><span class="tag tag-yellow">DSGVO</span></td></tr>
+        <tr><td>datum</td><td>TIMESTAMP</td><td></td></tr>
+        <tr><td>personen</td><td>INTEGER</td><td></td></tr>
+        <tr><td>status</td><td>TEXT</td><td>ausstehend / bestaetigt / storniert</td></tr>
+        <tr><td>anmerkung</td><td>TEXT</td><td></td></tr>
+        <tr><td>quelle</td><td>TEXT</td><td>App / WhatsApp / Telefon</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title collapsible" onclick="toggleCollapse(this)">mitarbeiter</div>
+    <div class="collapsible-content">
+      <table class="data-table">
+        <tr><th>Feld</th><th>Typ</th><th>Beschreibung</th></tr>
+        <tr><td>id</td><td>UUID (PK)</td><td></td></tr>
+        <tr><td>restaurant_id</td><td>UUID (FK)</td><td>Multi-Tenant</td></tr>
+        <tr><td>name</td><td>TEXT</td><td></td></tr>
+        <tr><td>email</td><td>TEXT UNIQUE</td><td><span class="tag tag-yellow">DSGVO</span></td></tr>
+        <tr><td>passwort_hash</td><td>TEXT</td><td>Niemals Klartext!</td></tr>
+        <tr><td>rolle</td><td>TEXT</td><td>admin / kellner / kueche</td></tr>
+        <tr><td>aktiv</td><td>BOOLEAN</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== API ==================== -->
+<div class="section" id="sec-api">
+  <div class="section-title">API-Endpunkte</div>
+  <div class="section-sub">Alle Backend-Routen im Uberblick</div>
+
+  <div class="card">
+    <div class="card-title">Auth</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/auth/login</td><td>Login</td><td>Nein</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/auth/logout</td><td>Logout</td><td>Ja</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Restaurants</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td>/api/restaurant</td><td>Eigenes Restaurant abrufen</td><td>Admin</td></tr>
+      <tr><td><span class="tag tag-yellow">PUT</span></td><td>/api/restaurant</td><td>Restaurant bearbeiten</td><td>Admin</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tische</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td>/api/tische</td><td>Alle Tische</td><td>Ja</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/tische</td><td>Neuer Tisch</td><td>Admin</td></tr>
+      <tr><td><span class="tag tag-yellow">PUT</span></td><td>/api/tische/:id</td><td>Status andern</td><td>Ja</td></tr>
+      <tr><td><span class="tag tag-red">DELETE</span></td><td>/api/tische/:id</td><td>Loschen</td><td>Admin</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Gerichte</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td>/api/gerichte</td><td>Alle Gerichte (offentlich)</td><td>Nein</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/gerichte</td><td>Neues Gericht</td><td>Admin</td></tr>
+      <tr><td><span class="tag tag-yellow">PUT</span></td><td>/api/gerichte/:id</td><td>Bearbeiten</td><td>Admin</td></tr>
+      <tr><td><span class="tag tag-red">DELETE</span></td><td>/api/gerichte/:id</td><td>Loschen</td><td>Admin</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bestellungen</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td>/api/bestellungen</td><td>Alle offenen</td><td>Ja</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/bestellungen</td><td>Neue Bestellung (Gast)</td><td>Nein (QR)</td></tr>
+      <tr><td><span class="tag tag-yellow">PUT</span></td><td>/api/bestellungen/:id/status</td><td>Status andern</td><td>Ja</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Reservierungen</div>
+    <table class="data-table">
+      <tr><th>Methode</th><th>Route</th><th>Beschreibung</th><th>Auth</th></tr>
+      <tr><td><span class="tag tag-blue">GET</span></td><td>/api/reservierungen</td><td>Alle</td><td>Ja</td></tr>
+      <tr><td><span class="tag tag-green">POST</span></td><td>/api/reservierungen</td><td>Neue Reservierung</td><td>Nein (offentlich)</td></tr>
+      <tr><td><span class="tag tag-yellow">PUT</span></td><td>/api/reservierungen/:id</td><td>Status andern</td><td>Ja</td></tr>
+      <tr><td><span class="tag tag-red">DELETE</span></td><td>/api/reservierungen/:id</td><td>Loschen</td><td>Admin</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== ROLES ==================== -->
+<div class="section" id="sec-roles">
+  <div class="section-title">Rollen & Berechtigungen</div>
+  <div class="section-sub">Wer darf was im System</div>
+
+  <div class="stats-grid">
+    <div class="stat-card" style="border-left: 3px solid var(--accent);">
+      <div style="font-size: 20px; font-weight: 700; color: var(--accent2);">Admin / Chef</div>
+      <div style="font-size: 13px; color: var(--text2); margin-top: 8px; text-align: left;">
+        &#8226; Vollzugriff auf alles<br>
+        &#8226; Menu verwalten, Tische anlegen<br>
+        &#8226; Mitarbeiter einladen<br>
+        &#8226; Design anpassen<br>
+        &#8226; Statistiken sehen<br>
+        &#8226; Rollen & Berechtigungen andern
+      </div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid var(--blue);">
+      <div style="font-size: 20px; font-weight: 700; color: var(--blue);">Kellner</div>
+      <div style="font-size: 13px; color: var(--text2); margin-top: 8px; text-align: left;">
+        &#8226; Bestellungen sehen & Status andern<br>
+        &#8226; Tischstatus andern<br>
+        &#8226; Reservierungen sehen & bestatigen<br>
+        &#8226; Kein Zugriff auf Einstellungen
+      </div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid var(--yellow);">
+      <div style="font-size: 20px; font-weight: 700; color: var(--yellow);">Kuche</div>
+      <div style="font-size: 13px; color: var(--text2); margin-top: 8px; text-align: left;">
+        &#8226; Nur Bestellungen sehen<br>
+        &#8226; Status: in_zubereitung / serviert<br>
+        &#8226; Kein Zugriff auf Tischplan<br>
+        &#8226; Kein Zugriff auf Reservierungen
+      </div>
+    </div>
+    <div class="stat-card" style="border-left: 3px solid var(--green);">
+      <div style="font-size: 20px; font-weight: 700; color: var(--green);">Gast</div>
+      <div style="font-size: 13px; color: var(--text2); margin-top: 8px; text-align: left;">
+        &#8226; Kein Login notig<br>
+        &#8226; Speisekarte sehen (via QR-Code)<br>
+        &#8226; Bestellung aufgeben<br>
+        &#8226; Kein Zugriff auf Dashboard
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Lizenz-Logik</div>
+    <div style="font-size: 14px; line-height: 1.8; color: var(--text2);">
+      &#8226; Jedes Restaurant hat <code>max_mitarbeiter</code> in der DB<br>
+      &#8226; Beim Einladen: Prufung ob Limit erreicht<br>
+      &#8226; Bei abgelaufenem Abo: Login fur alle ausser Admin sperren
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SKILLS ==================== -->
+<div class="section" id="sec-skills">
+  <div class="section-title">Claude Skills</div>
+  <div class="section-sub">Alle verfugbaren Fahigkeiten fur dein Projekt</div>
+
+  <input class="search-box" type="text" placeholder="Skills durchsuchen..." oninput="filterSkills(this.value)">
+
+  <div class="skills-grid" id="skills-container">
+    <div class="skill-card" data-name="frontend-design">
+      <div class="skill-name">/frontend-design</div>
+      <div class="skill-desc">UI/UX Design fur Web und Mobile. Baut professionelle Oberflachen.</div>
+    </div>
+    <div class="skill-card" data-name="ui-ux-pro-max">
+      <div class="skill-name">/ui-ux-pro-max</div>
+      <div class="skill-desc">50+ Styles, 161 Farbpaletten, 57 Schrift-Paarungen fur Design.</div>
+    </div>
+    <div class="skill-card" data-name="fullstack-guardian">
+      <div class="skill-name">/fullstack-guardian</div>
+      <div class="skill-desc">Sicherheitsfokussierte Full-Stack Web-Anwendungen bauen.</div>
+    </div>
+    <div class="skill-card" data-name="dsgvo-check">
+      <div class="skill-name">/dsgvo-check</div>
+      <div class="skill-desc">DSGVO/GDPR Konformitatsprufung fur Frontend- und Backend-Code.</div>
+    </div>
+    <div class="skill-card" data-name="architecture-designer">
+      <div class="skill-name">/architecture-designer</div>
+      <div class="skill-desc">System-Architektur entwerfen, bestehende Designs prufen.</div>
+    </div>
+    <div class="skill-card" data-name="api-designer">
+      <div class="skill-name">/api-designer</div>
+      <div class="skill-desc">REST/GraphQL APIs entwerfen, OpenAPI Spezifikationen erstellen.</div>
+    </div>
+    <div class="skill-card" data-name="test-master">
+      <div class="skill-name">/test-master</div>
+      <div class="skill-desc">Tests generieren, Mocking-Strategien, Code-Coverage analysieren.</div>
+    </div>
+    <div class="skill-card" data-name="code-reviewer">
+      <div class="skill-name">/code-reviewer</div>
+      <div class="skill-desc">Code-Diffs analysieren, Bugs und Sicherheitslucken finden.</div>
+    </div>
+    <div class="skill-card" data-name="debugging-wizard">
+      <div class="skill-name">/debugging-wizard</div>
+      <div class="skill-desc">Fehlermeldungen parsen, Ausfuhrungsfluss verfolgen, Logs korrelieren.</div>
+    </div>
+    <div class="skill-card" data-name="secure-code-guardian">
+      <div class="skill-name">/secure-code-guardian</div>
+      <div class="skill-desc">Auth/Autorisierung implementieren, OWASP Top 10 verhindern.</div>
+    </div>
+    <div class="skill-card" data-name="devops-engineer">
+      <div class="skill-name">/devops-engineer</div>
+      <div class="skill-desc">Dockerfiles, CI/CD Pipelines, Kubernetes, Terraform.</div>
+    </div>
+    <div class="skill-card" data-name="cloud-architect">
+      <div class="skill-name">/cloud-architect</div>
+      <div class="skill-desc">Cloud-Architektur, Migration, Kostenoptimierung.</div>
+    </div>
+    <div class="skill-card" data-name="dev-stack-backend">
+      <div class="skill-name">/dev-stack-backend</div>
+      <div class="skill-desc">Node.js, Express, NestJS Backend-Entwicklung.</div>
+    </div>
+    <div class="skill-card" data-name="dev-stack-frontend">
+      <div class="skill-name">/dev-stack-frontend</div>
+      <div class="skill-desc">React, Vue, moderne Frontend-Entwicklung.</div>
+    </div>
+    <div class="skill-card" data-name="dev-stack-database">
+      <div class="skill-name">/dev-stack-database</div>
+      <div class="skill-desc">Datenbank-Design, SQL, NoSQL, Datenmanagement.</div>
+    </div>
+    <div class="skill-card" data-name="feature-forge">
+      <div class="skill-name">/feature-forge</div>
+      <div class="skill-desc">Requirements-Workshops, Feature-Spezifikationen, User Stories.</div>
+    </div>
+    <div class="skill-card" data-name="performance-optimization">
+      <div class="skill-name">/performance-optimization</div>
+      <div class="skill-desc">Profiling, Optimierung, Performance Best Practices.</div>
+    </div>
+    <div class="skill-card" data-name="monitoring-expert">
+      <div class="skill-name">/monitoring-expert</div>
+      <div class="skill-desc">Monitoring-Systeme, Logging, Prometheus/Grafana Dashboards.</div>
+    </div>
+    <div class="skill-card" data-name="automation-scripts">
+      <div class="skill-name">/automation-scripts</div>
+      <div class="skill-desc">Automatisierung, Task-Runner, Scripting-Tools bauen.</div>
+    </div>
+    <div class="skill-card" data-name="git-workflows">
+      <div class="skill-name">/git-workflows</div>
+      <div class="skill-desc">Git Versionskontrolle, Branching-Strategien, Zusammenarbeit.</div>
+    </div>
+    <div class="skill-card" data-name="simplify">
+      <div class="skill-name">/simplify</div>
+      <div class="skill-desc">Code auf Wiederverwendung, Qualitat und Effizienz prufen.</div>
+    </div>
+    <div class="skill-card" data-name="claude-api">
+      <div class="skill-name">/claude-api</div>
+      <div class="skill-desc">Apps mit der Claude API oder Anthropic SDK bauen.</div>
+    </div>
+    <div class="skill-card" data-name="microservices-architect">
+      <div class="skill-name">/microservices-architect</div>
+      <div class="skill-desc">Verteilte Systeme, Monolith-Zerlegung, Service-Design.</div>
+    </div>
+    <div class="skill-card" data-name="kubernetes-specialist">
+      <div class="skill-name">/kubernetes-specialist</div>
+      <div class="skill-desc">Kubernetes-Deployments, Manifeste, Service-Konfiguration.</div>
+    </div>
+    <div class="skill-card" data-name="terraform-engineer">
+      <div class="skill-name">/terraform-engineer</div>
+      <div class="skill-desc">Infrastructure as Code mit Terraform fur AWS, Azure, GCP.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PROMPTS ==================== -->
+<div class="section" id="sec-prompts">
+  <div class="section-title">Prompt-Rollen</div>
+  <div class="section-sub">Die zwei Rollen fur Claude-Sessions</div>
+
+  <div class="card" style="border-left: 3px solid var(--blue);">
+    <div class="card-title" style="color: var(--blue);">Assistent (Projektmanager)</div>
+    <div style="font-size: 14px; line-height: 1.7;">
+      <p style="margin-bottom: 12px;">Starten mit: <code>Lies prompts/assistent.md und ubernimm diese Rolle.</code></p>
+      <strong>Aufgaben:</strong>
+      <ul style="color: var(--text2); margin: 8px 0 0 20px;">
+        <li>Zeigt dir was zuletzt getan wurde und was jetzt dran ist</li>
+        <li>Fuhrt dich Schritt fur Schritt – max. 1-2 Aufgaben</li>
+        <li>Aktualisiert todos.md und status.md automatisch</li>
+        <li>Erklart WARUM eine Aufgabe wichtig ist</li>
+        <li>Fuhrt bei jeder Session einen DSGVO-Check durch</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="border-left: 3px solid var(--green);">
+    <div class="card-title" style="color: var(--green);">Arbeiter (Entwickler)</div>
+    <div style="font-size: 14px; line-height: 1.7;">
+      <p style="margin-bottom: 12px;">Starten mit: <code>Lies prompts/arbeiter.md und ubernimm diese Rolle.</code></p>
+      <strong>Aufgaben:</strong>
+      <ul style="color: var(--text2); margin: 8px 0 0 20px;">
+        <li>Schreibt Code, baut Features, behebt Fehler</li>
+        <li>Erst handeln, dann erklaren</li>
+        <li>Aktualisiert status.md, todos.md und datenstruktur/ nach Anderungen</li>
+        <li>Testet und erklart wie du testen kannst</li>
+        <li>DSGVO-Check bei jeder Anderung</li>
+      </ul>
+      <div style="margin-top: 12px;">
+        <strong>Sicherheitsregeln:</strong>
+        <ul style="color: var(--red); margin: 8px 0 0 20px; font-size: 13px;">
+          <li>Jede DB-Query filtert nach restaurant_id</li>
+          <li>Keine API-Route ohne Auth-Check (ausser Gaste)</li>
+          <li>Keine Passworter im Klartext</li>
+          <li>Keine Secrets in Code-Dateien</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Test-Accounts (nach seed.sql)</div>
+    <table class="data-table">
+      <tr><th>Email</th><th>Passwort</th><th>Rolle</th></tr>
+      <tr><td>admin@demo.de</td><td>test1234</td><td><span class="tag tag-purple">admin</span></td></tr>
+      <tr><td>kellner@demo.de</td><td>test1234</td><td><span class="tag tag-blue">kellner</span></td></tr>
+      <tr><td>kueche@demo.de</td><td>test1234</td><td><span class="tag tag-yellow">kueche</span></td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// Navigation
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+
+  document.getElementById('sec-' + name).classList.add('active');
+  document.querySelector('[data-section="' + name + '"]').classList.add('active');
+}
+
+// Todo Toggle
+function toggleTodo(el) {
+  el.classList.toggle('done');
+  const textEl = el.nextElementSibling;
+  if (textEl) textEl.classList.toggle('done');
+
+  // Save state to localStorage
+  saveTodoState();
+}
+
+function saveTodoState() {
+  const todos = [];
+  document.querySelectorAll('.todo-check').forEach((el, i) => {
+    todos.push(el.classList.contains('done'));
+  });
+  localStorage.setItem('dashboard-todos', JSON.stringify(todos));
+}
+
+function loadTodoState() {
+  const saved = localStorage.getItem('dashboard-todos');
+  if (!saved) return;
+  const todos = JSON.parse(saved);
+  document.querySelectorAll('.todo-check').forEach((el, i) => {
+    if (todos[i] && !el.classList.contains('done')) {
+      el.classList.add('done');
+      const textEl = el.nextElementSibling;
+      if (textEl && textEl.classList.contains('todo-text')) textEl.classList.add('done');
+    }
+  });
+}
+
+// Collapsible
+function toggleCollapse(el) {
+  el.classList.toggle('open');
+  const content = el.nextElementSibling;
+  if (content) content.classList.toggle('open');
+}
+
+// Skills Search
+function filterSkills(query) {
+  const cards = document.querySelectorAll('.skill-card');
+  const q = query.toLowerCase();
+  cards.forEach(card => {
+    const name = card.getAttribute('data-name');
+    const desc = card.querySelector('.skill-desc').textContent.toLowerCase();
+    card.style.display = (name.includes(q) || desc.includes(q)) ? '' : 'none';
+  });
+}
+
+// Init
+loadTodoState();
+</script>
+
+</body>
+</html>
