@@ -72,6 +72,16 @@
 |---|---|---|---|
 | GET | /api/statistiken?tage=7 | Alle Statistiken (Umsatz, Gerichte, Stoßzeiten, Kategorien) | Ja (Admin) |
 
+## Online-Buchung (öffentlich)
+| Methode | Route | Beschreibung | Auth nötig |
+|---|---|---|---|
+| GET | /api/buchung/:restaurantId/info | Restaurant-Info + Öffnungszeiten für Buchungsseite | Nein |
+| GET | /api/buchung/:restaurantId/slots?datum=&personen= | Verfügbare Zeitslots | Nein |
+| POST | /api/buchung/:restaurantId | Online-Reservierung erstellen (mit Email + DSGVO) | Nein |
+| GET | /api/buchung/token/:token | Reservierung per Token abrufen (Self-Service) | Nein |
+| POST | /api/buchung/token/:token/stornieren | Reservierung per Token stornieren | Nein |
+| POST | /api/buchung/token/:token/umbuchen | Reservierung per Token auf neues Datum umbuchen | Nein |
+
 ## Mitarbeiter
 | Methode | Route | Beschreibung | Auth nötig |
 |---|---|---|---|
@@ -80,3 +90,14 @@
 | POST | /api/mitarbeiter/:id/erneut-einladen | Einladung erneut senden | Ja (Admin) |
 | PATCH | /api/mitarbeiter/:id | Mitarbeiter bearbeiten (Name, Rolle, Aktiv) | Ja (Admin) |
 | PATCH | /api/mitarbeiter/:id/passwort | Passwort ändern (eigenes oder Admin für andere) | Ja |
+
+## Socket.io Events (Live-Updates)
+
+Verbindung: Mitarbeiter treten `restaurant:{restaurantId}` Raum bei, Gäste treten `tisch:{restaurantId}:{tischId}` bei.
+
+| Event | Richtung | Raum | Beschreibung |
+|---|---|---|---|
+| `neue_bestellung` | Server → Client | `restaurant:*` | Neue Bestellung eingegangen (Gast hat bestellt) |
+| `bestellung_aktualisiert` | Server → Client | `restaurant:*` + `tisch:*` | Bestellstatus geändert |
+| `neue_reservierung` | Server → Client | `restaurant:*` | Neue Online-Reservierung eingegangen |
+| `reservierung_aktualisiert` | Server → Client | `restaurant:*` | Reservierung storniert/umgebucht (Gast-Self-Service) |

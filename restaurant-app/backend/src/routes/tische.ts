@@ -16,7 +16,7 @@ router.post('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Au
   const { nummer, kapazitaet } = req.body;
   if (!nummer) { res.status(400).json({ fehler: 'Tischnummer erforderlich' }); return; }
   const id = uuid();
-  const qrUrl = `${process.env.FRONTEND_URL}/bestellen/${req.auth!.restaurantId}/${id}`;
+  const qrUrl = `${process.env.FRONTEND_URL}/bestellen-pro/${req.auth!.restaurantId}/${id}`;
   const tisch = await TischModel.erstellen({ id, restaurant_id: req.auth!.restaurantId, nummer, kapazitaet: kapazitaet || null, status: 'frei', qr_url: qrUrl });
   res.status(201).json(tisch);
 }));

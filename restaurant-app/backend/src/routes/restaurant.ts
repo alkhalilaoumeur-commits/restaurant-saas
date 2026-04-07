@@ -23,7 +23,7 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
 
 // PUT /api/restaurant – Restaurant-Daten aktualisieren
 router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, oeffnungszeiten, primaerfarbe } = req.body;
+  const { name, oeffnungszeiten, primaerfarbe, layout_id } = req.body;
 
   // Farbwert validieren (Hex-Format)
   if (primaerfarbe !== undefined && !/^#[0-9a-fA-F]{6}$/.test(primaerfarbe)) {
@@ -31,10 +31,18 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
     return;
   }
 
+  // Layout-ID validieren
+  const erlaubteLayouts = ['modern', 'elegant-dunkel', 'osteria', 'editorial'];
+  if (layout_id !== undefined && !erlaubteLayouts.includes(layout_id)) {
+    res.status(400).json({ fehler: 'Ungültige Layout-ID' });
+    return;
+  }
+
   const restaurant = await RestaurantModel.aktualisieren(req.auth!.restaurantId, {
     name,
     oeffnungszeiten,
     primaerfarbe,
+    layout_id,
   });
 
   if (!restaurant) {

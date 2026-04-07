@@ -17,8 +17,11 @@ import Reservierungen from './pages/Reservierungen';
 import Tischplan from './pages/Tischplan';
 import Statistiken from './pages/Statistiken';
 import Mitarbeiter from './pages/Mitarbeiter';
-import Bestellen from './pages/Bestellen';
 import BestellenPro from './pages/BestellenPro';
+import Buchen from './pages/Buchen';
+import ReservierungDetail from './pages/ReservierungDetail';
+import ReservierungStornieren from './pages/ReservierungStornieren';
+import ReservierungUmbuchen from './pages/ReservierungUmbuchen';
 import Dienstplan from './pages/Dienstplan';
 import Einstellungen from './pages/Einstellungen';
 
@@ -47,8 +50,12 @@ export default function App() {
       <Route path="/passwort-zuruecksetzen/:token" element={<PasswortZuruecksetzen />} />
       <Route path="/einladung/:token" element={<Einladung />} />
       <Route path="/email-verifizieren/:token" element={<EmailVerifizieren />} />
-      <Route path="/bestellen/:restaurantId/:tischId" element={<Bestellen />} />
+      <Route path="/bestellen/:restaurantId/:tischId" element={<BestellenPro />} />
       <Route path="/bestellen-pro/:restaurantId/:tischId" element={<BestellenPro />} />
+      <Route path="/buchen/:restaurantId" element={<Buchen />} />
+      <Route path="/reservierung/:token" element={<ReservierungDetail />} />
+      <Route path="/reservierung/:token/stornieren" element={<ReservierungStornieren />} />
+      <Route path="/reservierung/:token/aendern" element={<ReservierungUmbuchen />} />
 
       {/* Geschützter Admin-Bereich */}
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>

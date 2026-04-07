@@ -1,4 +1,4 @@
-// AUTO-GENERIERT von sync-dashboard.js — 2026-04-07T08:23:08.556Z
+// AUTO-GENERIERT von sync-dashboard.js — 2026-04-07T20:39:50.203Z
 // Nicht manuell bearbeiten! Aenderungen werden beim naechsten Sync ueberschrieben.
 window.SYNCED_DATA = {
   "project": {
@@ -7,7 +7,7 @@ window.SYNCED_DATA = {
     "techStack": "Node.js + Express + TypeScript, React + Tailwind + Vite, PostgreSQL, Socket.io",
     "team": [
       {
-        "id": "be5ic3h4z",
+        "id": "1b0q08yi8",
         "name": "Ilias",
         "rolle": "Entwickler & Gruender"
       }
@@ -15,109 +15,123 @@ window.SYNCED_DATA = {
   },
   "dataTypes": [
     {
-      "id": "dt-40s2fz9d6",
+      "id": "dt-hcw33r5du",
       "name": "Restaurants",
       "fields": [
         {
-          "id": "xb6pzeob2",
+          "id": "ub61zi2xi",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "hn54nra4z",
+          "id": "bzis3mqbb",
           "name": "name",
           "type": "Text",
           "description": "name",
           "required": true
         },
         {
-          "id": "oeqsxktpy",
+          "id": "hjjp5dfil",
           "name": "logo_url",
           "type": "Text",
           "description": "logo_url",
           "required": false
         },
         {
-          "id": "9t3p997yt",
+          "id": "tip1rlbwb",
           "name": "oeffnungszeiten",
           "type": "Text",
           "description": "oeffnungszeiten",
           "required": false
         },
         {
-          "id": "m6fgz98k3",
+          "id": "56dxye87y",
           "name": "strasse",
           "type": "Text",
           "description": "strasse",
           "required": false
         },
         {
-          "id": "uanfg3ong",
+          "id": "bg1x8l8ie",
           "name": "plz",
           "type": "Text",
           "description": "plz",
           "required": false
         },
         {
-          "id": "wwsx6pjz8",
+          "id": "2oq79pyz3",
           "name": "stadt",
           "type": "Text",
           "description": "stadt",
           "required": false
         },
         {
-          "id": "ufn9bdfk7",
+          "id": "csyq0w5qu",
           "name": "telefon",
           "type": "Text",
           "description": "telefon",
           "required": false
         },
         {
-          "id": "8oz3p33gx",
+          "id": "16v63wlwy",
           "name": "email",
           "type": "Text",
           "description": "email",
           "required": false
         },
         {
-          "id": "wvm8qjv8z",
+          "id": "30jb3skif",
           "name": "waehrung",
           "type": "Text",
           "description": "waehrung",
           "required": true
         },
         {
-          "id": "w9elapxay",
+          "id": "ofoc6oitc",
           "name": "primaerfarbe",
           "type": "Text",
           "description": "primaerfarbe",
           "required": true
         },
         {
-          "id": "rd1b0lisc",
+          "id": "dbnnphw0p",
+          "name": "layout_id",
+          "type": "Text",
+          "description": "layout_id",
+          "required": true
+        },
+        {
+          "id": "6sjpex0a0",
+          "name": "restaurant_code",
+          "type": "Text",
+          "description": "restaurant_code",
+          "required": true
+        },
+        {
+          "id": "pw1j5smqd",
           "name": "lizenz_code",
           "type": "Text",
           "description": "lizenz_code",
           "required": false
         },
         {
-          "id": "rdehyxm9g",
+          "id": "jfhbnixq0",
           "name": "max_mitarbeiter",
           "type": "Zahl",
           "description": "max_mitarbeiter",
           "required": true
         },
         {
-          "id": "w7v9b16d6",
+          "id": "dc68jbhl2",
           "name": "abo_status",
           "type": "Option Set",
           "description": "Moegliche Werte: trial, active, expired",
           "required": true
         },
         {
-          "id": "wx6f2l8xd",
+          "id": "b6zmk8y9e",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
@@ -127,172 +141,179 @@ window.SYNCED_DATA = {
       "relationships": []
     },
     {
-      "id": "dt-mfl5fj8ak",
+      "id": "dt-iwy42d5jf",
       "name": "Kategorien",
       "fields": [
         {
-          "id": "gmhyjk7hh",
+          "id": "mdkto5sop",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "xfzr0llyi",
+          "id": "9pqucxiwt",
           "name": "restaurant_id",
           "type": "Beziehung",
           "description": "Gehoert zu Restaurant (Multi-Tenant)",
           "required": true
         },
         {
-          "id": "zakyx7dem",
+          "id": "wch8lk37q",
           "name": "name",
           "type": "Text",
           "description": "name",
           "required": true
         },
         {
-          "id": "sdrnx7584",
-          "name": "reihenfolge",
-          "type": "Zahl",
-          "description": "reihenfolge",
-          "required": true
-        },
-        {
-          "id": "lz8tisx5d",
-          "name": "erstellt_am",
-          "type": "Datum",
-          "description": "Erstellungszeitpunkt",
-          "required": true
-        }
-      ],
-      "relationships": []
-    },
-    {
-      "id": "dt-ywsdwdm1r",
-      "name": "Tische",
-      "fields": [
-        {
-          "id": "wn084h1up",
-          "name": "id",
-          "type": "ID",
-          "description": "Eindeutige ID (UUID, automatisch)",
-          "required": false
-        },
-        {
-          "id": "cl58t8a4v",
-          "name": "restaurant_id",
-          "type": "Beziehung",
-          "description": "Gehoert zu Restaurant (Multi-Tenant)",
-          "required": true
-        },
-        {
-          "id": "k553epxj8",
-          "name": "nummer",
-          "type": "Zahl",
-          "description": "nummer",
-          "required": true
-        },
-        {
-          "id": "jdpujr82u",
-          "name": "kapazitaet",
-          "type": "Zahl",
-          "description": "kapazitaet",
-          "required": false
-        },
-        {
-          "id": "z7mv5y6lh",
-          "name": "status",
-          "type": "Option Set",
-          "description": "Moegliche Werte: frei, besetzt, wartet_auf_zahlung",
-          "required": true
-        },
-        {
-          "id": "ftlbylx85",
-          "name": "qr_url",
-          "type": "Text",
-          "description": "qr_url",
-          "required": false
-        },
-        {
-          "id": "m134htf6e",
-          "name": "erstellt_am",
-          "type": "Datum",
-          "description": "Erstellungszeitpunkt",
-          "required": true
-        }
-      ],
-      "relationships": []
-    },
-    {
-      "id": "dt-xrmjt6bwh",
-      "name": "Gerichte",
-      "fields": [
-        {
-          "id": "j5v2ksai2",
-          "name": "id",
-          "type": "ID",
-          "description": "Eindeutige ID (UUID, automatisch)",
-          "required": false
-        },
-        {
-          "id": "dtk1b1opv",
-          "name": "restaurant_id",
-          "type": "Beziehung",
-          "description": "Gehoert zu Restaurant (Multi-Tenant)",
-          "required": true
-        },
-        {
-          "id": "jwc3daqhh",
-          "name": "kategorie_id",
-          "type": "Beziehung",
-          "description": "Verknuepft mit Kategorien",
-          "required": true
-        },
-        {
-          "id": "cpm9utacv",
-          "name": "name",
-          "type": "Text",
-          "description": "name",
-          "required": true
-        },
-        {
-          "id": "8prm84pel",
-          "name": "beschreibung",
-          "type": "Text",
-          "description": "beschreibung",
-          "required": false
-        },
-        {
-          "id": "evo7f2obt",
-          "name": "preis",
-          "type": "Zahl",
-          "description": "preis",
-          "required": true
-        },
-        {
-          "id": "i2txaywwj",
+          "id": "c9eieh6ql",
           "name": "bild_url",
           "type": "Text",
           "description": "bild_url",
           "required": false
         },
         {
-          "id": "zstr4s8l0",
+          "id": "w1yjn1o04",
+          "name": "reihenfolge",
+          "type": "Zahl",
+          "description": "reihenfolge",
+          "required": true
+        },
+        {
+          "id": "w0scbw097",
+          "name": "erstellt_am",
+          "type": "Datum",
+          "description": "Erstellungszeitpunkt",
+          "required": true
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "dt-gjfkpnmyy",
+      "name": "Tische",
+      "fields": [
+        {
+          "id": "tcg7dv0uf",
+          "name": "id",
+          "type": "ID",
+          "description": "Eindeutige ID (UUID, automatisch)",
+          "required": false
+        },
+        {
+          "id": "n1mkvqone",
+          "name": "restaurant_id",
+          "type": "Beziehung",
+          "description": "Gehoert zu Restaurant (Multi-Tenant)",
+          "required": true
+        },
+        {
+          "id": "dtwfeq4zh",
+          "name": "nummer",
+          "type": "Zahl",
+          "description": "nummer",
+          "required": true
+        },
+        {
+          "id": "y4q5i5ird",
+          "name": "kapazitaet",
+          "type": "Zahl",
+          "description": "kapazitaet",
+          "required": false
+        },
+        {
+          "id": "iad3i7s1h",
+          "name": "status",
+          "type": "Option Set",
+          "description": "Moegliche Werte: frei, besetzt, wartet_auf_zahlung",
+          "required": true
+        },
+        {
+          "id": "zp7dz66i5",
+          "name": "qr_url",
+          "type": "Text",
+          "description": "qr_url",
+          "required": false
+        },
+        {
+          "id": "afdd4sbsx",
+          "name": "erstellt_am",
+          "type": "Datum",
+          "description": "Erstellungszeitpunkt",
+          "required": true
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "dt-ddgk3g2de",
+      "name": "Gerichte",
+      "fields": [
+        {
+          "id": "j5q8xu9id",
+          "name": "id",
+          "type": "ID",
+          "description": "Eindeutige ID (UUID, automatisch)",
+          "required": false
+        },
+        {
+          "id": "vkdowhx6a",
+          "name": "restaurant_id",
+          "type": "Beziehung",
+          "description": "Gehoert zu Restaurant (Multi-Tenant)",
+          "required": true
+        },
+        {
+          "id": "fcozoy6wu",
+          "name": "kategorie_id",
+          "type": "Beziehung",
+          "description": "Verknuepft mit Kategorien",
+          "required": true
+        },
+        {
+          "id": "2qhmadnuh",
+          "name": "name",
+          "type": "Text",
+          "description": "name",
+          "required": true
+        },
+        {
+          "id": "qfmckcyi5",
+          "name": "beschreibung",
+          "type": "Text",
+          "description": "beschreibung",
+          "required": false
+        },
+        {
+          "id": "94j2ehuhc",
+          "name": "preis",
+          "type": "Zahl",
+          "description": "preis",
+          "required": true
+        },
+        {
+          "id": "8iu62ibzs",
+          "name": "bild_url",
+          "type": "Text",
+          "description": "bild_url",
+          "required": false
+        },
+        {
+          "id": "4fzaxch5a",
           "name": "allergene",
           "type": "Text",
           "description": "allergene",
           "required": false
         },
         {
-          "id": "2hiujo5l3",
+          "id": "ml8m1cvvg",
           "name": "verfuegbar",
           "type": "Ja/Nein",
           "description": "verfuegbar",
           "required": true
         },
         {
-          "id": "li6ry2pzn",
+          "id": "c73i81qxp",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
@@ -304,60 +325,60 @@ window.SYNCED_DATA = {
       ]
     },
     {
-      "id": "dt-d7xbb2c8f",
+      "id": "dt-5ekvd5jc5",
       "name": "Bestellungen",
       "fields": [
         {
-          "id": "dl9yzvlmb",
+          "id": "qrld1zzmr",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "9vs37zt4l",
+          "id": "poubxqpbu",
           "name": "restaurant_id",
           "type": "Beziehung",
           "description": "Gehoert zu Restaurant (Multi-Tenant)",
           "required": true
         },
         {
-          "id": "mrvuydaji",
+          "id": "yxo1r9356",
           "name": "tisch_id",
           "type": "Beziehung",
           "description": "Verknuepft mit Tische",
           "required": true
         },
         {
-          "id": "rjfujxg17",
+          "id": "vazl8tutk",
           "name": "status",
           "type": "Option Set",
           "description": "Moegliche Werte: offen, in_zubereitung, serviert, bezahlt",
           "required": true
         },
         {
-          "id": "fkso7gzhx",
+          "id": "u0dla9lhp",
           "name": "gesamtpreis",
           "type": "Zahl",
           "description": "gesamtpreis",
           "required": true
         },
         {
-          "id": "4wvvvd5m8",
+          "id": "q4l90yqfu",
           "name": "anmerkung",
           "type": "Text",
           "description": "anmerkung",
           "required": false
         },
         {
-          "id": "qhq02jma6",
+          "id": "3hae88kzs",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
           "required": true
         },
         {
-          "id": "savoe72b8",
+          "id": "j5rxaosjh",
           "name": "aktualisiert_am",
           "type": "Datum",
           "description": "Letzte Aenderung",
@@ -369,39 +390,39 @@ window.SYNCED_DATA = {
       ]
     },
     {
-      "id": "dt-5jj17et9v",
+      "id": "dt-28xex01zt",
       "name": "Bestellpositionen",
       "fields": [
         {
-          "id": "ha3nq95lv",
+          "id": "8jqnci8pa",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "rndrr5k4i",
+          "id": "7grghtzw9",
           "name": "bestellung_id",
           "type": "Beziehung",
           "description": "Verknuepft mit Bestellungen",
           "required": true
         },
         {
-          "id": "ixf6apr03",
+          "id": "o0hfd9e2m",
           "name": "gericht_id",
           "type": "Beziehung",
           "description": "Verknuepft mit Gerichte",
           "required": true
         },
         {
-          "id": "3iq7wvxic",
+          "id": "aezspg6t4",
           "name": "menge",
           "type": "Zahl",
           "description": "menge",
           "required": true
         },
         {
-          "id": "i3lp399st",
+          "id": "d8ql0enlp",
           "name": "einzelpreis",
           "type": "Zahl",
           "description": "einzelpreis",
@@ -414,81 +435,81 @@ window.SYNCED_DATA = {
       ]
     },
     {
-      "id": "dt-mhb84gt07",
+      "id": "dt-dmgdevh34",
       "name": "Reservierungen",
       "fields": [
         {
-          "id": "njmq097dm",
+          "id": "ohkrmj6io",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "t7e0b2ma8",
+          "id": "5w19n728s",
           "name": "restaurant_id",
           "type": "Beziehung",
           "description": "Gehoert zu Restaurant (Multi-Tenant)",
           "required": true
         },
         {
-          "id": "oml2wivwv",
+          "id": "75rxcidjc",
           "name": "tisch_id",
           "type": "Beziehung",
           "description": "Verknuepft mit Tische",
           "required": false
         },
         {
-          "id": "b47iflt4i",
+          "id": "svjw22fa7",
           "name": "gast_name",
           "type": "Text",
           "description": "gast_name",
           "required": true
         },
         {
-          "id": "xmw6eqzfb",
+          "id": "0tqanivbc",
           "name": "telefon",
           "type": "Text",
           "description": "telefon",
           "required": false
         },
         {
-          "id": "n0771rdgf",
+          "id": "8q4djwp5r",
           "name": "datum",
           "type": "Datum",
           "description": "datum",
           "required": true
         },
         {
-          "id": "mh2yqgwy7",
+          "id": "v8yajyyby",
           "name": "personen",
           "type": "Zahl",
           "description": "personen",
           "required": true
         },
         {
-          "id": "s4tz0nhdb",
+          "id": "g8ok6yvhr",
           "name": "status",
           "type": "Option Set",
           "description": "Moegliche Werte: ausstehend, bestaetigt, storniert",
           "required": true
         },
         {
-          "id": "kjdiam2mp",
+          "id": "ubp7plsps",
           "name": "anmerkung",
           "type": "Text",
           "description": "anmerkung",
           "required": false
         },
         {
-          "id": "vwc2x6skx",
+          "id": "482mfuc58",
           "name": "quelle",
           "type": "Option Set",
           "description": "Moegliche Werte: app, whatsapp, telefon",
           "required": true
         },
         {
-          "id": "uuv6i8yj1",
+          "id": "zv3wfkbcc",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
@@ -500,60 +521,88 @@ window.SYNCED_DATA = {
       ]
     },
     {
-      "id": "dt-u6aw4dyn1",
+      "id": "dt-kc51lqfyp",
       "name": "Mitarbeiter",
       "fields": [
         {
-          "id": "sgabc936g",
+          "id": "135bxxzqq",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "n9mts57xk",
+          "id": "l96cgu9g0",
           "name": "restaurant_id",
           "type": "Beziehung",
           "description": "Gehoert zu Restaurant (Multi-Tenant)",
           "required": true
         },
         {
-          "id": "0hz95yt2w",
+          "id": "2plys67f3",
           "name": "name",
           "type": "Text",
           "description": "name",
           "required": true
         },
         {
-          "id": "ofhyspn4z",
+          "id": "96wen1thh",
           "name": "email",
           "type": "Text",
           "description": "email",
           "required": true
         },
         {
-          "id": "kcwcy4yyj",
+          "id": "6rptxbkov",
           "name": "passwort_hash",
           "type": "Text",
           "description": "passwort_hash",
-          "required": true
+          "required": false
         },
         {
-          "id": "mvy6lgk0m",
+          "id": "owmch61r8",
           "name": "rolle",
           "type": "Option Set",
           "description": "Moegliche Werte: admin, kellner, kueche",
           "required": true
         },
         {
-          "id": "yyk4k3lod",
+          "id": "9o6c6lpv4",
           "name": "aktiv",
           "type": "Ja/Nein",
           "description": "aktiv",
           "required": true
         },
         {
-          "id": "3gc8lq3vk",
+          "id": "tcq9vq36x",
+          "name": "einladung_token",
+          "type": "Text",
+          "description": "einladung_token",
+          "required": false
+        },
+        {
+          "id": "xv1z07d6h",
+          "name": "einladung_gueltig_bis",
+          "type": "Datum",
+          "description": "einladung_gueltig_bis",
+          "required": false
+        },
+        {
+          "id": "gptvkv1w7",
+          "name": "email_verifiziert",
+          "type": "Ja/Nein",
+          "description": "email_verifiziert",
+          "required": true
+        },
+        {
+          "id": "sqsm8wd4s",
+          "name": "verifizierung_token",
+          "type": "Text",
+          "description": "verifizierung_token",
+          "required": false
+        },
+        {
+          "id": "avvl7mxa3",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
@@ -563,60 +612,60 @@ window.SYNCED_DATA = {
       "relationships": []
     },
     {
-      "id": "dt-f0d8ocpgp",
+      "id": "dt-yja7wm9m4",
       "name": "Schichten",
       "fields": [
         {
-          "id": "4ixyrjqd5",
+          "id": "7e6woklu8",
           "name": "id",
           "type": "ID",
           "description": "Eindeutige ID (UUID, automatisch)",
           "required": false
         },
         {
-          "id": "bjdgw55nc",
+          "id": "vc9ci6nop",
           "name": "restaurant_id",
           "type": "Beziehung",
           "description": "Gehoert zu Restaurant (Multi-Tenant)",
           "required": true
         },
         {
-          "id": "zzp4o3kwl",
+          "id": "2ndgls3cl",
           "name": "mitarbeiter_id",
           "type": "Beziehung",
           "description": "Verknuepft mit Mitarbeiter",
           "required": true
         },
         {
-          "id": "nhtf5w2wr",
+          "id": "4ql9jjpmh",
           "name": "datum",
           "type": "Datum",
           "description": "datum",
           "required": true
         },
         {
-          "id": "h3stk4p1q",
+          "id": "wawg7p46i",
           "name": "beginn",
           "type": "Datum",
           "description": "beginn",
           "required": true
         },
         {
-          "id": "brzagcoja",
+          "id": "nvylwyt7a",
           "name": "ende",
           "type": "Datum",
           "description": "ende",
           "required": true
         },
         {
-          "id": "hn1oj8793",
+          "id": "m82dn67ad",
           "name": "notiz",
           "type": "Text",
           "description": "notiz",
           "required": false
         },
         {
-          "id": "2ctxg5rqe",
+          "id": "qexwbsqoh",
           "name": "erstellt_am",
           "type": "Datum",
           "description": "Erstellungszeitpunkt",
@@ -626,46 +675,188 @@ window.SYNCED_DATA = {
       "relationships": [
         "Mitarbeiter"
       ]
+    },
+    {
+      "id": "dt-rh02au1wy",
+      "name": "Oeffnungszeiten",
+      "fields": [
+        {
+          "id": "2wwsmenmw",
+          "name": "id",
+          "type": "ID",
+          "description": "Eindeutige ID (UUID, automatisch)",
+          "required": false
+        },
+        {
+          "id": "pue8uqfxb",
+          "name": "restaurant_id",
+          "type": "Beziehung",
+          "description": "Gehoert zu Restaurant (Multi-Tenant)",
+          "required": true
+        },
+        {
+          "id": "d97zytawg",
+          "name": "wochentag",
+          "type": "Zahl",
+          "description": "wochentag",
+          "required": true
+        },
+        {
+          "id": "q1bdyqj4d",
+          "name": "von",
+          "type": "Datum",
+          "description": "von",
+          "required": true
+        },
+        {
+          "id": "b2c5slglw",
+          "name": "bis",
+          "type": "Datum",
+          "description": "bis",
+          "required": true
+        },
+        {
+          "id": "p7gkwxdes",
+          "name": "geschlossen",
+          "type": "Ja/Nein",
+          "description": "geschlossen",
+          "required": true
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "dt-o0l3tq4yb",
+      "name": "Passwort_resets",
+      "fields": [
+        {
+          "id": "4ly81d6be",
+          "name": "id",
+          "type": "ID",
+          "description": "Eindeutige ID (UUID, automatisch)",
+          "required": false
+        },
+        {
+          "id": "tktuj2okw",
+          "name": "mitarbeiter_id",
+          "type": "Beziehung",
+          "description": "Verknuepft mit Mitarbeiter",
+          "required": true
+        },
+        {
+          "id": "oc4zjucu0",
+          "name": "token",
+          "type": "Text",
+          "description": "token",
+          "required": true
+        },
+        {
+          "id": "qr6b1uj3w",
+          "name": "gueltig_bis",
+          "type": "Datum",
+          "description": "gueltig_bis",
+          "required": true
+        },
+        {
+          "id": "2mg829cb8",
+          "name": "benutzt",
+          "type": "Ja/Nein",
+          "description": "benutzt",
+          "required": true
+        },
+        {
+          "id": "kz99tr9ci",
+          "name": "erstellt_am",
+          "type": "Datum",
+          "description": "Erstellungszeitpunkt",
+          "required": true
+        }
+      ],
+      "relationships": [
+        "Mitarbeiter"
+      ]
+    },
+    {
+      "id": "dt-fadc486qc",
+      "name": "Login_versuche",
+      "fields": [
+        {
+          "id": "wsqzpbicj",
+          "name": "id",
+          "type": "ID",
+          "description": "Eindeutige ID (UUID, automatisch)",
+          "required": false
+        },
+        {
+          "id": "vnvh43lsw",
+          "name": "email",
+          "type": "Text",
+          "description": "email",
+          "required": true
+        },
+        {
+          "id": "hrdwwgt7a",
+          "name": "ip_adresse",
+          "type": "Text",
+          "description": "ip_adresse",
+          "required": false
+        },
+        {
+          "id": "baew10g8b",
+          "name": "erfolgreich",
+          "type": "Ja/Nein",
+          "description": "erfolgreich",
+          "required": true
+        },
+        {
+          "id": "40msnjlz9",
+          "name": "erstellt_am",
+          "type": "Datum",
+          "description": "Erstellungszeitpunkt",
+          "required": true
+        }
+      ],
+      "relationships": []
     }
   ],
   "optionSets": [
     {
-      "id": "dh84jjy5j",
+      "id": "k9oxxtg00",
       "name": "Restaurants_Abo_status",
       "values": [
         "trial, active, expired"
       ]
     },
     {
-      "id": "bf4mts0dc",
+      "id": "pxeztzr8q",
       "name": "Tische_Status",
       "values": [
         "frei, besetzt, wartet_auf_zahlung"
       ]
     },
     {
-      "id": "swem0uujo",
+      "id": "db2c9xdr3",
       "name": "Bestellungen_Status",
       "values": [
         "offen, in_zubereitung, serviert, bezahlt"
       ]
     },
     {
-      "id": "zvwmyw78y",
+      "id": "2fuq089yw",
       "name": "Reservierungen_Status",
       "values": [
         "ausstehend, bestaetigt, storniert"
       ]
     },
     {
-      "id": "n808ewc48",
+      "id": "186tq7bfg",
       "name": "Reservierungen_Quelle",
       "values": [
         "app, whatsapp, telefon"
       ]
     },
     {
-      "id": "7hl72lcty",
+      "id": "ssr7sxvgm",
       "name": "Mitarbeiter_Rolle",
       "values": [
         "admin, kellner, kueche"
@@ -674,7 +865,7 @@ window.SYNCED_DATA = {
   ],
   "workflows": [
     {
-      "id": "chqbvbvhb",
+      "id": "zfa34uenm",
       "name": "Auth abrufen",
       "folder": "Auth",
       "trigger": "Seiten-Load",
@@ -682,24 +873,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Auth-Seite geladen wird",
       "steps": [
         {
-          "id": "k92ozify3",
+          "id": "epdhmjorh",
           "type": "api",
           "desc": "GET /api/auth aufrufen"
         },
         {
-          "id": "pyngp0ejd",
+          "id": "6e03jsuwy",
           "type": "database",
           "desc": "Auth-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "t56heaw5q",
+          "id": "sb5bfdgil",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "aes02kqvp",
+      "id": "dtrq3y9va",
       "name": "Auth erstellen",
       "folder": "Auth",
       "trigger": "Button-Klick",
@@ -707,29 +898,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Auth abgeschickt wird",
       "steps": [
         {
-          "id": "dvygkzgtg",
+          "id": "8ozsg7db0",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "l06vhs4ux",
+          "id": "q1pzvotpn",
           "type": "api",
           "desc": "POST /api/auth aufrufen"
         },
         {
-          "id": "evuw7asii",
+          "id": "gxt3rs4nl",
           "type": "database",
           "desc": "Neuen Auth-Datensatz in DB speichern"
         },
         {
-          "id": "sdnetepy6",
+          "id": "lmyppblls",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "jfur12gu4",
+      "id": "ndh3nwg1r",
       "name": "Bestellungen abrufen",
       "folder": "Bestellungen",
       "trigger": "Seiten-Load",
@@ -737,24 +928,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Bestellungen-Seite geladen wird",
       "steps": [
         {
-          "id": "2etmz5wki",
+          "id": "5t6rzsguy",
           "type": "api",
           "desc": "GET /api/bestellungen aufrufen"
         },
         {
-          "id": "njzed9qfu",
+          "id": "9k14u97z9",
           "type": "database",
           "desc": "Bestellungen-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "9od3lp8z2",
+          "id": "gc1yllc37",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "qzd0xtkv0",
+      "id": "85fpxosb9",
       "name": "Bestellungen erstellen",
       "folder": "Bestellungen",
       "trigger": "Button-Klick",
@@ -762,29 +953,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Bestellungen abgeschickt wird",
       "steps": [
         {
-          "id": "z1vibjlmn",
+          "id": "rrswjoxx6",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "2p2ukj3bf",
+          "id": "am1xswbfv",
           "type": "api",
           "desc": "POST /api/bestellungen aufrufen"
         },
         {
-          "id": "2panexpdx",
+          "id": "e0au4x8h4",
           "type": "database",
           "desc": "Neuen Bestellungen-Datensatz in DB speichern"
         },
         {
-          "id": "dobl47ajf",
+          "id": "4nos4ex9n",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "3jg068bdu",
+      "id": "divawbwuo",
       "name": "Bestellungen bearbeiten",
       "folder": "Bestellungen",
       "trigger": "Button-Klick",
@@ -792,29 +983,84 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Bestellungen bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "309ucnyzu",
+          "id": "838xtj0vn",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "b0yrwoxaw",
+          "id": "ls2p220h3",
           "type": "api",
           "desc": "PATCH /api/bestellungen/:id aufrufen"
         },
         {
-          "id": "b6o1t2c11",
+          "id": "6e2jt8glt",
           "type": "database",
           "desc": "Bestellungen-Datensatz in DB aktualisieren"
         },
         {
-          "id": "6i1ejebkr",
+          "id": "62fh7h5qx",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "ncph8q2vw",
+      "id": "g39n0tqn7",
+      "name": "Buchung abrufen",
+      "folder": "Buchung",
+      "trigger": "Seiten-Load",
+      "status": "Fertig",
+      "triggerDesc": "Wenn: Buchung-Seite geladen wird",
+      "steps": [
+        {
+          "id": "nww1z7iei",
+          "type": "api",
+          "desc": "GET /api/buchung aufrufen"
+        },
+        {
+          "id": "s45wj7f08",
+          "type": "database",
+          "desc": "Buchung-Daten aus DB laden (gefiltert nach restaurant_id)"
+        },
+        {
+          "id": "7yfhy7paw",
+          "type": "navigation",
+          "desc": "Daten in der UI anzeigen"
+        }
+      ]
+    },
+    {
+      "id": "w5h04qyw8",
+      "name": "Buchung erstellen",
+      "folder": "Buchung",
+      "trigger": "Button-Klick",
+      "status": "Fertig",
+      "triggerDesc": "Wenn: Formular fuer neuen Buchung abgeschickt wird",
+      "steps": [
+        {
+          "id": "326gt6dyg",
+          "type": "condition",
+          "desc": "Eingaben validieren"
+        },
+        {
+          "id": "jl2cpjhq0",
+          "type": "api",
+          "desc": "POST /api/buchung aufrufen"
+        },
+        {
+          "id": "zu7zmnlub",
+          "type": "database",
+          "desc": "Neuen Buchung-Datensatz in DB speichern"
+        },
+        {
+          "id": "0ysbqlodx",
+          "type": "confirm",
+          "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
+        }
+      ]
+    },
+    {
+      "id": "o6xxqwkbf",
       "name": "Dienstplan abrufen",
       "folder": "Dienstplan",
       "trigger": "Seiten-Load",
@@ -822,24 +1068,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Dienstplan-Seite geladen wird",
       "steps": [
         {
-          "id": "bj1z9n4ts",
+          "id": "at354b2uj",
           "type": "api",
           "desc": "GET /api/dienstplan aufrufen"
         },
         {
-          "id": "5h26m1q1a",
+          "id": "qdn2se0b8",
           "type": "database",
           "desc": "Dienstplan-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "qnnh3x9vi",
+          "id": "z3lj8ymro",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "76mqs476q",
+      "id": "fhez0wjv5",
       "name": "Dienstplan erstellen",
       "folder": "Dienstplan",
       "trigger": "Button-Klick",
@@ -847,29 +1093,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Dienstplan abgeschickt wird",
       "steps": [
         {
-          "id": "zv5e7626n",
+          "id": "ixpuhzx8h",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "a4gau911x",
+          "id": "a7hoap1g9",
           "type": "api",
           "desc": "POST /api/dienstplan aufrufen"
         },
         {
-          "id": "jnzf4bp6u",
+          "id": "k9qa52a4q",
           "type": "database",
           "desc": "Neuen Dienstplan-Datensatz in DB speichern"
         },
         {
-          "id": "usik5zshi",
+          "id": "azm4lk2zc",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "rwjt3ipln",
+      "id": "m8o0lvzkb",
       "name": "Dienstplan bearbeiten",
       "folder": "Dienstplan",
       "trigger": "Button-Klick",
@@ -877,29 +1123,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Dienstplan bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "z1l8hblgb",
+          "id": "5mfdoqs60",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "krag9qiy2",
+          "id": "uebyoydgj",
           "type": "api",
           "desc": "PATCH /api/dienstplan/:id aufrufen"
         },
         {
-          "id": "l93y6i5nj",
+          "id": "czzzm6qod",
           "type": "database",
           "desc": "Dienstplan-Datensatz in DB aktualisieren"
         },
         {
-          "id": "lc7pfnzk3",
+          "id": "vf0mpmc3z",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "0csy1387u",
+      "id": "9yk52k4fo",
       "name": "Dienstplan loeschen",
       "folder": "Dienstplan",
       "trigger": "Button-Klick",
@@ -907,29 +1153,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Loeschen-Button geklickt und bestaetigt",
       "steps": [
         {
-          "id": "q85nbs9fv",
+          "id": "q70uh06e3",
           "type": "condition",
           "desc": "Bestaetigung vom Benutzer einholen"
         },
         {
-          "id": "2so4ab8sj",
+          "id": "m3mo9rbme",
           "type": "api",
           "desc": "DELETE /api/dienstplan/:id aufrufen"
         },
         {
-          "id": "vz0r4yu84",
+          "id": "1a5ob0v5y",
           "type": "database",
           "desc": "Dienstplan-Datensatz aus DB entfernen"
         },
         {
-          "id": "c28agf00s",
+          "id": "j8htv1z9p",
           "type": "confirm",
           "desc": "Erfolgsmeldung + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "3zme9puko",
+      "id": "24bi9q41v",
       "name": "Mitarbeiter abrufen",
       "folder": "Mitarbeiter",
       "trigger": "Seiten-Load",
@@ -937,24 +1183,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Mitarbeiter-Seite geladen wird",
       "steps": [
         {
-          "id": "jsy5hoy5i",
+          "id": "79bsxiv94",
           "type": "api",
           "desc": "GET /api/mitarbeiter aufrufen"
         },
         {
-          "id": "qpgy1lnzp",
+          "id": "3hh9ug3al",
           "type": "database",
           "desc": "Mitarbeiter-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "mswb8shdp",
+          "id": "8glg967ka",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "91rv2fsfs",
+      "id": "7nnlqxp5e",
       "name": "Mitarbeiter erstellen",
       "folder": "Mitarbeiter",
       "trigger": "Button-Klick",
@@ -962,29 +1208,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Mitarbeiter abgeschickt wird",
       "steps": [
         {
-          "id": "3w6eaorep",
+          "id": "rhxacwtqa",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "o10xf5vu8",
+          "id": "sk58pvknf",
           "type": "api",
           "desc": "POST /api/mitarbeiter aufrufen"
         },
         {
-          "id": "wkbxwcgxk",
+          "id": "zaf779bsd",
           "type": "database",
           "desc": "Neuen Mitarbeiter-Datensatz in DB speichern"
         },
         {
-          "id": "ort26el45",
+          "id": "tbgwdw44a",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "ts9xvofly",
+      "id": "l95werbo0",
       "name": "Mitarbeiter bearbeiten",
       "folder": "Mitarbeiter",
       "trigger": "Button-Klick",
@@ -992,29 +1238,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Mitarbeiter bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "ksjorcufa",
+          "id": "0rjviww2s",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "59sux1bgd",
+          "id": "ocjzc23qh",
           "type": "api",
           "desc": "PATCH /api/mitarbeiter/:id aufrufen"
         },
         {
-          "id": "fn7pfpc9i",
+          "id": "x3b987eas",
           "type": "database",
           "desc": "Mitarbeiter-Datensatz in DB aktualisieren"
         },
         {
-          "id": "rvw04f3ac",
+          "id": "0v8fi80ek",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "lcdyf8dwq",
+      "id": "fpn0b9k6x",
       "name": "Reservierungen abrufen",
       "folder": "Reservierungen",
       "trigger": "Seiten-Load",
@@ -1022,24 +1268,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Reservierungen-Seite geladen wird",
       "steps": [
         {
-          "id": "ovaw2cfln",
+          "id": "jytupm7xx",
           "type": "api",
           "desc": "GET /api/reservierungen aufrufen"
         },
         {
-          "id": "mwhwamtil",
+          "id": "rhe9urw3z",
           "type": "database",
           "desc": "Reservierungen-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "962vyalxr",
+          "id": "kjlwvnmh1",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "tb09dh3bf",
+      "id": "ye5r7hlfi",
       "name": "Reservierungen erstellen",
       "folder": "Reservierungen",
       "trigger": "Button-Klick",
@@ -1047,29 +1293,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Reservierungen abgeschickt wird",
       "steps": [
         {
-          "id": "soa86u2mx",
+          "id": "zqj923otl",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "6djn6cfrx",
+          "id": "hnpcx4nmv",
           "type": "api",
           "desc": "POST /api/reservierungen aufrufen"
         },
         {
-          "id": "8zod3i3ul",
+          "id": "zdjbnppbj",
           "type": "database",
           "desc": "Neuen Reservierungen-Datensatz in DB speichern"
         },
         {
-          "id": "15qbtjig7",
+          "id": "k34smq302",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "ny5f5ifz4",
+      "id": "7bz643bka",
       "name": "Reservierungen bearbeiten",
       "folder": "Reservierungen",
       "trigger": "Button-Klick",
@@ -1077,29 +1323,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Reservierungen bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "onl70v0x3",
+          "id": "gy80j52b0",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "tf54jld23",
+          "id": "n8jckmooe",
           "type": "api",
           "desc": "PATCH /api/reservierungen/:id aufrufen"
         },
         {
-          "id": "2k586bydl",
+          "id": "hopntr8au",
           "type": "database",
           "desc": "Reservierungen-Datensatz in DB aktualisieren"
         },
         {
-          "id": "6grctgpz9",
+          "id": "pcyfs29gi",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "f2gzeuwsh",
+      "id": "yvlhkw6ek",
       "name": "Reservierungen loeschen",
       "folder": "Reservierungen",
       "trigger": "Button-Klick",
@@ -1107,29 +1353,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Loeschen-Button geklickt und bestaetigt",
       "steps": [
         {
-          "id": "hwtn79e0t",
+          "id": "97riykxv0",
           "type": "condition",
           "desc": "Bestaetigung vom Benutzer einholen"
         },
         {
-          "id": "q5gj3cslb",
+          "id": "nbgx3knrd",
           "type": "api",
           "desc": "DELETE /api/reservierungen/:id aufrufen"
         },
         {
-          "id": "kvjo0rmsa",
+          "id": "rpc39d7h3",
           "type": "database",
           "desc": "Reservierungen-Datensatz aus DB entfernen"
         },
         {
-          "id": "ohb7c97bj",
+          "id": "prnncn2pb",
           "type": "confirm",
           "desc": "Erfolgsmeldung + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "vocd8rwf3",
+      "id": "oaaxkgmpl",
       "name": "Restaurant abrufen",
       "folder": "Restaurant",
       "trigger": "Seiten-Load",
@@ -1137,24 +1383,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Restaurant-Seite geladen wird",
       "steps": [
         {
-          "id": "eatx6d6fh",
+          "id": "gfo6jt7us",
           "type": "api",
           "desc": "GET /api/restaurant aufrufen"
         },
         {
-          "id": "u46og6k2g",
+          "id": "rq6hw3j59",
           "type": "database",
           "desc": "Restaurant-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "zv5ekjjjp",
+          "id": "4terslahr",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "h5ou5r6s4",
+      "id": "dj08krz90",
       "name": "Restaurant bearbeiten",
       "folder": "Restaurant",
       "trigger": "Button-Klick",
@@ -1162,29 +1408,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Restaurant bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "6qbpjp5gj",
+          "id": "zirpk9va9",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "rex9xlpre",
+          "id": "e11z1w2bp",
           "type": "api",
           "desc": "PATCH /api/restaurant/:id aufrufen"
         },
         {
-          "id": "xjo537nhn",
+          "id": "zbtwqzk05",
           "type": "database",
           "desc": "Restaurant-Datensatz in DB aktualisieren"
         },
         {
-          "id": "ii0lvfpo5",
+          "id": "le5bjpnm4",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "vgpinhe3x",
+      "id": "si1vxxjfh",
       "name": "Speisekarte abrufen",
       "folder": "Speisekarte",
       "trigger": "Seiten-Load",
@@ -1192,24 +1438,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Speisekarte-Seite geladen wird",
       "steps": [
         {
-          "id": "r7yd5f6rv",
+          "id": "526hsbsmq",
           "type": "api",
           "desc": "GET /api/speisekarte aufrufen"
         },
         {
-          "id": "jol1viqjo",
+          "id": "k1kltnw3t",
           "type": "database",
           "desc": "Speisekarte-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "8i0lel96s",
+          "id": "jpfm0wvu8",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "w8ky4bq2n",
+      "id": "4uwuwefg2",
       "name": "Speisekarte erstellen",
       "folder": "Speisekarte",
       "trigger": "Button-Klick",
@@ -1217,29 +1463,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Speisekarte abgeschickt wird",
       "steps": [
         {
-          "id": "7e55m4prq",
+          "id": "jahmdw3hq",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "borurbt31",
+          "id": "i9ifc4ene",
           "type": "api",
           "desc": "POST /api/speisekarte aufrufen"
         },
         {
-          "id": "ukn86yrvv",
+          "id": "03pama1gu",
           "type": "database",
           "desc": "Neuen Speisekarte-Datensatz in DB speichern"
         },
         {
-          "id": "uomsqikla",
+          "id": "ypnhcfvh5",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "zc8k9cz89",
+      "id": "zxw2bolg6",
       "name": "Speisekarte bearbeiten",
       "folder": "Speisekarte",
       "trigger": "Button-Klick",
@@ -1247,29 +1493,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Speisekarte bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "mnon7jnks",
+          "id": "3lrdorjkv",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "a28k470n6",
+          "id": "vzhek5z85",
           "type": "api",
           "desc": "PATCH /api/speisekarte/:id aufrufen"
         },
         {
-          "id": "if7l42v3w",
+          "id": "hfhhpqfv5",
           "type": "database",
           "desc": "Speisekarte-Datensatz in DB aktualisieren"
         },
         {
-          "id": "7btnmk5ni",
+          "id": "e4uhe4v20",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "3025a3non",
+      "id": "by47kmu10",
       "name": "Speisekarte loeschen",
       "folder": "Speisekarte",
       "trigger": "Button-Klick",
@@ -1277,29 +1523,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Loeschen-Button geklickt und bestaetigt",
       "steps": [
         {
-          "id": "p3bibmmyw",
+          "id": "z6mj7yldy",
           "type": "condition",
           "desc": "Bestaetigung vom Benutzer einholen"
         },
         {
-          "id": "8iw7pv7bd",
+          "id": "7y1nfsmn3",
           "type": "api",
           "desc": "DELETE /api/speisekarte/:id aufrufen"
         },
         {
-          "id": "pnzi7jhll",
+          "id": "ty27umga7",
           "type": "database",
           "desc": "Speisekarte-Datensatz aus DB entfernen"
         },
         {
-          "id": "5jip7w7k3",
+          "id": "oomez7l48",
           "type": "confirm",
           "desc": "Erfolgsmeldung + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "2lf093roi",
+      "id": "2ee7yw2yl",
       "name": "Statistiken abrufen",
       "folder": "Statistiken",
       "trigger": "Seiten-Load",
@@ -1307,24 +1553,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Statistiken-Seite geladen wird",
       "steps": [
         {
-          "id": "a3aoqbghb",
+          "id": "lce4eve67",
           "type": "api",
           "desc": "GET /api/statistiken aufrufen"
         },
         {
-          "id": "k9rkh1zfn",
+          "id": "y1sh2bzq0",
           "type": "database",
           "desc": "Statistiken-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "3sawlj2kv",
+          "id": "7xhbywcnt",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "hixi1i02r",
+      "id": "eo8yolf0g",
       "name": "Tische abrufen",
       "folder": "Tische",
       "trigger": "Seiten-Load",
@@ -1332,24 +1578,24 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Tische-Seite geladen wird",
       "steps": [
         {
-          "id": "q6auczdyg",
+          "id": "ml0klgyid",
           "type": "api",
           "desc": "GET /api/tische aufrufen"
         },
         {
-          "id": "1oucakw54",
+          "id": "2rttw6csh",
           "type": "database",
           "desc": "Tische-Daten aus DB laden (gefiltert nach restaurant_id)"
         },
         {
-          "id": "o0g7ewgj1",
+          "id": "fpcskgj2l",
           "type": "navigation",
           "desc": "Daten in der UI anzeigen"
         }
       ]
     },
     {
-      "id": "gg65yhb59",
+      "id": "gs78sbueq",
       "name": "Tische erstellen",
       "folder": "Tische",
       "trigger": "Button-Klick",
@@ -1357,29 +1603,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Formular fuer neuen Tische abgeschickt wird",
       "steps": [
         {
-          "id": "io52yirg0",
+          "id": "tbr2s29ig",
           "type": "condition",
           "desc": "Eingaben validieren"
         },
         {
-          "id": "a8knarcu7",
+          "id": "grddq8k4o",
           "type": "api",
           "desc": "POST /api/tische aufrufen"
         },
         {
-          "id": "llkv2rpjq",
+          "id": "k0uzj9ok2",
           "type": "database",
           "desc": "Neuen Tische-Datensatz in DB speichern"
         },
         {
-          "id": "5hsmpr6jz",
+          "id": "9hexln6qy",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     },
     {
-      "id": "9opqbl6gv",
+      "id": "hpi470iom",
       "name": "Tische bearbeiten",
       "folder": "Tische",
       "trigger": "Button-Klick",
@@ -1387,29 +1633,29 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Tische bearbeitet und gespeichert wird",
       "steps": [
         {
-          "id": "gdmjhp7y7",
+          "id": "9jn8m4cy0",
           "type": "condition",
           "desc": "Aenderungen validieren"
         },
         {
-          "id": "526p4dox0",
+          "id": "ly3lfrqvt",
           "type": "api",
           "desc": "PATCH /api/tische/:id aufrufen"
         },
         {
-          "id": "nblm99e19",
+          "id": "y6yws0vbk",
           "type": "database",
           "desc": "Tische-Datensatz in DB aktualisieren"
         },
         {
-          "id": "9ofmo29ub",
+          "id": "e4bafb6zd",
           "type": "confirm",
           "desc": "Erfolgsmeldung anzeigen"
         }
       ]
     },
     {
-      "id": "tfpgfwjch",
+      "id": "qh8l0c1li",
       "name": "Tische loeschen",
       "folder": "Tische",
       "trigger": "Button-Klick",
@@ -1417,31 +1663,61 @@ window.SYNCED_DATA = {
       "triggerDesc": "Wenn: Loeschen-Button geklickt und bestaetigt",
       "steps": [
         {
-          "id": "dr16ztdrs",
+          "id": "w2db0saqc",
           "type": "condition",
           "desc": "Bestaetigung vom Benutzer einholen"
         },
         {
-          "id": "a1p1w7qig",
+          "id": "ew4k3yz52",
           "type": "api",
           "desc": "DELETE /api/tische/:id aufrufen"
         },
         {
-          "id": "n7enn322q",
+          "id": "3x6ctpxtg",
           "type": "database",
           "desc": "Tische-Datensatz aus DB entfernen"
         },
         {
-          "id": "w8mlq7xyg",
+          "id": "08enrflcc",
           "type": "confirm",
           "desc": "Erfolgsmeldung + Liste aktualisieren"
+        }
+      ]
+    },
+    {
+      "id": "3z6pi5hyb",
+      "name": "Uploads erstellen",
+      "folder": "Uploads",
+      "trigger": "Button-Klick",
+      "status": "Fertig",
+      "triggerDesc": "Wenn: Formular fuer neuen Uploads abgeschickt wird",
+      "steps": [
+        {
+          "id": "75pn54725",
+          "type": "condition",
+          "desc": "Eingaben validieren"
+        },
+        {
+          "id": "ls4uj6gti",
+          "type": "api",
+          "desc": "POST /api/uploads aufrufen"
+        },
+        {
+          "id": "l93474qb8",
+          "type": "database",
+          "desc": "Neuen Uploads-Datensatz in DB speichern"
+        },
+        {
+          "id": "f41h4c180",
+          "type": "confirm",
+          "desc": "Erfolgsmeldung anzeigen + Liste aktualisieren"
         }
       ]
     }
   ],
   "pages": [
     {
-      "id": "za60qqch5",
+      "id": "cft4y4n8f",
       "name": "Bestellen",
       "desc": "Seite: Bestellen — Nutzt 4 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1459,7 +1735,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "n21gc06hk",
+      "id": "e6pu370iu",
       "name": "BestellenPro",
       "desc": "Seite: BestellenPro — Nutzt 4 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1477,7 +1753,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "wpv1nj9ap",
+      "id": "6smhl1xi1",
       "name": "Bestellungen",
       "desc": "Seite: Bestellungen — Nutzt 1 Hooks, 2 Komponenten",
       "status": "Fertig",
@@ -1495,7 +1771,20 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "krv9y7ua0",
+      "id": "zn3295u62",
+      "name": "Buchen",
+      "desc": "Seite: Buchen — Nutzt 0 Hooks, 0 Komponenten",
+      "status": "Fertig",
+      "dataTypes": [],
+      "reusables": [],
+      "responsive": {
+        "desktop": true,
+        "tablet": true,
+        "mobile": false
+      }
+    },
+    {
+      "id": "d14zgswbj",
       "name": "Dashboard",
       "desc": "Seite: Dashboard — Nutzt 3 Hooks, 5 Komponenten",
       "status": "Fertig",
@@ -1518,7 +1807,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "phmhh8xsx",
+      "id": "85eq7bhog",
       "name": "Dienstplan",
       "desc": "Seite: Dienstplan — Nutzt 2 Hooks, 1 Komponenten",
       "status": "Fertig",
@@ -1536,7 +1825,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "drbr36iml",
+      "id": "kauqatzll",
       "name": "Einladung",
       "desc": "Seite: Einladung — Nutzt 1 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1551,7 +1840,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "4d8rltvpd",
+      "id": "7gxn8cd8q",
       "name": "Einstellungen",
       "desc": "Seite: Einstellungen — Nutzt 2 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1567,7 +1856,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "2xpe71gi1",
+      "id": "04h6h251g",
       "name": "EmailVerifizieren",
       "desc": "Seite: EmailVerifizieren — Nutzt 0 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1580,7 +1869,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "jfe20q9pm",
+      "id": "izc8spl5x",
       "name": "Login",
       "desc": "Seite: Login — Nutzt 1 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1595,7 +1884,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "ulpbnaf5w",
+      "id": "bj691bp7u",
       "name": "Mitarbeiter",
       "desc": "Seite: Mitarbeiter — Nutzt 3 Hooks, 2 Komponenten",
       "status": "Fertig",
@@ -1615,7 +1904,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "2gx8u0fki",
+      "id": "qdgdqd9r7",
       "name": "PasswortVergessen",
       "desc": "Seite: PasswortVergessen — Nutzt 0 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1628,7 +1917,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "a5hmqw2cj",
+      "id": "zc4s4kzoq",
       "name": "PasswortZuruecksetzen",
       "desc": "Seite: PasswortZuruecksetzen — Nutzt 0 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1641,7 +1930,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "76gnhh3q8",
+      "id": "1icxilhd6",
       "name": "Registrieren",
       "desc": "Seite: Registrieren — Nutzt 1 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1656,7 +1945,46 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "cmc1qo5ad",
+      "id": "h2tfehzus",
+      "name": "ReservierungDetail",
+      "desc": "Seite: ReservierungDetail — Nutzt 0 Hooks, 0 Komponenten",
+      "status": "Fertig",
+      "dataTypes": [],
+      "reusables": [],
+      "responsive": {
+        "desktop": true,
+        "tablet": true,
+        "mobile": false
+      }
+    },
+    {
+      "id": "2t5v5bnhb",
+      "name": "ReservierungStornieren",
+      "desc": "Seite: ReservierungStornieren — Nutzt 0 Hooks, 0 Komponenten",
+      "status": "Fertig",
+      "dataTypes": [],
+      "reusables": [],
+      "responsive": {
+        "desktop": true,
+        "tablet": true,
+        "mobile": false
+      }
+    },
+    {
+      "id": "gjx4wc4sp",
+      "name": "ReservierungUmbuchen",
+      "desc": "Seite: ReservierungUmbuchen — Nutzt 0 Hooks, 0 Komponenten",
+      "status": "Fertig",
+      "dataTypes": [],
+      "reusables": [],
+      "responsive": {
+        "desktop": true,
+        "tablet": true,
+        "mobile": false
+      }
+    },
+    {
+      "id": "3yhqdpvl3",
       "name": "Reservierungen",
       "desc": "Seite: Reservierungen — Nutzt 2 Hooks, 2 Komponenten",
       "status": "Fertig",
@@ -1675,7 +2003,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "qq8cvz3qm",
+      "id": "w0ka8qkha",
       "name": "Speisekarte",
       "desc": "Seite: Speisekarte — Nutzt 1 Hooks, 3 Komponenten",
       "status": "Fertig",
@@ -1694,7 +2022,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "m9pbd8fq5",
+      "id": "fb26tdzl7",
       "name": "Statistiken",
       "desc": "Seite: Statistiken — Nutzt 2 Hooks, 0 Komponenten",
       "status": "Fertig",
@@ -1710,7 +2038,7 @@ window.SYNCED_DATA = {
       }
     },
     {
-      "id": "nyvrt33lh",
+      "id": "jr0kbb4yg",
       "name": "Tischplan",
       "desc": "Seite: Tischplan — Nutzt 2 Hooks, 2 Komponenten",
       "status": "Fertig",
@@ -1763,7 +2091,7 @@ window.SYNCED_DATA = {
       "url": "ws://localhost:3001"
     },
     {
-      "id": "2doyjkizm",
+      "id": "hwjf5j8fx",
       "name": "API: Auth",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1771,7 +2099,7 @@ window.SYNCED_DATA = {
       "url": "/api/auth"
     },
     {
-      "id": "xoo2wqwtv",
+      "id": "a3n6ewxqy",
       "name": "API: Restaurants",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1779,7 +2107,7 @@ window.SYNCED_DATA = {
       "url": "/api/restaurants"
     },
     {
-      "id": "9p02hqdoo",
+      "id": "4p1nip7gk",
       "name": "API: Tische",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1787,7 +2115,7 @@ window.SYNCED_DATA = {
       "url": "/api/tische"
     },
     {
-      "id": "48ladzvy3",
+      "id": "u0kefochh",
       "name": "API: Speisekarte (Gerichte",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1795,7 +2123,7 @@ window.SYNCED_DATA = {
       "url": "/api/speisekartegerichte"
     },
     {
-      "id": "qv8ftaf8a",
+      "id": "u1k6dgoef",
       "name": "API: Bestellungen",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1803,7 +2131,7 @@ window.SYNCED_DATA = {
       "url": "/api/bestellungen"
     },
     {
-      "id": "xnw5x4mpa",
+      "id": "ymbqs76fa",
       "name": "API: Reservierungen",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1811,7 +2139,7 @@ window.SYNCED_DATA = {
       "url": "/api/reservierungen"
     },
     {
-      "id": "5rqpyh15i",
+      "id": "esamj1z9y",
       "name": "API: Dienstplan",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1819,7 +2147,7 @@ window.SYNCED_DATA = {
       "url": "/api/dienstplan"
     },
     {
-      "id": "obom3f4wg",
+      "id": "0xmpa1gf9",
       "name": "API: Statistiken",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1827,7 +2155,15 @@ window.SYNCED_DATA = {
       "url": "/api/statistiken"
     },
     {
-      "id": "qgam8pdm5",
+      "id": "5mt9ww6oy",
+      "name": "API: Online-Buchung (",
+      "typ": "REST API",
+      "status": "Verbunden",
+      "desc": "6 Endpunkte fuer Online-Buchung (",
+      "url": "/api/onlinebuchung"
+    },
+    {
+      "id": "9vmigiqxm",
       "name": "API: Mitarbeiter",
       "typ": "REST API",
       "status": "Verbunden",
@@ -1893,6 +2229,24 @@ window.SYNCED_DATA = {
           "create": true,
           "update": true,
           "delete": true
+        },
+        "Oeffnungszeiten": {
+          "read": true,
+          "create": true,
+          "update": true,
+          "delete": true
+        },
+        "Passwort_resets": {
+          "read": true,
+          "create": true,
+          "update": true,
+          "delete": true
+        },
+        "Login_versuche": {
+          "read": true,
+          "create": true,
+          "update": true,
+          "delete": true
         }
       }
     },
@@ -1949,6 +2303,24 @@ window.SYNCED_DATA = {
           "delete": false
         },
         "Schichten": {
+          "read": true,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Oeffnungszeiten": {
+          "read": true,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Passwort_resets": {
+          "read": true,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Login_versuche": {
           "read": true,
           "create": false,
           "update": false,
@@ -2013,6 +2385,24 @@ window.SYNCED_DATA = {
           "create": false,
           "update": false,
           "delete": false
+        },
+        "Oeffnungszeiten": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Passwort_resets": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Login_versuche": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
         }
       }
     },
@@ -2073,13 +2463,31 @@ window.SYNCED_DATA = {
           "create": false,
           "update": false,
           "delete": false
+        },
+        "Oeffnungszeiten": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Passwort_resets": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
+        },
+        "Login_versuche": {
+          "read": false,
+          "create": false,
+          "update": false,
+          "delete": false
         }
       }
     }
   ],
   "issues": [
     {
-      "id": "njbmhb0oo",
+      "id": "vfhnz7zlc",
       "title": "Abonnement-Verwaltung (Mollie)",
       "desc": "Aus Phase 4 – SaaS-Features",
       "priority": "Hoch",
@@ -2088,7 +2496,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "xberrwf74",
+      "id": "jzw706uux",
       "title": "Mehrsprachigkeit (DE/EN)",
       "desc": "Aus Phase 5 – Extras",
       "priority": "Hoch",
@@ -2097,7 +2505,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "demd0p1pl",
+      "id": "nwcz2mjp6",
       "title": "DB: `theme_config JSONB` + `theme_premium_unlocked BOOLEAN` auf `restaurants`",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2106,7 +2514,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "rbbo1371p",
+      "id": "k7u1c0h22",
       "title": "API: `/api/restaurant/:id/design` um `theme_config` erweitern",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2115,7 +2523,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "ru9gqirle",
+      "id": "7mvpzjq7f",
       "title": "Einstellungen-Seite: Preset-Galerie mit Vorschau-Thumbnails",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2124,7 +2532,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "utsasdzrm",
+      "id": "tejnou7it",
       "title": "Premium Custom-Builder UI (Farb-Picker, Font-Dropdown, Layout-Toggle, Live-Preview)",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2133,7 +2541,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "3dleeljbq",
+      "id": "dyifmpbvr",
       "title": "Zahlungsintegration fuer 20 EUR einmalig (Mollie/Stripe) → `theme_premium_unlocked` setzen",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2142,7 +2550,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "60rpat1o2",
+      "id": "xcvt55r2o",
       "title": "Paywall-UI: \"Design-Builder freischalten\" mit Vorschau",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2151,7 +2559,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "7twtv9m45",
+      "id": "vzqsyssx8",
       "title": "Mobile-Vorschau im Builder + \"Zurueck zum Preset\" Reset",
       "desc": "Aus Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "priority": "Normal",
@@ -2160,7 +2568,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "z9ar1hjax",
+      "id": "td3jxbzf2",
       "title": "Dienstplan fuer Mitarbeiter sichtbar machen (aktuell nur Admin — Kellner/Kueche muessen eigene Schichten sehen)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2169,7 +2577,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "ogbhkbb0r",
+      "id": "rwy3nxvqb",
       "title": "Drag & Drop Schichtplanung (Schichten per Ziehen verschieben/kopieren)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2178,7 +2586,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "usnnthbcd",
+      "id": "fquwmxv7c",
       "title": "ArbZG-Compliance (11h Ruhezeit, Pausen 30min/6h + 45min/9h, Max 10h/Tag)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2187,7 +2595,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "bjksryjcc",
+      "id": "044otdtjd",
       "title": "Konflikterkennung mit Gelb/Rot-Warnungen (Doppelbuchung, Ruhezeitverstoss, Ueberstunden)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2196,7 +2604,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "cgpd6e0pw",
+      "id": "xj5yrkuxf",
       "title": "Mitarbeiter-Verfuegbarkeit (MA tragen ein wann sie koennen/nicht koennen)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2205,7 +2613,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "mhaqi0kug",
+      "id": "i2kslt1gs",
       "title": "Schicht-Templates (wiederkehrende Wochen als Vorlage speichern + anwenden)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2214,7 +2622,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "b9zsoj3gd",
+      "id": "coxau773i",
       "title": "Reservierungs-basierter Personalbedarf (Reservierungen → automatische Empfehlung Mitarbeiterzahl)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2223,7 +2631,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "lq4thmaub",
+      "id": "hn4wxikip",
       "title": "Budget-Overlay (Personalkosten live waehrend der Planung anzeigen)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2232,7 +2640,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "h18hgl5s4",
+      "id": "xnnkfyv7y",
       "title": "Schichttausch 3-Tap-Flow (Anfrage → Claim → Genehmigung)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2241,7 +2649,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "7yg6ceymw",
+      "id": "8cdb8pxjl",
       "title": "Push-Benachrichtigungen (neue Schicht, Aenderungen, Erinnerung vor Schichtbeginn)",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2250,7 +2658,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "67uijeo4u",
+      "id": "y5410oonc",
       "title": "Lesebestaetigung fuer veroeffentlichte Dienstplaene",
       "desc": "Aus Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "priority": "Hoch",
@@ -2259,61 +2667,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "hl9ygao34",
-      "title": "Zeitslot-System (Kapazitaet pro 15-Min-Slot konfigurierbar, Turn-Times pro Tischgroesse)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "s2mnhia3u",
-      "title": "Oeffentliche Buchungsseite fuer Gaeste (3-Schritt-Flow: Datum+Personen → Slot waehlen → Kontaktdaten)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "tye4om8ef",
-      "title": "E-Mail-Bestaetigung + Erinnerung (sofort + 24h + 2-3h vorher, automatisch)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "8sq4eo1mo",
-      "title": "Gast-Self-Service (Stornierung + Umbuchung per Link in der E-Mail, 1-Klick)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "ehqxuqewu",
-      "title": "Einbettbares Buchungswidget (JS-Snippet fuer Restaurant-Website, responsiv, Modal-Overlay)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "yfxgan8py",
-      "title": "Kapazitaetsmanagement (Max Covers pro Slot, Pufferzeiten zwischen Reservierungen)",
-      "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
-      "priority": "Hoch",
-      "area": "Allgemein",
-      "status": "Backlog",
-      "created": "2026-04-07"
-    },
-    {
-      "id": "dgvfxmxa5",
+      "id": "h6eknik5n",
       "title": "**Räumlicher Tischplan / Floor Plan Editor** (Priorität!)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2322,7 +2676,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "6jg4wuxbd",
+      "id": "m7j3r0pim",
       "title": "Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen, Puffer, Zonen)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2331,7 +2685,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "undin0mwk",
+      "id": "cojd3vyg9",
       "title": "Gaeste-CRM (Profile, Tags, Besuchshistorie, Allergien mit DSGVO-Einwilligung)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2340,7 +2694,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "qt370at1g",
+      "id": "3n7b35dzf",
       "title": "No-Show-Management (Kreditkartengarantie optional, No-Show-Tracking, Gaeste-Score)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2349,7 +2703,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "h0s86iaeq",
+      "id": "0cz6t04xu",
       "title": "SMS/WhatsApp-Erinnerungen (95% Oeffnungsrate vs. 20-30% bei E-Mail)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Normal",
@@ -2358,7 +2712,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "8j68k5s2k",
+      "id": "g130aomvd",
       "title": "Google Reserve Integration (>50% aller Reservierungen in DE kommen ueber Google Maps)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2367,7 +2721,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "8prqclwu8",
+      "id": "xe51aiidl",
       "title": "Warteliste (Walk-in + Online, automatisches Nachruecken bei Stornierung, SMS-Benachrichtigung)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2376,7 +2730,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "n4ncks7ef",
+      "id": "ciacsp2lc",
       "title": "Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2385,7 +2739,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "6jbxu1zbo",
+      "id": "di13ddm5z",
       "title": "Reservierungs-basierte Personalplanung (Alleinstellungsmerkmal! Reservierungen → Personalbedarf)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2394,7 +2748,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "qcxyjajgu",
+      "id": "i3p3unmi6",
       "title": "Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2403,7 +2757,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "3w5vszb3q",
+      "id": "rf9ydonxz",
       "title": "Erlebnis-Buchung (Menue + Tisch als Prepaid-Paket, eliminiert No-Shows)",
       "desc": "Aus Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "priority": "Hoch",
@@ -2412,16 +2766,16 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "owc4lpz5p",
-      "title": "🔴 Speisekarte-Bug fixen — Kategorien + Gerichte können nicht hinzugefügt werden (Frontend)",
-      "desc": "Aus Nächstes Todo",
+      "id": "53j6z6zc4",
+      "title": "E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)",
+      "desc": "Aus Vor Release (Pflicht!)",
       "priority": "Hoch",
       "area": "Allgemein",
       "status": "Backlog",
       "created": "2026-04-07"
     },
     {
-      "id": "03e4up5o0",
+      "id": "ob22nf984",
       "title": "SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus",
       "desc": "Aus Vor Release (Pflicht!)",
       "priority": "Hoch",
@@ -2430,7 +2784,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "0f1w574ni",
+      "id": "sjqgxdtpo",
       "title": "SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)",
       "desc": "Aus Vor Release (Pflicht!)",
       "priority": "Hoch",
@@ -2439,7 +2793,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "byksqot1k",
+      "id": "t6k4knldg",
       "title": "Mobile App (falls gewünscht)",
       "desc": "Aus Irgendwann",
       "priority": "Normal",
@@ -2448,7 +2802,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "dbpryovkw",
+      "id": "0h2hpf6hu",
       "title": "Kundenbewertungen",
       "desc": "Aus Irgendwann",
       "priority": "Hoch",
@@ -2457,7 +2811,7 @@ window.SYNCED_DATA = {
       "created": "2026-04-07"
     },
     {
-      "id": "4x2r7929h",
+      "id": "fszcbggdn",
       "title": "Wartezeit-Schätzung",
       "desc": "Aus Irgendwann",
       "priority": "Hoch",
@@ -2468,31 +2822,31 @@ window.SYNCED_DATA = {
   ],
   "roadmap": [
     {
-      "id": "3u4bpbeoj",
+      "id": "ma26htrq1",
       "name": "Jetzt dran",
       "todos": [
         {
-          "id": "5jsmy33x6",
+          "id": "rqx8dkjjy",
           "title": "Node.js installieren (via nvm, Version 20)",
           "done": true
         },
         {
-          "id": "brjd6n9y2",
+          "id": "v2flya56e",
           "title": "PostgreSQL installieren",
           "done": true
         },
         {
-          "id": "gq3gwie3v",
+          "id": "htnl7f7f7",
           "title": "PostgreSQL: Datenbank `restaurant_saas` anlegen",
           "done": true
         },
         {
-          "id": "jyk1o01oa",
+          "id": "wx7hib5rk",
           "title": "`.env` konfigurieren und Backend starten (`npm run dev`)",
           "done": true
         },
         {
-          "id": "igc5kpcn7",
+          "id": "8z92u9rk5",
           "title": "Datenbank-Migration ausführen (`migration.sql`)",
           "done": true
         }
@@ -2501,46 +2855,46 @@ window.SYNCED_DATA = {
       "total": 5
     },
     {
-      "id": "1qfx2pt9z",
+      "id": "gsen070jj",
       "name": "Phase 1 – Grundstruktur ✅ (Codestruktur fertig)",
       "todos": [
         {
-          "id": "a4rl57zha",
+          "id": "iw11s2bp3",
           "title": "Backend-Grundstruktur (Node.js + Express + TypeScript)",
           "done": true
         },
         {
-          "id": "9c6yttpjd",
+          "id": "ffld8yy8d",
           "title": "Datenbankschema in PostgreSQL-Migration erstellt",
           "done": true
         },
         {
-          "id": "cibd3qf2b",
+          "id": "1x9jmk85w",
           "title": "Multi-Tenant-Logik (restaurant_id überall)",
           "done": true
         },
         {
-          "id": "5p99gwj5m",
+          "id": "aevw0ibms",
           "title": "Authentifizierung (Login, JWT, Rollen)",
           "done": true
         },
         {
-          "id": "stm6nrxta",
+          "id": "10db7o8he",
           "title": "Alle 7 API-Routen (auth, restaurants, tische, gerichte, bestellungen, reservierungen, mitarbeiter)",
           "done": true
         },
         {
-          "id": "9zfwc0j1x",
+          "id": "mrlaektak",
           "title": "Socket.io für Live-Updates",
           "done": true
         },
         {
-          "id": "hejvfps7n",
+          "id": "j6w54twf8",
           "title": "Frontend-Grundstruktur (React + TypeScript + Tailwind)",
           "done": true
         },
         {
-          "id": "wl80pd1au",
+          "id": "fgsrjiwuf",
           "title": "Gäste-Bestellseite (QR-Code-basiert)",
           "done": true
         }
@@ -2549,31 +2903,31 @@ window.SYNCED_DATA = {
       "total": 8
     },
     {
-      "id": "nw72m5muo",
+      "id": "70n4gko6m",
       "name": "Phase 2 – Admin-Dashboard (in Arbeit)",
       "todos": [
         {
-          "id": "eppqxhkoa",
+          "id": "mv5umzzi0",
           "title": "Dashboard Live-Stats (Tagesumsatz, Reservierungen heute, Bestellungs-Übersicht)",
           "done": true
         },
         {
-          "id": "o5rrnhvjj",
+          "id": "3itoovwzl",
           "title": "Speisekarte verwalten (Kategorien + Gerichte CRUD)",
           "done": true
         },
         {
-          "id": "j3s7t1lz0",
+          "id": "i6u31d1km",
           "title": "Tischplan visuell (Tisch-CRUD, Status-Wechsel, QR-Link)",
           "done": true
         },
         {
-          "id": "le0fot8ev",
+          "id": "5h2o7ujul",
           "title": "Reservierungsverwaltung mit Kalenderansicht (Wochenleiste, Tagesnavigation, Statistiken)",
           "done": true
         },
         {
-          "id": "vf31ot0ye",
+          "id": "2ed2kyh9i",
           "title": "Mitarbeiterverwaltung (anlegen, Rollen, deaktivieren, Passwort ändern)",
           "done": true
         }
@@ -2582,31 +2936,31 @@ window.SYNCED_DATA = {
       "total": 5
     },
     {
-      "id": "3ccldqtho",
+      "id": "ij6d670al",
       "name": "Phase 3 – Gäste-Seite ✅ (komplett)",
       "todos": [
         {
-          "id": "02v0qmapi",
+          "id": "stq1jk93x",
           "title": "Öffentliche Bestellseite mit QR-Code-Parameter",
           "done": true
         },
         {
-          "id": "vrn3ophcs",
+          "id": "x8fll6c6c",
           "title": "Speisekarte anzeigen (nach Kategorien)",
           "done": true
         },
         {
-          "id": "g3c7jun1m",
+          "id": "oex61yqye",
           "title": "Warenkorb + Bestellung abschicken",
           "done": true
         },
         {
-          "id": "9u6sam9o8",
+          "id": "z9o1nlwpx",
           "title": "QR-Codes generieren & drucken pro Tisch",
           "done": true
         },
         {
-          "id": "txo1mvfsd",
+          "id": "9o8d1b2ln",
           "title": "Bestellstatus für Gäste (Socket.io)",
           "done": true
         }
@@ -2615,26 +2969,26 @@ window.SYNCED_DATA = {
       "total": 5
     },
     {
-      "id": "n3qhj7n11",
+      "id": "txn2auo11",
       "name": "Phase 4 – SaaS-Features",
       "todos": [
         {
-          "id": "7a63e6brj",
+          "id": "q95ne9ag2",
           "title": "Restaurant-Registrierung & Onboarding",
           "done": true
         },
         {
-          "id": "pelkbmdrh",
+          "id": "02wqxu2px",
           "title": "Lizenzcode-System (pro Restaurant, Mitarbeiteranzahl)",
           "done": true
         },
         {
-          "id": "m8496b8ns",
+          "id": "q4l736lch",
           "title": "Design-Anpassung pro Restaurant (Primärfarbe für Gäste-Seite)",
           "done": true
         },
         {
-          "id": "ngwax4a6m",
+          "id": "d52qoqgzv",
           "title": "Abonnement-Verwaltung (Mollie)",
           "done": false
         }
@@ -2643,31 +2997,31 @@ window.SYNCED_DATA = {
       "total": 4
     },
     {
-      "id": "amzdoaeo7",
+      "id": "0x96ponie",
       "name": "Phase 5 – Extras",
       "todos": [
         {
-          "id": "k50s9grqa",
+          "id": "ldq1z7e1u",
           "title": "Statistiken & Berichte (Umsatz, Top-Gerichte, Stoßzeiten, Kategorien)",
           "done": true
         },
         {
-          "id": "86a7k7y9j",
+          "id": "kzdlystuo",
           "title": "Dienstplan (Wochenansicht, Schicht-CRUD, Stundenzähler)",
           "done": true
         },
         {
-          "id": "53oae9bjw",
+          "id": "333ft6wc3",
           "title": "Dark Mode (Toggle in Einstellungen, alle Seiten + Komponenten, Light als Standard)",
           "done": true
         },
         {
-          "id": "qg8pn9c8j",
+          "id": "1134be9es",
           "title": "Dashboard Auto-Sync + Erweiterung (Hook, Roadmap-Tab, Entscheidungen-Tab, DSGVO-Status)",
           "done": true
         },
         {
-          "id": "i295wx2ym",
+          "id": "3rma1lp1d",
           "title": "Mehrsprachigkeit (DE/EN)",
           "done": false
         }
@@ -2676,76 +3030,76 @@ window.SYNCED_DATA = {
       "total": 5
     },
     {
-      "id": "lushgvlxr",
+      "id": "yonwa8aj5",
       "name": "Phase 6 – Design-System Bestellseite (Marktanalyse 2026-04-06)",
       "todos": [
         {
-          "id": "r5i9e5059",
+          "id": "ecovhhjh9",
           "title": "Theme-JSON-Schema + TypeScript-Interface definieren",
           "done": true
         },
         {
-          "id": "qq4vyjpak",
+          "id": "yhfcph5am",
           "title": "6 Preset-Konstanten anlegen (`src/lib/themes.ts`: Modern, Eleganz, Trattoria, Fresh, Street, Rustikal)",
           "done": true
         },
         {
-          "id": "qyn4kdmab",
+          "id": "jcqx2rg5y",
           "title": "`useGastroTheme`-Hook: JSON → CSS Custom Properties auf document.documentElement",
           "done": true
         },
         {
-          "id": "1753va318",
+          "id": "i9dwin92t",
           "title": "Tailwind-Config: `gastro-*` Utilities auf `var(--t-*)` CSS-Variablen mappen",
           "done": true
         },
         {
-          "id": "x9objq8iv",
+          "id": "lnlf2ifpg",
           "title": "Bestellen-Seite + 3 Komponenten von inline-styles auf `gastro-*` Klassen umgebaut",
           "done": true
         },
         {
-          "id": "1r92mzyyj",
+          "id": "mtk9g3t2n",
           "title": "DB: `bild_url` auf `kategorien` + Kategorien-Endpoint öffentlich + KategorieKarte-Komponente",
           "done": true
         },
         {
-          "id": "j69n2dbux",
+          "id": "k8b9qiyaf",
           "title": "BestellenPro: Kategorie-First Flow (Kategorie-Kacheln → Gerichte-Grid)",
           "done": true
         },
         {
-          "id": "45qym1lfs",
+          "id": "eyexvexj5",
           "title": "DB: `theme_config JSONB` + `theme_premium_unlocked BOOLEAN` auf `restaurants`",
           "done": false
         },
         {
-          "id": "zr9ikt8of",
+          "id": "34ic83pfe",
           "title": "API: `/api/restaurant/:id/design` um `theme_config` erweitern",
           "done": false
         },
         {
-          "id": "j1sy06x33",
+          "id": "bvb9dj3jm",
           "title": "Einstellungen-Seite: Preset-Galerie mit Vorschau-Thumbnails",
           "done": false
         },
         {
-          "id": "yrc4uugp6",
+          "id": "1uyerafk0",
           "title": "Premium Custom-Builder UI (Farb-Picker, Font-Dropdown, Layout-Toggle, Live-Preview)",
           "done": false
         },
         {
-          "id": "l0ciipjgn",
+          "id": "shufiw5ih",
           "title": "Zahlungsintegration fuer 20 EUR einmalig (Mollie/Stripe) → `theme_premium_unlocked` setzen",
           "done": false
         },
         {
-          "id": "102g12hw4",
+          "id": "fcfmgn854",
           "title": "Paywall-UI: \"Design-Builder freischalten\" mit Vorschau",
           "done": false
         },
         {
-          "id": "xjeg8ulj7",
+          "id": "657tak4kh",
           "title": "Mobile-Vorschau im Builder + \"Zurueck zum Preset\" Reset",
           "done": false
         }
@@ -2754,61 +3108,61 @@ window.SYNCED_DATA = {
       "total": 14
     },
     {
-      "id": "6aadyphk7",
+      "id": "fily2cxo5",
       "name": "Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)",
       "todos": [
         {
-          "id": "jw8pgvagf",
+          "id": "4condewt4",
           "title": "Dienstplan fuer Mitarbeiter sichtbar machen (aktuell nur Admin — Kellner/Kueche muessen eigene Schichten sehen)",
           "done": false
         },
         {
-          "id": "pgcfeeddi",
+          "id": "k9zeplpl1",
           "title": "Drag & Drop Schichtplanung (Schichten per Ziehen verschieben/kopieren)",
           "done": false
         },
         {
-          "id": "5lrjdhxk9",
+          "id": "kekghtwzk",
           "title": "ArbZG-Compliance (11h Ruhezeit, Pausen 30min/6h + 45min/9h, Max 10h/Tag)",
           "done": false
         },
         {
-          "id": "3o1ie1l5z",
+          "id": "jnxri5tjs",
           "title": "Konflikterkennung mit Gelb/Rot-Warnungen (Doppelbuchung, Ruhezeitverstoss, Ueberstunden)",
           "done": false
         },
         {
-          "id": "hps6ph2lx",
+          "id": "yvmagpf9a",
           "title": "Mitarbeiter-Verfuegbarkeit (MA tragen ein wann sie koennen/nicht koennen)",
           "done": false
         },
         {
-          "id": "egy1qfhbb",
+          "id": "d9tob05xn",
           "title": "Schicht-Templates (wiederkehrende Wochen als Vorlage speichern + anwenden)",
           "done": false
         },
         {
-          "id": "x8d7kw1uj",
+          "id": "f4xw3izfb",
           "title": "Reservierungs-basierter Personalbedarf (Reservierungen → automatische Empfehlung Mitarbeiterzahl)",
           "done": false
         },
         {
-          "id": "u3tsy0xy3",
+          "id": "jqebygo91",
           "title": "Budget-Overlay (Personalkosten live waehrend der Planung anzeigen)",
           "done": false
         },
         {
-          "id": "i743rblvq",
+          "id": "7zjt2t5z4",
           "title": "Schichttausch 3-Tap-Flow (Anfrage → Claim → Genehmigung)",
           "done": false
         },
         {
-          "id": "ez9ye22hp",
+          "id": "8s9thjwx0",
           "title": "Push-Benachrichtigungen (neue Schicht, Aenderungen, Erinnerung vor Schichtbeginn)",
           "done": false
         },
         {
-          "id": "q0gwnbis1",
+          "id": "8m6c8jja5",
           "title": "Lesebestaetigung fuer veroeffentlichte Dienstplaene",
           "done": false
         }
@@ -2817,154 +3171,154 @@ window.SYNCED_DATA = {
       "total": 11
     },
     {
-      "id": "9q3iif2gn",
+      "id": "yzq0eyf7x",
       "name": "Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)",
       "todos": [
         {
-          "id": "wicn8vv96",
-          "title": "Zeitslot-System (Kapazitaet pro 15-Min-Slot konfigurierbar, Turn-Times pro Tischgroesse)",
-          "done": false
+          "id": "g97nbe9y3",
+          "title": "Zeitslot-System (15-Min-Slots on-the-fly aus Öffnungszeiten, Verweilzeit nach Gruppengröße)",
+          "done": true
         },
         {
-          "id": "mi8slox82",
-          "title": "Oeffentliche Buchungsseite fuer Gaeste (3-Schritt-Flow: Datum+Personen → Slot waehlen → Kontaktdaten)",
-          "done": false
+          "id": "o6mk1mi6p",
+          "title": "Öffentliche Buchungsseite für Gäste (3-Schritt-Flow: Datum+Personen → Slot wählen → Kontaktdaten)",
+          "done": true
         },
         {
-          "id": "d9ozay0zm",
-          "title": "E-Mail-Bestaetigung + Erinnerung (sofort + 24h + 2-3h vorher, automatisch)",
-          "done": false
+          "id": "8wvr0thkw",
+          "title": "E-Mail-Bestätigung + Erinnerung (sofort + 24h + 3h vorher via node-cron)",
+          "done": true
         },
         {
-          "id": "ufnyvxa6i",
-          "title": "Gast-Self-Service (Stornierung + Umbuchung per Link in der E-Mail, 1-Klick)",
-          "done": false
+          "id": "wbc160pc3",
+          "title": "Gast-Self-Service (Stornierung + Umbuchung per Buchungs-Token in der E-Mail)",
+          "done": true
         },
         {
-          "id": "nfzixgy2h",
-          "title": "Einbettbares Buchungswidget (JS-Snippet fuer Restaurant-Website, responsiv, Modal-Overlay)",
-          "done": false
+          "id": "3zv8g832x",
+          "title": "Einbettbares Buchungswidget (iframe-Snippet, kopierbar aus Einstellungen)",
+          "done": true
         },
         {
-          "id": "tvoul0va6",
-          "title": "Kapazitaetsmanagement (Max Covers pro Slot, Pufferzeiten zwischen Reservierungen)",
-          "done": false
+          "id": "16vn2dvgz",
+          "title": "Kapazitätsmanagement (Max Covers pro Slot, Pufferzeiten, Auto-Tischzuweisung)",
+          "done": true
         },
         {
-          "id": "atk7ims4d",
+          "id": "vyuy1ce3m",
           "title": "**Räumlicher Tischplan / Floor Plan Editor** (Priorität!)",
           "done": false
         },
         {
-          "id": "otjy9euw8",
+          "id": "myb8aes8j",
           "title": "Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen, Puffer, Zonen)",
           "done": false
         },
         {
-          "id": "y2nlis88u",
+          "id": "3ncxn49wu",
           "title": "Gaeste-CRM (Profile, Tags, Besuchshistorie, Allergien mit DSGVO-Einwilligung)",
           "done": false
         },
         {
-          "id": "x183h3etp",
+          "id": "rvuov3v8j",
           "title": "No-Show-Management (Kreditkartengarantie optional, No-Show-Tracking, Gaeste-Score)",
           "done": false
         },
         {
-          "id": "k5xs3gbq9",
+          "id": "7hlq2je1y",
           "title": "SMS/WhatsApp-Erinnerungen (95% Oeffnungsrate vs. 20-30% bei E-Mail)",
           "done": false
         },
         {
-          "id": "icchjdvf0",
+          "id": "q5rp4dxii",
           "title": "Google Reserve Integration (>50% aller Reservierungen in DE kommen ueber Google Maps)",
           "done": false
         },
         {
-          "id": "irlbz9ek2",
+          "id": "xpzqcsz17",
           "title": "Warteliste (Walk-in + Online, automatisches Nachruecken bei Stornierung, SMS-Benachrichtigung)",
           "done": false
         },
         {
-          "id": "rdg5jxqcr",
+          "id": "ajukhs181",
           "title": "Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung)",
           "done": false
         },
         {
-          "id": "p1x34kqng",
+          "id": "loep1w4bx",
           "title": "Reservierungs-basierte Personalplanung (Alleinstellungsmerkmal! Reservierungen → Personalbedarf)",
           "done": false
         },
         {
-          "id": "n3jm4wyoq",
+          "id": "v16j1negf",
           "title": "Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen)",
           "done": false
         },
         {
-          "id": "8qy2zq5vk",
+          "id": "0iwz4hpym",
           "title": "Erlebnis-Buchung (Menue + Tisch als Prepaid-Paket, eliminiert No-Shows)",
           "done": false
         }
       ],
-      "done": 0,
+      "done": 6,
       "total": 17
     },
     {
-      "id": "8y9ja8b5a",
+      "id": "5hgnm8p50",
       "name": "Auth-System Umbau ✅ (erledigt 2026-04-06)",
       "todos": [
         {
-          "id": "6pj7v6d28",
+          "id": "qcyulw5jp",
           "title": "Rate Limiting auf Login (5 Versuche / 15 Min)",
           "done": true
         },
         {
-          "id": "b8irkphgs",
+          "id": "z85jdjk9u",
           "title": "Passwort-Anforderungen (8+ Zeichen, 1 Großbuchstabe, 1 Zahl)",
           "done": true
         },
         {
-          "id": "163ftaai2",
+          "id": "9nh7x8ptw",
           "title": "Email- und Telefon-Formatvalidierung",
           "done": true
         },
         {
-          "id": "tvzjikzg1",
+          "id": "u1fs9417y",
           "title": "Restaurant-Code (auto-generiert bei Registrierung)",
           "done": true
         },
         {
-          "id": "2h2r5z6hq",
+          "id": "l6ktadd39",
           "title": "Registrierung als 3-Schritt-Wizard (Konto → Restaurant → Details)",
           "done": true
         },
         {
-          "id": "4xgkz8tkp",
+          "id": "nlw134fiy",
           "title": "Öffnungszeiten-Tabelle + automatische Tisch-Erstellung",
           "done": true
         },
         {
-          "id": "7crl7zjy5",
+          "id": "4k27fcoa5",
           "title": "Email-Verifizierung (Token + Bestätigungslink)",
           "done": true
         },
         {
-          "id": "7ol9brew9",
+          "id": "daiwuddqp",
           "title": "Mitarbeiter-Einladung per Email (MA setzt eigenes Passwort)",
           "done": true
         },
         {
-          "id": "8vxdhtajc",
+          "id": "8fyqke49o",
           "title": "Passwort-vergessen Flow (Reset-Link, 1h gültig)",
           "done": true
         },
         {
-          "id": "mbei2oygn",
+          "id": "kh8af4to2",
           "title": "Email-Service (Nodemailer)",
           "done": true
         },
         {
-          "id": "6bobb5wo1",
+          "id": "80sc1linz",
           "title": "DB-Migration (migration-auth.sql)",
           "done": true
         }
@@ -2973,87 +3327,102 @@ window.SYNCED_DATA = {
       "total": 11
     },
     {
-      "id": "tgp6bynyw",
+      "id": "chkpy0ywl",
       "name": "Nächstes Todo",
       "todos": [
         {
-          "id": "duivfiyaz",
-          "title": "🔴 Speisekarte-Bug fixen — Kategorien + Gerichte können nicht hinzugefügt werden (Frontend)",
-          "done": false
+          "id": "d1m5265ul",
+          "title": "🔴 Speisekarte-Auth-Bug fixen — GET-Routes fehlte `optionalAuth`, Mitarbeiter bekamen 400-Fehler",
+          "done": true
         },
         {
-          "id": "0oi4zif9h",
+          "id": "ivdxc3for",
+          "title": "🔴 Schema.sql synchronisieren — migration-auth.sql Änderungen in schema.sql eingebaut",
+          "done": true
+        },
+        {
+          "id": "e5seis360",
+          "title": "🟡 BestellenPro raw fetch — `fetch()` durch `api.post()` ersetzt",
+          "done": true
+        },
+        {
+          "id": "1c5krttnr",
           "title": "🔴 Phase 6 Theme-Umbau debuggen — Problem war fehlende npm install, Code war korrekt",
           "done": true
         },
         {
-          "id": "yxdxthm53",
+          "id": "xotcb3htf",
           "title": "Kategorie-First Bestellseite — Kacheln mit Hintergrundbild, 2-Schritt-Flow",
           "done": true
         },
         {
-          "id": "35vq1ov2n",
+          "id": "7qvy7yjfi",
           "title": "DB-Migration ausführen (`psql $DATABASE_URL -f database/migration-auth.sql`)",
           "done": true
         },
         {
-          "id": "npiguxuri",
+          "id": "6hmq3j5dh",
           "title": "SMTP-Daten in `.env` konfigurieren (Gmail)",
           "done": true
         },
         {
-          "id": "fbbg1hbgj",
+          "id": "m2zzdk5zm",
           "title": "Email-Verifizierung inline bei Registrierung (6-stelliger Code)",
           "done": true
         },
         {
-          "id": "im3hjsgkz",
+          "id": "m9wteucx0",
           "title": "SMS-Verifizierung inline bei Registrierung (6-stelliger Code, Dev: Konsole)",
           "done": true
         },
         {
-          "id": "1qxtdn65x",
+          "id": "m7fivi88j",
           "title": "Mitarbeiter-Seite im Frontend an Einladungssystem anpassen",
           "done": true
         }
       ],
-      "done": 7,
-      "total": 8
+      "done": 10,
+      "total": 10
     },
     {
-      "id": "kw9i106k2",
+      "id": "4i2oxqhms",
       "name": "Vor Release (Pflicht!)",
       "todos": [
         {
-          "id": "w1soflss4",
+          "id": "iy97bh0n9",
+          "title": "E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)",
+          "done": false
+        },
+        {
+          "id": "ay67ykwpv",
           "title": "SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus",
           "done": false
         },
         {
-          "id": "pqtt1bgjt",
+          "id": "6if984pe5",
           "title": "SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)",
           "done": false
         }
       ],
       "done": 0,
-      "total": 2
+      "total": 3
     },
     {
-      "id": "vrnwzpzvq",
+      "id": "z4jj8n804",
       "name": "Irgendwann",
       "todos": [
         {
-          "id": "fso85rz25",
+          "id": "ifzlpktq3",
           "title": "Mobile App (falls gewünscht)",
           "done": false
         },
         {
-          "id": "pgp3viiju",
+          "id": "1ogync26c",
           "title": "Kundenbewertungen",
           "done": false
         },
         {
-          "id": "od8qy28ww",
+          "id": "eq94rffp6",
           "title": "Wartezeit-Schätzung",
           "done": false
         }
@@ -3064,73 +3433,90 @@ window.SYNCED_DATA = {
   ],
   "decisions": [
     {
-      "id": "acccf356f",
+      "id": "9apsxoya6",
       "title": "Tech-Stack",
       "date": "2026-04-04",
       "content": "- Frontend: React + TypeScript + Tailwind CSS\n- Backend: Node.js + Express\n- Datenbank: PostgreSQL\n- Echtzeit: Socket.io (WebSockets)\n- Hosting: Hetzner Cloud Frankfurt (DSGVO-konform)\n- Auth: JWT + bcrypt\n- Zahlungen: Mollie (NL, DSGVO-freundlich)"
     },
     {
-      "id": "g1ixl0cla",
+      "id": "ms9ewui10",
       "title": "Geschäftsmodell",
       "date": "",
       "content": "- SaaS Abo: €49/Monat Einstieg, später €99-129 Premium\n- Zielmarkt: DACH (Deutschland, Österreich, Schweiz)\n- Multi-Tenant: jedes Restaurant bekommt eigene UUID + Lizenzcode"
     },
     {
-      "id": "2gzm5ho4v",
+      "id": "44n1gw3ok",
       "title": "Plattform",
       "date": "",
       "content": "- Umstieg von Bubble.io auf Custom Code\n- Grund: DSGVO (Bubble-Server in USA), Flexibilität, Kontrolle"
     },
     {
-      "id": "j2szwg47x",
+      "id": "y7gtj2z3i",
       "title": "Supabase entfernt (2026-04-05)",
       "date": "",
       "content": "- Frontend lief doppelt: teils über Express API, teils direkt über Supabase\n- Entscheidung: Alles über Express API — eine einzige, kontrollierte Backend-Schicht\n- Grund: Konsistenz, Sicherheit (Preise wurden vom Client geschickt), Multi-Tenancy zentral im Backend\n- Supabase Realtime ersetzt durch Socket.io (war bereits im Backend vorhanden)\n- DB-Visualisierung: TablePlus statt Supabase-Dashboard"
     },
     {
-      "id": "fops21dvc",
+      "id": "h0malmzqn",
       "title": "Multi-Tenancy Absicherung (2026-04-05)",
       "date": "",
       "content": "- Öffentliche Endpunkte (Bestellungen, Reservierungen) validieren jetzt restaurant_id\n- Bestellungen: Tisch muss zum Restaurant gehören (DB-Check)\n- Reservierungen: Restaurant muss existieren (DB-Check)"
     },
     {
-      "id": "wigaw95mv",
+      "id": "d2ccvqufm",
       "title": "Produktname: ServeFlow (2026-04-06)",
       "date": "",
       "content": "- App heißt ab jetzt **ServeFlow** (vorher \"Restaurant App\")\n- Eigenständiger Produktname statt DRVN Sub-Brand\n- Logo: Stilisierte Servierglocke mit Flow-Kurve, Blue→Cyan Gradient (DRVN-Farben)\n- Farbschema: Brand-Farben von Rot auf Blue (#3B82F6) / Cyan (#06B6D4) umgestellt\n- Grund: \"ServeFlow\" klingt professionell, international, kommuniziert Service + Effizienz\n- Alternativen waren: DRVN Gastro (Sub-Brand), Gastronaut, Mise\n- Geänderte Dateien: Logo-Komponente, Sidebar, Login, Registrierung, Einladung, Passwort-Reset, Tailwind-Config, index.html, package.json"
     },
     {
-      "id": "fi5x2cixe",
+      "id": "92a2etf1w",
       "title": "Dashboard Auto-Sync via Claude Code Hook (2026-04-06)",
       "date": "",
       "content": "- PostToolUse Hook in `.claude/settings.json`: Bei jedem Write/Edit wird `sync-dashboard.js` automatisch ausgeführt\n- Das Sync-Script liest alle Projektdateien (todos, schema, routes, entscheidungen, dsgvo) und generiert `dashboard-data.js`\n- Dashboard zeigt jetzt ALLES: Roadmap mit allen Phasen/Todos, Entscheidungen-Timeline, DSGVO-Status\n- SYNCED_DATA hat Priorität über DEFAULT_DATA — Dashboard ist immer aktuell\n- Grund: Vorher musste man manuell `node dashboard/sync-dashboard.js` ausführen → wurde oft vergessen"
+    },
+    {
+      "id": "c08c9h05q",
+      "title": "asyncHandler für Express 4 (2026-04-07)",
+      "date": "",
+      "content": "- Express 4 fängt keine Errors aus async Route-Handlern ab → Server crashte bei DB-Fehlern (z.B. duplicate key)\n- Lösung: `asyncHandler()` Wrapper in `middleware/errorHandler.ts` — ruft `.catch(next)` auf\n- Auf alle 30+ Route-Handler in 8 Route-Dateien angewendet\n- Error-Handler erkennt jetzt PostgreSQL-Fehlercodes: 23505 (unique → 409), 23503 (FK → 400)"
+    },
+    {
+      "id": "npex0aflb",
+      "title": "Reservierungssystem Pro — Architektur (2026-04-07)",
+      "date": "",
+      "content": "- Slots werden **on-the-fly berechnet** aus `oeffnungszeiten` + bestehenden Reservierungen (kein Slot-Table)\n- Tischzuweisung: **Auto-Assign** (kleinster passender Tisch), nicht manuell\n- Kapazitätsmodell: Summe Tischkapazitäten als Default, optionaler `max_gaeste_pro_slot` Override\n- Self-Service: **Buchungs-Token** (64 Hex-Zeichen) in URL statt Login — sicher + einfach für Gäste\n- Erinnerungen: **node-cron** im Express-Prozess (alle 15 Min), nicht separater Service\n- Widget: **iframe** auf `/buchen/:restaurantId` — kein separates Build nötig\n- DSGVO: Personenbezogene Daten (Name, Email, Telefon) werden 30 Tage nach Reservierungsdatum automatisch gelöscht (Cron täglich 3:00)"
     }
   ],
   "dsgvo": {
     "entries": [
       {
-        "id": "2mc2tbqqq",
+        "id": "w734hmkgn",
         "date": "2026-04-05",
         "title": "Restaurant-Registrierung"
       },
       {
-        "id": "9k5d3nr1o",
+        "id": "ockbviock",
         "date": "2026-04-05",
         "title": "Umfassender DSGVO-Check & Skill-Erstellung"
       },
       {
-        "id": "2ot4yl7dw",
+        "id": "uvxsv7to4",
+        "date": "2026-04-07",
+        "title": "Reservierungssystem Pro (Online-Buchung)"
+      },
+      {
+        "id": "g5znbcd9f",
         "date": "2026-04-05",
         "title": "Mitarbeiterverwaltung"
       },
       {
-        "id": "ex6cuonfo",
+        "id": "ylzfrjpp8",
         "date": "2026-04-04",
         "title": "Initiale Bewertung"
       }
     ],
-    "tomDone": 19,
-    "tomOpen": 14,
+    "tomDone": 28,
+    "tomOpen": 13,
     "tomPartial": 3,
     "openCritical": [
       "Datenschutzerklaerung erstellen und auf Webseite einbinden",
@@ -3138,11 +3524,9 @@ window.SYNCED_DATA = {
       "AV-Vertrag mit Supabase abschliessen (Serverstandort pruefen: EU?)",
       "AV-Vertrag mit Hetzner abschliessen",
       "HTTPS / TLS auf Produktionsserver konfigurieren",
-      "Automatische Loeschung: Reservierungsdaten nach 30 Tagen",
       "Hinweis im Anmerkungsfeld: \"Bitte keine Gesundheitsdaten ohne Einwilligung\""
     ],
     "openImportant": [
-      "Rate Limiting auf Login-Endpunkt (Brute-Force-Schutz)",
       "Sichere HTTP-Headers (helmet.js) einbinden",
       "Passwort-Hash bei Mitarbeiter-Deaktivierung auf NULL setzen",
       "Art. 15 Auskunftsrecht: Export-Funktion (JSON) implementieren",
@@ -3152,12 +3536,17 @@ window.SYNCED_DATA = {
   },
   "changelog": [
     {
-      "id": "8d5zbhwrn",
+      "id": "xd0oz6y0f",
+      "text": "Full app update: auth system, dashboard, theme engine, pro order page, and project docs",
+      "date": "2026-04-07"
+    },
+    {
+      "id": "z1m41bvq2",
       "text": "Add dashboard, sync skill, project docs, and restaurant-app codebase",
       "date": "2026-04-04"
     },
     {
-      "id": "fky1osdro",
+      "id": "khy4zfwud",
       "text": "Initial commit: Restaurant SaaS project",
       "date": "2026-04-04"
     }

@@ -154,11 +154,59 @@ export const THEME_PRESETS: Record<ThemePresetId, Theme> = {
     ecken: 'mittel',
     cardStil: 'border',
   },
+
+  // ── 7. Osteria ────────────────────────────────────────────────────────────────
+  // Dunkles Gold-auf-Schwarz Design. Elegante Pill-Navigation, kompakte Karten.
+  // Inspiration: Osteria Nobile HTML — warm-goldene Akzente, Serif-Headings,
+  // Tags für Diät-Infos. Fokus auf Übersichtlichkeit mit Single-Page-Flow.
+  osteria: {
+    id: 'osteria',
+    name: 'Osteria',
+    beschreibung: 'Goldene Akzente auf Schwarz — Italienisch, Fine Casual',
+    emoji: '🍷',
+    farben: {
+      hintergrund: '#0C0C0C',
+      oberflaeche: '#161616',
+      primaer: '#C9A84C',      // Warmes Gold
+      sekundaer: '#A8843A',    // Gedämpftes Gold
+      text: '#F5F0E8',         // Warmes Off-White
+      textGedaempft: '#9A9488',
+      border: '#252525',
+    },
+    fontHeading: 'Cormorant Garamond',
+    fontBody: 'Inter',
+    ecken: 'mittel',
+    cardStil: 'border',
+  },
+
+  // ── 8. Editorial ──────────────────────────────────────────────────────────
+  // Magazin-Stil mit cremefarbenem Hintergrund und Terracotta-Akzenten.
+  // Inspiration: Italienische Trattoria-Karte als Print-Editorial —
+  // nummerierte Kategorien, Serif-Headings, warme Erd-Töne.
+  editorial: {
+    id: 'editorial',
+    name: 'Editorial',
+    beschreibung: 'Magazin-Stil — Creme & Terracotta, nummeriert',
+    emoji: '📰',
+    farben: {
+      hintergrund: '#F7F3EE',
+      oberflaeche: '#FFFFFF',
+      primaer: '#C4622D',      // Terracotta
+      sekundaer: '#A34E22',    // Dunkleres Terracotta
+      text: '#1A1209',         // Tinten-Schwarz
+      textGedaempft: '#6B5F52', // Warmes Grau
+      border: '#E5E0D8',       // Cremiger Border
+    },
+    fontHeading: 'Playfair Display',
+    fontBody: 'DM Sans',
+    ecken: 'mittel',
+    cardStil: 'border',
+  },
 };
 
 /** Alle Preset-IDs als Array (für Iteration in der UI) */
 export const THEME_PRESET_IDS: ThemePresetId[] = [
-  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal',
+  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal', 'osteria', 'editorial',
 ];
 
 /** Standard-Theme wenn nichts konfiguriert ist */

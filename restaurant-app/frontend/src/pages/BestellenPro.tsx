@@ -1,55 +1,50 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import KategorieKarte from '../components/gaeste/KategorieKarte';
+import KategorieZeile from '../components/gaeste/KategorieZeile';
+import KategoriePills from '../components/gaeste/KategoriePills';
+import KategorieZeileEditorial from '../components/gaeste/KategorieZeileEditorial';
 import GerichtKartePro from '../components/gaeste/GerichtKartePro';
+import GerichtZeile from '../components/gaeste/GerichtZeile';
+import GerichtKarteOsteria from '../components/gaeste/GerichtKarteOsteria';
+import GerichtKarteEditorial from '../components/gaeste/GerichtKarteEditorial';
 import WarenkorbPro from '../components/gaeste/WarenkorbPro';
 import BestellStatusTracker from '../components/gaeste/BestellStatusTracker';
 import { useSpeisekarte } from '../hooks/useSpeisekarte';
 import { useGaesteSocket } from '../hooks/useGaesteSocket';
 import { useRestaurantDesign } from '../hooks/useRestaurantDesign';
 import { useGastroTheme } from '../hooks/useGastroTheme';
-import { WarenkorbPosition, BestellungStatus, ThemePresetId, KategorieMitAnzahl } from '../types';
-
-// ─── Theme-Auswahl (Demo) ──────────────────────────────────────────────────
-// In Produktion kommt die Theme-ID aus der DB (design?.theme_preset_id).
-// Für die Demo kann man das Theme oben auf der Seite wechseln.
-const DEMO_THEMES: { id: ThemePresetId; emoji: string; name: string }[] = [
-  { id: 'modern', emoji: '✨', name: 'Modern' },
-  { id: 'eleganz', emoji: '🥂', name: 'Eleganz' },
-  { id: 'trattoria', emoji: '🍝', name: 'Trattoria' },
-  { id: 'fresh', emoji: '🥗', name: 'Fresh' },
-  { id: 'street', emoji: '🍔', name: 'Street' },
-  { id: 'rustikal', emoji: '🍺', name: 'Rustikal' },
-];
+import { getLayout } from '../lib/layouts';
+import { WarenkorbPosition, BestellungStatus, KategorieMitAnzahl } from '../types';
+import { api } from '../lib/api';
 
 // ─── Seite ──────────────────────────────────────────────────────────────────
 //
-// Zwei-Schritt-Flow:
-//   Schritt 1: Kategorie-Übersicht → große Kacheln mit Hintergrundbildern
-//   Schritt 2: Gerichte einer Kategorie → Grid mit GerichtKartePro
+// Drei Layout-Modi:
+//   Grid (Modern):       Schritt 1: Kategorie-Kacheln → Schritt 2: Gerichte-Grid
+//   Liste (Elegant):     Schritt 1: Kategorie-Balken → Schritt 2: Gerichte-Zeilen
+//   Pills (Osteria):     Single-Page — Pill-Navigation oben, alle Gerichte gruppiert
+//   Editorial (Magazin): Schritt 1: Nummerierte Kategorie-Liste → Schritt 2: Dunkler Header + Gerichtkarten
 //
-// Datenfluss:
-//   URL-Params (restaurantId, tischId)
-//     → useSpeisekarte() lädt Gerichte + Kategorien
-//     → useRestaurantDesign() lädt Name/Logo
-//     → useGastroTheme() setzt CSS-Variablen
-//     → gewaehlteKategorie steuert welche Ansicht sichtbar ist
-//     → mengen-State trackt Auswahl des Gastes
-//     → POST /api/bestellungen sendet Bestellung
-//     → useGaesteSocket() empfängt Live-Updates
+// Das Layout wird aus der DB geladen:
+//   design?.layout_id → getLayout() → bestimmt Theme + Anzeige-Modus
 export default function BestellenPro() {
   const { restaurantId, tischId } = useParams<{ restaurantId: string; tischId: string }>();
   const { gerichte, kategorien, laden } = useSpeisekarte(restaurantId);
   const design = useRestaurantDesign(restaurantId);
 
-  // Theme-State für Demo-Switcher
-  const [themeId, setThemeId] = useState<ThemePresetId>('modern');
-  useGastroTheme(themeId);
+  // Layout aus DB laden → bestimmt Theme + Darstellung
+  const layout = getLayout(design?.layout_id);
+  useGastroTheme(layout.themeId);
 
-  // ── Navigation: welche Kategorie ist gewählt? ─────────────────────────────
-  // null = Kategorie-Übersicht (Schritt 1)
-  // KategorieMitAnzahl = Gerichte-Ansicht (Schritt 2)
+  const istPills = layout.kategorienAnzeige === 'pills';
+  const istEditorial = layout.kategorienAnzeige === 'editorial';
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  // Grid/Liste: gewaehlteKategorie = null → Übersicht, sonst → Detail
+  // Pills: pillFilter = null → "Alle", sonst → gefilterte Kategorie-ID
   const [gewaehlteKategorie, setGewaehlteKategorie] = useState<KategorieMitAnzahl | null>(null);
+  const [pillFilter, setPillFilter] = useState<string | null>(null);
 
   // Bestell-State
   const [mengen, setMengen] = useState<Record<string, number>>({});
@@ -93,21 +88,15 @@ export default function BestellenPro() {
     setFehler('');
     setSendenLaden(true);
     try {
-      const res = await fetch('/api/bestellungen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurant_id: restaurantId,
-          tisch_id: tischId,
-          anmerkung: anmerkung || null,
-          positionen: positionen.map((p) => ({
-            gericht_id: p.gericht.id,
-            menge: p.menge,
-          })),
-        }),
+      const data = await api.post<{ id: string; gesamtpreis: number }>('/bestellungen', {
+        restaurant_id: restaurantId,
+        tisch_id: tischId,
+        anmerkung: anmerkung || null,
+        positionen: positionen.map((p) => ({
+          gericht_id: p.gericht.id,
+          menge: p.menge,
+        })),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.fehler || 'Bestellung fehlgeschlagen');
 
       setBestellungId(data.id);
       setGespeicherterPreis(data.gesamtpreis);
@@ -125,14 +114,25 @@ export default function BestellenPro() {
     return <BestellStatusTracker status={bestellStatus} gesamtpreis={gespeicherterPreis} />;
   }
 
-  // Gerichte der gewählten Kategorie filtern
+  // Gerichte der gewählten Kategorie filtern (Grid/Liste Modus)
   const gerichteInKategorie = gewaehlteKategorie
     ? gerichte.filter((g) => g.kategorie_id === gewaehlteKategorie.id && g.verfuegbar)
     : [];
 
-  const restaurantName = design?.name || 'Restaurant';
+  // Gerichte gruppiert nach Kategorie (Pills Modus)
+  const gruppierteSektionen = useMemo(() => {
+    if (!istPills) return [];
+    const katList = kategorien as KategorieMitAnzahl[];
+    return katList
+      .filter((kat) => !pillFilter || kat.id === pillFilter)
+      .map((kat) => ({
+        kategorie: kat,
+        gerichte: gerichte.filter((g) => g.kategorie_id === kat.id && g.verfuegbar),
+      }))
+      .filter((s) => s.gerichte.length > 0);
+  }, [istPills, kategorien, gerichte, pillFilter]);
 
-  // Anzahl Artikel im Warenkorb (für Badge)
+  const restaurantName = design?.name || 'Restaurant';
   const anzahlImWarenkorb = positionen.reduce((s, p) => s + p.menge, 0);
 
   return (
@@ -140,102 +140,266 @@ export default function BestellenPro() {
 
       {/* ═══════════════════════════════════════════════════════════════════
           HERO-HEADER
-          Immer sichtbar — Restaurant-Name + Tisch-Badge.
-          Wenn in Kategorie-Detail: Zurück-Button statt Deko.
        ═══════════════════════════════════════════════════════════════════ */}
-      <header className="relative bg-gastro-surface overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gastro-primary/10 via-transparent to-gastro-secondary/10" />
-        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gastro-primary/5" />
-        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gastro-secondary/5" />
 
-        <div className="relative max-w-lg mx-auto px-5 pt-10 pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            {/* Zurück-Button wenn in Kategorie-Detail */}
-            {gewaehlteKategorie ? (
+      {/* ── Editorial: eigener Header-Stil ──────────────────────────────── */}
+      {istEditorial && !gewaehlteKategorie && (
+        <header className="bg-gastro">
+          <div className="max-w-lg mx-auto px-6 pt-8 pb-0">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="text-[10px] font-medium tracking-[2.5px] uppercase text-gastro-muted mb-2">
+                  Willkommen bei
+                </div>
+                <h1 className="text-[36px] font-black text-gastro-text font-theme-heading leading-[0.95] tracking-tight">
+                  {restaurantName}
+                </h1>
+              </div>
+              {tischId && (
+                <div className="bg-gastro-surface border border-gastro-border rounded-[20px] px-4 py-2 flex flex-col items-center gap-px">
+                  <span className="text-[9px] font-semibold tracking-[1.5px] uppercase text-gastro-muted">Tisch</span>
+                  <span className="text-[22px] font-bold text-gastro-text font-theme-heading leading-none">{tischId}</span>
+                </div>
+              )}
+            </div>
+            <div className="h-px bg-gastro-border mt-7" />
+          </div>
+        </header>
+      )}
+
+      {/* ── Editorial: Dunkler Kategorie-Header (wenn Kategorie gewählt) ── */}
+      {istEditorial && gewaehlteKategorie && (
+        <header className="bg-gastro-text relative overflow-hidden">
+          {/* Ghost-Text im Hintergrund */}
+          <div className="absolute right-[-8px] top-1/2 -translate-y-1/2 font-theme-heading text-[72px] font-black opacity-[0.07] whitespace-nowrap pointer-events-none tracking-tight text-gastro-surface">
+            {gewaehlteKategorie.name}
+          </div>
+
+          <div className="relative max-w-lg mx-auto px-6 py-5">
+            <div className="flex items-center gap-3 mb-3">
               <button
                 onClick={() => setGewaehlteKategorie(null)}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gastro-border/50 text-gastro-text hover:bg-gastro-border transition-colors"
+                className="bg-gastro-surface/10 border border-gastro-surface/15 rounded-[20px] px-3.5 py-1.5 text-xs text-gastro-surface/70 flex items-center gap-1.5 transition-colors hover:bg-gastro-surface/[0.18]"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
+                ← Zurück
               </button>
-            ) : (
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gastro-primary text-gastro-on-primary shadow-lg shadow-gastro-primary/25">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2" />
-                  <path d="M7 2v20" />
-                  <path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3" />
-                  <path d="M18 22v-7" />
-                </svg>
-              </div>
-            )}
-            <div>
-              <h1 className="text-xl font-bold text-gastro-text font-theme-heading leading-tight">
-                {restaurantName}
-              </h1>
-              <p className="text-xs text-gastro-muted mt-0.5">
-                {gewaehlteKategorie ? gewaehlteKategorie.name : 'Digitale Speisekarte'}
-              </p>
+              <span className="ml-auto text-xs italic text-gastro-primary font-theme-heading">
+                {String((kategorien as KategorieMitAnzahl[]).findIndex(k => k.id === gewaehlteKategorie.id) + 1).padStart(2, '0')} / {String(kategorien.length).padStart(2, '0')}
+              </span>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            {tischId && (
-              <span className="inline-flex items-center gap-1.5 bg-gastro-primary/10 text-gastro-primary text-xs font-semibold px-3 py-1.5 rounded-full">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18" />
-                </svg>
-                Tisch {tischId}
-              </span>
-            )}
-            {/* Warenkorb-Badge im Header wenn Artikel drin sind */}
-            {anzahlImWarenkorb > 0 && (
-              <span className="inline-flex items-center gap-1.5 bg-gastro-primary text-gastro-on-primary text-xs font-semibold px-3 py-1.5 rounded-full">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                </svg>
-                {anzahlImWarenkorb}
-              </span>
+            <h2 className="text-[32px] font-black text-gastro-surface font-theme-heading tracking-tight leading-none">
+              {gewaehlteKategorie.name}
+            </h2>
+            <p className="text-[13px] text-gastro-surface/50 mt-1.5 font-light leading-relaxed">
+              {gewaehlteKategorie.anzahl_gerichte} {gewaehlteKategorie.anzahl_gerichte === 1 ? 'Gericht' : 'Gerichte'} in dieser Kategorie
+            </p>
+          </div>
+        </header>
+      )}
+
+      {/* ── Standard-Header (Grid/Liste/Pills) ─────────────────────────── */}
+      {!istEditorial && (
+        <header className="relative bg-gastro-surface overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-gastro-primary/10 via-transparent to-gastro-secondary/10" />
+          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gastro-primary/5" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-gastro-secondary/5" />
+
+          <div className="relative max-w-lg mx-auto px-5 pt-10 pb-6">
+
+            {/* Pills-Layout: zentrierter Hero im Restaurant-Stil */}
+            {istPills ? (
+              <div className="text-center">
+                {/* "Jetzt geöffnet"-Badge */}
+                <div className="inline-flex items-center gap-1.5 bg-gastro-primary/10 border border-gastro-primary/30 text-gastro-primary text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  Jetzt geöffnet
+                </div>
+
+                <h1 className="text-[28px] font-normal text-gastro-text font-theme-heading leading-tight tracking-tight">
+                  {restaurantName}
+                </h1>
+                <p className="text-sm text-gastro-muted mt-1">Digitale Speisekarte</p>
+
+                {/* Gold-Trennlinie */}
+                <div className="w-10 h-px bg-gastro-primary/50 mx-auto my-4" />
+
+                {/* Tisch-Badge */}
+                {tischId && (
+                  <div className="inline-flex items-center gap-2 bg-gastro-border/50 border border-gastro-border text-gastro-muted text-xs px-4 py-2 rounded-lg">
+                    <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="5" width="12" height="8" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M5 5V4a3 3 0 016 0v1" stroke="currentColor" strokeWidth="1.3" />
+                    </svg>
+                    Tisch&nbsp;<span className="text-base font-bold text-gastro-primary">{tischId}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Grid/Liste-Layout: Standard-Hero mit Icon links */
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  {gewaehlteKategorie ? (
+                    <button
+                      onClick={() => setGewaehlteKategorie(null)}
+                      className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gastro-border/50 text-gastro-text hover:bg-gastro-border transition-colors"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gastro-primary text-gastro-on-primary shadow-lg shadow-gastro-primary/25">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2" />
+                        <path d="M7 2v20" />
+                        <path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3" />
+                        <path d="M18 22v-7" />
+                      </svg>
+                    </div>
+                  )}
+                  <div>
+                    <h1 className="text-xl font-bold text-gastro-text font-theme-heading leading-tight">
+                      {restaurantName}
+                    </h1>
+                    <p className="text-xs text-gastro-muted mt-0.5">
+                      {gewaehlteKategorie ? gewaehlteKategorie.name : 'Digitale Speisekarte'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {tischId && (
+                    <span className="inline-flex items-center gap-1.5 bg-gastro-primary/10 text-gastro-primary text-xs font-semibold px-3 py-1.5 rounded-full">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18" />
+                      </svg>
+                      Tisch {tischId}
+                    </span>
+                  )}
+                  {anzahlImWarenkorb > 0 && (
+                    <span className="inline-flex items-center gap-1.5 bg-gastro-primary text-gastro-on-primary text-xs font-semibold px-3 py-1.5 rounded-full">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                      </svg>
+                      {anzahlImWarenkorb}
+                    </span>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          DEMO: Theme-Switcher (in Produktion entfernen)
+          PILLS-LEISTE (nur Osteria-Layout)
+          Sticky horizontal scrollbar mit Kategorie-Buttons
        ═══════════════════════════════════════════════════════════════════ */}
-      <div className="bg-gastro-surface/80 backdrop-blur-sm border-b border-gastro-border">
-        <div className="max-w-lg mx-auto px-5 py-2.5">
-          <p className="text-[10px] text-gastro-muted uppercase tracking-wider font-medium mb-1.5">Design wechseln</p>
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-            {DEMO_THEMES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setThemeId(t.id)}
-                className={`shrink-0 text-xs px-3 py-1.5 rounded-full transition-all duration-200 font-medium ${
-                  themeId === t.id
-                    ? 'bg-gastro-primary text-gastro-on-primary shadow-sm'
-                    : 'bg-gastro-border/40 text-gastro-muted hover:bg-gastro-border/70'
-                }`}
-              >
-                {t.emoji} {t.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {istPills && !laden && (
+        <KategoriePills
+          kategorien={kategorien as KategorieMitAnzahl[]}
+          aktiveKategorieId={pillFilter}
+          onWaehlen={setPillFilter}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          MAIN CONTENT: Kategorie-Übersicht ODER Gerichte-Grid
+          MAIN CONTENT
        ═══════════════════════════════════════════════════════════════════ */}
       <main className="max-w-lg mx-auto px-4 py-5 pb-32">
 
+        {/* ═════════════════════════════════════════════════════════════
+            EDITORIAL-MODUS: 2-Schritt-Flow mit Magazin-Stil
+         ═════════════════════════════════════════════════════════════ */}
+
+        {/* ── EDITORIAL Schritt 1: Nummerierte Kategorie-Liste ──────── */}
+        {!laden && istEditorial && !gewaehlteKategorie && (
+          <>
+            <div className="mb-2">
+              <p className="text-[11px] font-medium tracking-[1px] uppercase text-gastro-muted py-5">
+                {kategorien.length} Kategorien — wähle dein Gericht
+              </p>
+            </div>
+
+            <div>
+              {(kategorien as KategorieMitAnzahl[]).map((kat, i) => (
+                <KategorieZeileEditorial
+                  key={kat.id}
+                  kategorie={kat}
+                  index={i}
+                  gesamt={kategorien.length}
+                  onClick={() => setGewaehlteKategorie(kat)}
+                />
+              ))}
+            </div>
+
+            {/* Footer mit Öffnungsinfo + Warenkorb-Button */}
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-gastro-border">
+              <div className="flex items-center gap-2 text-xs text-gastro-muted">
+                <div className="w-[7px] h-[7px] rounded-full bg-green-500" />
+                Küche geöffnet
+              </div>
+              {anzahlImWarenkorb > 0 && (
+                <div className="bg-gastro-text text-gastro rounded-[20px] px-5 py-2.5 text-[13px] font-semibold flex items-center gap-2">
+                  Warenkorb
+                  <span className="bg-gastro-primary text-gastro-on-primary rounded-[10px] px-[7px] py-px text-[11px] font-bold">
+                    {anzahlImWarenkorb}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {kategorien.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-4xl mb-3">🍽️</div>
+                <p className="text-gastro-muted text-sm">Die Speisekarte wird gerade aktualisiert.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── EDITORIAL Schritt 2: Gerichte in gewählter Kategorie ──── */}
+        {!laden && istEditorial && gewaehlteKategorie && (
+          <>
+            {/* Kategorie-Bild (wenn vorhanden) */}
+            {gewaehlteKategorie.bild_url && (
+              <div className="relative h-44 -mx-4 -mt-5 mb-5 overflow-hidden">
+                <img
+                  src={gewaehlteKategorie.bild_url}
+                  alt={gewaehlteKategorie.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gastro via-gastro/40 to-transparent" />
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2.5 pt-2">
+              {gerichteInKategorie.map((g, i) => (
+                <GerichtKarteEditorial
+                  key={g.id}
+                  gericht={g}
+                  index={i}
+                  menge={mengen[g.id] || 0}
+                  onAendern={(delta) => mengeAendern(g.id, delta)}
+                />
+              ))}
+            </div>
+
+            {gerichteInKategorie.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-4xl mb-3">🍽️</div>
+                <p className="text-gastro-muted text-sm">Aktuell keine Gerichte in dieser Kategorie verfügbar.</p>
+              </div>
+            )}
+          </>
+        )}
+
         {/* ── Ladeindikator ─────────────────────────────────────────── */}
-        {laden && (
+        {laden && layout.kategorienAnzeige === 'grid' && (
           <div className="grid grid-cols-2 gap-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="aspect-[4/5] bg-gastro-surface rounded-theme overflow-hidden">
@@ -244,12 +408,61 @@ export default function BestellenPro() {
             ))}
           </div>
         )}
+        {laden && (layout.kategorienAnzeige === 'liste' || layout.kategorienAnzeige === 'pills' || layout.kategorienAnzeige === 'editorial') && (
+          <div className="flex flex-col gap-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-[72px] bg-gastro-surface rounded-theme overflow-hidden">
+                <div className="w-full h-full bg-gastro-border/30 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ═════════════════════════════════════════════════════════════
+            PILLS-MODUS (Osteria): Single-Page mit Sektionen
+         ═════════════════════════════════════════════════════════════ */}
+        {!laden && istPills && (
+          <>
+            {gruppierteSektionen.map(({ kategorie, gerichte: sektionGerichte }) => (
+              <section key={kategorie.id} className="mb-6">
+                {/* Sektions-Überschrift */}
+                <div className="py-4 px-1">
+                  <h2 className="text-[11px] font-bold tracking-[1.2px] uppercase text-gastro-muted/60">
+                    {kategorie.name}
+                  </h2>
+                </div>
+
+                {/* Gerichte als Osteria-Karten */}
+                <div className="flex flex-col gap-[3px]">
+                  {sektionGerichte.map((g) => (
+                    <GerichtKarteOsteria
+                      key={g.id}
+                      gericht={g}
+                      menge={mengen[g.id] || 0}
+                      onAendern={(delta) => mengeAendern(g.id, delta)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {gruppierteSektionen.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-4xl mb-3">🍽️</div>
+                <p className="text-gastro-muted text-sm">
+                  {pillFilter ? 'Keine Gerichte in dieser Kategorie.' : 'Die Speisekarte wird gerade aktualisiert.'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ═════════════════════════════════════════════════════════════
+            GRID/LISTE-MODUS: 2-Schritt-Flow (wie bisher)
+         ═════════════════════════════════════════════════════════════ */}
 
         {/* ── SCHRITT 1: Kategorie-Übersicht ────────────────────────── */}
-        {/* Große Kacheln im 2-Spalten-Grid. Jede Kachel hat ein
-            Hintergrundbild (oder Gradient-Fallback) mit dem Kategorie-
-            namen darüber. Klick → zu Schritt 2. */}
-        {!laden && !gewaehlteKategorie && (
+        {!laden && !istPills && !istEditorial && !gewaehlteKategorie && (
           <>
             <div className="mb-4">
               <h2 className="text-lg font-bold text-gastro-text font-theme-heading">
@@ -260,18 +473,30 @@ export default function BestellenPro() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {(kategorien as KategorieMitAnzahl[]).map((kat, i) => (
-                <KategorieKarte
-                  key={kat.id}
-                  kategorie={kat}
-                  index={i}
-                  onClick={() => setGewaehlteKategorie(kat)}
-                />
-              ))}
-            </div>
+            {layout.kategorienAnzeige === 'grid' ? (
+              <div className="grid grid-cols-2 gap-3">
+                {(kategorien as KategorieMitAnzahl[]).map((kat, i) => (
+                  <KategorieKarte
+                    key={kat.id}
+                    kategorie={kat}
+                    index={i}
+                    onClick={() => setGewaehlteKategorie(kat)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {(kategorien as KategorieMitAnzahl[]).map((kat, i) => (
+                  <KategorieZeile
+                    key={kat.id}
+                    kategorie={kat}
+                    index={i}
+                    onClick={() => setGewaehlteKategorie(kat)}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Leere Speisekarte */}
             {kategorien.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-4xl mb-3">🍽️</div>
@@ -282,12 +507,8 @@ export default function BestellenPro() {
         )}
 
         {/* ── SCHRITT 2: Gerichte einer Kategorie ───────────────────── */}
-        {/* Wird angezeigt wenn eine Kategorie gewählt wurde.
-            Zeigt alle verfügbaren Gerichte als Grid.
-            Zurück-Button ist im Header. */}
-        {!laden && gewaehlteKategorie && (
+        {!laden && !istPills && !istEditorial && gewaehlteKategorie && (
           <>
-            {/* Kategorie-Header mit Bild */}
             {gewaehlteKategorie.bild_url && (
               <div className="relative h-40 -mx-4 -mt-5 mb-5 overflow-hidden">
                 <img
@@ -308,7 +529,6 @@ export default function BestellenPro() {
                   {gerichteInKategorie.length} {gerichteInKategorie.length === 1 ? 'Gericht' : 'Gerichte'}
                 </p>
               </div>
-              {/* Zurück-Link */}
               <button
                 onClick={() => setGewaehlteKategorie(null)}
                 className="text-sm text-gastro-primary font-medium hover:underline flex items-center gap-1"
@@ -320,19 +540,30 @@ export default function BestellenPro() {
               </button>
             </div>
 
-            {/* 2-Spalten Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {gerichteInKategorie.map((g) => (
-                <GerichtKartePro
-                  key={g.id}
-                  gericht={g}
-                  menge={mengen[g.id] || 0}
-                  onAendern={(delta) => mengeAendern(g.id, delta)}
-                />
-              ))}
-            </div>
+            {layout.gerichteAnzeige === 'grid' ? (
+              <div className="grid grid-cols-2 gap-3">
+                {gerichteInKategorie.map((g) => (
+                  <GerichtKartePro
+                    key={g.id}
+                    gericht={g}
+                    menge={mengen[g.id] || 0}
+                    onAendern={(delta) => mengeAendern(g.id, delta)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {gerichteInKategorie.map((g) => (
+                  <GerichtZeile
+                    key={g.id}
+                    gericht={g}
+                    menge={mengen[g.id] || 0}
+                    onAendern={(delta) => mengeAendern(g.id, delta)}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Keine Gerichte */}
             {gerichteInKategorie.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-4xl mb-3">🍽️</div>
@@ -364,8 +595,7 @@ export default function BestellenPro() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          WARENKORB (Floating Button + Sheet)
-          Immer sichtbar — egal ob in Kategorie-Übersicht oder Detail.
+          WARENKORB
        ═══════════════════════════════════════════════════════════════════ */}
       <WarenkorbPro
         positionen={positionen}

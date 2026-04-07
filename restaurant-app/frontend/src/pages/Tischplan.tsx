@@ -47,7 +47,7 @@ export default function Tischplan() {
   }
 
   function qrUrl(tisch: Tisch): string {
-    return tisch.qr_url || `${window.location.origin}/bestellen/${tisch.restaurant_id}/${tisch.id}`;
+    return tisch.qr_url || `${window.location.origin}/bestellen-pro/${tisch.restaurant_id}/${tisch.id}`;
   }
 
   async function linkKopieren(url: string) {

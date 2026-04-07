@@ -1,7 +1,7 @@
 # Projektstatus
 
 **Letzte Aktualisierung:** 2026-04-07
-**Aktuelle Phase:** Phase 6 Design-System in Arbeit — Theme-Hook + Tailwind + Komponenten-Umbau fertig
+**Aktuelle Phase:** Phase 8A Reservierungssystem abgeschlossen — Phase 8B (Floor Plan) als nächstes
 **Dashboard:** Auto-Sync Hook aktiv — Dashboard aktualisiert sich bei jeder Dateiänderung automatisch
 
 ---
@@ -81,14 +81,26 @@ Basierend auf Marktanalyse (2026-04-05, siehe `project/schichtplan-analyse.md`):
 - [ ] Schichttausch (3-Tap-Flow)
 - [ ] Push-Benachrichtigungen + Lesebestaetigung
 
-### Phase 8 – Reservierungssystem Pro (geplant)
+### Phase 8A – Reservierungssystem Pro Basis ✅ (erledigt 2026-04-07)
+- [x] DB-Migration (neue Felder auf reservierungen + restaurants)
+- [x] Verfügbarkeits-Logik (On-the-fly Slot-Berechnung, Verweilzeit nach Gruppengröße)
+- [x] Öffentliche Buchungs-API (6 Endpunkte, kein Auth nötig)
+- [x] Email-Templates (Bestätigung, Erinnerung, Stornierung, Umbuchung)
+- [x] Erinnerungs-Cron (node-cron, alle 15 Min, 24h + 3h vorher)
+- [x] Öffentliche Buchungsseite (3-Schritt-Flow: Datum → Slot → Kontakt)
+- [x] Gast-Self-Service (Stornieren + Umbuchen per Buchungs-Token)
+- [x] Admin-Verbesserungen (Quelle-Badge, Email-Anzeige, Kapazität)
+- [x] Buchungswidget (iframe-Snippet in Einstellungen)
+- Health Check: 50/50 bestanden ✅
+
+### Phase 8B – Reservierungssystem Pro (nächste Phase)
 Basierend auf Marktanalyse (2026-04-06, siehe `project/reservierungssystem-analyse.md`):
-- 8 Systeme verglichen: OpenTable, Resy, TheFork, Quandoo, resmio, DISH, Yelp, SevenRooms
-- resmio ist gefaehrlichster DACH-Wettbewerber (Flat-Fee, DSGVO, waechst stark)
-- Unser Vorteil: QR-Ordering + KDS + Bestellsystem — kein Wettbewerber hat das
-- **Phase A (Basis):** Zeitslots, Online-Buchung, E-Mail-Bestaetigung, Self-Service, Widget, Kapazitaet
-- **Phase B (Profi):** Floor Plan, Auto-Tischzuweisung, CRM, No-Show, SMS/WhatsApp, Google Reserve
-- **Phase C (Differenzierung):** Warteliste, Walk-in, Reservierungs-basierte Personalplanung, Bewertungen
+- [ ] Floor Plan Editor (visueller Tischplan, react-konva, Drag & Drop)
+- [ ] Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen)
+- [ ] Gäste-CRM (Profile, Tags, Besuchshistorie, Allergien)
+- [ ] No-Show-Management (Tracking, Score, optional Kreditkartengarantie)
+- [ ] SMS/WhatsApp-Erinnerungen
+- [ ] Google Reserve Integration
 
 ### Architektur-Bereinigung (2026-04-05)
 - [x] Supabase komplett entfernt — alle Frontend-Hooks/Seiten auf Express API migriert
@@ -120,9 +132,14 @@ Basierend auf Marktanalyse (2026-04-06, siehe `project/reservierungssystem-analy
 - [x] DB-Migration erstellt (migration-auth.sql)
 
 ## Nächster Schritt
-~~DB-Migration ausführen~~ ✅ erledigt 2026-04-06 → Mitarbeiter-Seite anpassen → Abonnement-Verwaltung (Mollie) → Hosting (Hetzner + Coolify).
+Phase 8B (Floor Plan Editor) oder Phase 6 (Design-System fertigstellen) oder Hosting (Hetzner + Coolify).
 
 ---
+
+### Bugfixes (2026-04-07)
+- [x] Speisekarte GET-Routes fehlte Auth → `optionalAuth` Middleware erstellt + eingebaut ✅
+- [x] `schema.sql` war veraltet (fehlten `restaurant_code`, `oeffnungszeiten`, Einladungsfelder, etc.) → mit migration-auth.sql zusammengeführt ✅
+- [x] BestellenPro.tsx nutzte direktes `fetch()` statt `api.post()` → auf zentralen API-Client umgestellt ✅
 
 ## Bekannte Probleme / Offene Fragen
 - ~~Node.js~~ ✅ installiert (2026-04-04)

@@ -29,7 +29,7 @@ export function useRestaurant() {
 
   useEffect(() => { laden_(); }, [laden_]);
 
-  const aktualisieren = useCallback(async (felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string }) => {
+  const aktualisieren = useCallback(async (felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string }) => {
     if (demo) return;
     const data = await api.put<Restaurant>('/restaurant', felder);
     setRestaurant((prev) => prev ? { ...prev, ...data } : prev);
@@ -50,6 +50,7 @@ const DEMO_RESTAURANT: Restaurant = {
   email: 'demo@restaurant.de',
   waehrung: 'EUR',
   primaerfarbe: '#ea580c',
+  layout_id: 'modern',
   lizenz_code: 'REST-DEMO',
   max_mitarbeiter: 5,
   abo_status: 'trial',

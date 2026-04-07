@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Topbar from '../components/layout/Topbar';
 import Modal from '../components/layout/Modal';
 import ReservierungZeile from '../components/reservierungen/ReservierungZeile';
@@ -33,6 +33,17 @@ export default function Reservierungen() {
   const { mitarbeiter } = useAuthStore();
   const [datum, setDatum] = useState(() => new Date());
   const [formularOffen, setFormularOffen] = useState(false);
+  const [linkKopiert, setLinkKopiert] = useState(false);
+
+  const buchungsLink = mitarbeiter
+    ? `${window.location.origin}/buchen/${mitarbeiter.restaurantId}`
+    : '';
+
+  const linkKopieren = useCallback(() => {
+    navigator.clipboard.writeText(buchungsLink);
+    setLinkKopiert(true);
+    setTimeout(() => setLinkKopiert(false), 2000);
+  }, [buchungsLink]);
 
   const datumStr = datumString(datum);
   const { reservierungen, laden, laden_, statusAendern } = useReservierungen(datumStr);
@@ -66,12 +77,21 @@ export default function Reservierungen() {
       <Topbar
         titel="Reservierungen"
         aktion={
-          <button
-            onClick={() => setFormularOffen(true)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-orange-700"
-          >
-            + Reservierung
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={linkKopieren}
+              className="border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              title="Online-Buchungslink kopieren"
+            >
+              {linkKopiert ? '✓ Kopiert!' : '🔗 Buchungslink'}
+            </button>
+            <button
+              onClick={() => setFormularOffen(true)}
+              className="bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-orange-700"
+            >
+              + Reservierung
+            </button>
+          </div>
         }
       />
 

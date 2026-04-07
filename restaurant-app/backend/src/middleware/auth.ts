@@ -11,6 +11,23 @@ export interface AuthRequest extends Request {
   auth?: AuthPayload;
 }
 
+/**
+ * optionalAuth: Liest den JWT aus dem Authorization-Header, WENN einer vorhanden ist.
+ * Blockiert aber NICHT, wenn kein Token da ist → req.auth bleibt dann undefined.
+ * Nützlich für Routen die sowohl öffentlich (Gäste) als auch authentifiziert (Mitarbeiter) funktionieren.
+ */
+export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunction): void {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    try {
+      req.auth = jwt.verify(header.slice(7), process.env.JWT_SECRET!) as AuthPayload;
+    } catch {
+      // Ungültiger Token → ignorieren, req.auth bleibt undefined
+    }
+  }
+  next();
+}
+
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {

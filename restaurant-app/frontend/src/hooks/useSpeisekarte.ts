@@ -72,13 +72,13 @@ export function useSpeisekarte(restaurantId?: string) {
 
   // ─── Kategorien ──────────────────────────────────────────────────────────────
 
-  const kategorieErstellen = useCallback(async (name: string) => {
+  const kategorieErstellen = useCallback(async (name: string, bild_url?: string | null) => {
     if (demo) {
-      const neue: Kategorie = { id: `k${Date.now()}`, restaurant_id: 'demo', name, reihenfolge: kategorien.length, bild_url: null };
+      const neue: Kategorie = { id: `k${Date.now()}`, restaurant_id: 'demo', name, reihenfolge: kategorien.length, bild_url: bild_url ?? null };
       setKategorien((prev) => [...prev, neue]);
       return;
     }
-    await api.post('/speisekarte/kategorien', { name, reihenfolge: kategorien.length });
+    await api.post('/speisekarte/kategorien', { name, reihenfolge: kategorien.length, bild_url: bild_url ?? null });
     await laden_();
   }, [demo, kategorien.length, laden_]);
 

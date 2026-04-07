@@ -24,6 +24,7 @@ export interface Restaurant {
   email: string | null;
   waehrung: string;
   primaerfarbe: string;
+  layout_id: string;
   lizenz_code: string | null;
   max_mitarbeiter: number;
   abo_status: 'trial' | 'active' | 'expired';
@@ -35,6 +36,7 @@ export interface RestaurantDesign {
   name: string;
   logo_url: string | null;
   primaerfarbe: string;
+  layout_id: string;
 }
 
 // ─── Tisch ────────────────────────────────────────────────────────────────────
@@ -105,7 +107,7 @@ export interface Bestellung {
 // ─── Reservierung ─────────────────────────────────────────────────────────────
 
 export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert';
-export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon';
+export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online';
 
 export interface Reservierung {
   id: string;
@@ -113,12 +115,54 @@ export interface Reservierung {
   tisch_id: string | null;
   gast_name: string;
   telefon: string | null;
+  email: string | null;
   datum: string;
   personen: number;
   status: ReservierungStatus;
   anmerkung: string | null;
   quelle: ReservierungQuelle;
+  buchungs_token: string | null;
+  dsgvo_einwilligung: boolean;
+  erinnerung_gesendet: Record<string, boolean>;
+  verweilzeit_min: number;
   erstellt_am: string;
+}
+
+// ─── Buchung (öffentliche Reservierung) ──────────────────────────────────────
+
+export interface BuchungInfo {
+  name: string;
+  logo_url: string | null;
+  primaerfarbe: string;
+  adresse: string;
+  telefon: string | null;
+  vorlauf_tage: number;
+  oeffnungszeiten: Oeffnungszeit[];
+}
+
+export interface Oeffnungszeit {
+  wochentag: number;  // 0=Montag, 6=Sonntag
+  von: string;        // "11:00:00"
+  bis: string;        // "22:00:00"
+  geschlossen: boolean;
+}
+
+export interface ZeitSlot {
+  zeit: string;        // "18:00"
+  verfuegbar: boolean;
+  restplaetze: number;
+}
+
+export interface BuchungSelfService {
+  id: string;
+  gast_name: string;
+  datum: string;
+  personen: number;
+  status: ReservierungStatus;
+  anmerkung: string | null;
+  restaurant_name: string;
+  restaurant_adresse: string | null;
+  restaurant_id: string;
 }
 
 // ─── Mitarbeiter (Verwaltung) ─────────────────────────────────────────────────
@@ -193,8 +237,8 @@ export interface Theme {
   cardStil: ThemeCardStil;
 }
 
-/** Theme-ID eines der 6 eingebauten Presets */
-export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal';
+/** Theme-ID eines der eingebauten Presets */
+export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal' | 'osteria' | 'editorial';
 
 // ─── Warenkorb (nur Frontend) ─────────────────────────────────────────────────
 

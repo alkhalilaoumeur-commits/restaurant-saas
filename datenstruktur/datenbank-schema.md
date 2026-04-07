@@ -24,6 +24,9 @@
 | restaurant_code | TEXT UNIQUE NOT NULL | Eindeutiger Restaurant-Code (z.B. REST-A7K39M2P), bei Registrierung generiert |
 | max_mitarbeiter | INTEGER | Lizenz: max. erlaubte Mitarbeiter |
 | abo_status | TEXT | active / expired / trial |
+| max_gaeste_pro_slot | INTEGER | Optional: Max Gäste pro Zeitslot (NULL = Summe Tischkapazitäten) |
+| reservierung_puffer_min | INTEGER | Pufferzeit in Minuten zwischen Reservierungen (Standard: 15) |
+| reservierung_vorlauf_tage | INTEGER | Wie viele Tage im Voraus online buchbar (Standard: 30) |
 | erstellt_am | TIMESTAMP | |
 
 ### oeffnungszeiten
@@ -94,14 +97,20 @@
 |---|---|---|
 | id | UUID (PK) | |
 | restaurant_id | UUID (FK → restaurants) | Multi-Tenant |
-| tisch_id | UUID (FK → tische) | Optional |
-| name | TEXT | Gastname |
-| telefon | TEXT | ⚠️ DSGVO: personenbezogen |
+| tisch_id | UUID (FK → tische) | Optional (Auto-Assign bei Online-Buchung) |
+| gast_name | TEXT | Gastname |
+| telefon | TEXT | ⚠️ DSGVO: personenbezogen, 30 Tage Löschfrist |
+| email | TEXT | ⚠️ DSGVO: personenbezogen, 30 Tage Löschfrist |
 | datum | TIMESTAMP | |
 | personen | INTEGER | |
 | status | TEXT | ausstehend / bestaetigt / storniert |
 | anmerkung | TEXT | |
-| quelle | TEXT | App / WhatsApp / Telefon |
+| quelle | TEXT | app / whatsapp / telefon / online |
+| buchungs_token | TEXT UNIQUE | Sicherer Token für Self-Service-Links (64 Hex-Zeichen) |
+| dsgvo_einwilligung | BOOLEAN | Einwilligungsflag (Pflicht bei Online-Buchung) |
+| erinnerung_gesendet | JSONB | Tracking gesendeter Erinnerungen (z.B. {"24h": true, "3h": true}) |
+| verweilzeit_min | INTEGER | Geschätzte Tischbelegung in Minuten (Standard: 90) |
+| erstellt_am | TIMESTAMP | |
 
 ### mitarbeiter
 | Feld | Typ | Beschreibung |

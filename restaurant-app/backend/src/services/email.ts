@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import QRCode from 'qrcode';
 
 // Transporter wird einmal erstellt und wiederverwendet.
 // In der Entwicklung: Falls keine SMTP-Daten konfiguriert → Emails werden nur in die Konsole geloggt.
@@ -147,6 +148,142 @@ export async function passwortResetSenden(email: string, token: string, name: st
         </p>
         <p style="color: #666; font-size: 14px;">Der Link ist 1 Stunde gültig.</p>
         <p style="color: #666; font-size: 14px;">Falls du das nicht warst, ignoriere diese E-Mail. Dein Passwort bleibt unverändert.</p>
+      </div>
+    `,
+  });
+}
+
+// ────────────────────────────────────────────────
+// Reservierungs-Emails
+// ────────────────────────────────────────────────
+
+/** Datum "2026-04-10T18:00:00" → "Freitag, 10. April 2026 um 18:00 Uhr" */
+function datumFormatiert(datum: string): string {
+  const d = new Date(datum);
+  const tag = d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const zeit = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  return `${tag} um ${zeit} Uhr`;
+}
+
+/** Reservierungs-Bestätigung — sofort nach Online-Buchung, mit QR-Code */
+export async function reservierungBestaetigungSenden(
+  email: string, gastName: string, restaurantName: string,
+  datum: string, personen: number, buchungsToken: string, adresse: string
+): Promise<void> {
+  const stornoLink = `${FRONTEND_URL}/reservierung/${buchungsToken}/stornieren`;
+  const umbuchLink = `${FRONTEND_URL}/reservierung/${buchungsToken}/aendern`;
+  const reservierungLink = `${FRONTEND_URL}/reservierung/${buchungsToken}`;
+
+  // QR-Code als Base64 Data-URL generieren — Gast zeigt ihn im Restaurant vor
+  let qrCodeDataUrl = '';
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(reservierungLink, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+  } catch (err) {
+    console.error('[QR-Code] Fehler bei Generierung:', err);
+  }
+
+  await senden({
+    an: email,
+    betreff: `Reservierung bestätigt – ${restaurantName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2>Hallo ${gastName},</h2>
+        <p>Ihre Reservierung bei <strong>${restaurantName}</strong> ist bestätigt!</p>
+        <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px;">📅 <strong>${datumFormatiert(datum)}</strong></p>
+          <p style="margin: 0 0 8px;">👥 <strong>${personen} ${personen === 1 ? 'Person' : 'Personen'}</strong></p>
+          ${adresse ? `<p style="margin: 0;">📍 ${adresse}</p>` : ''}
+        </div>
+        ${qrCodeDataUrl ? `
+        <div style="text-align: center; margin: 24px 0; padding: 20px; background: #f9fafb; border-radius: 12px;">
+          <img src="${qrCodeDataUrl}" alt="QR-Code Reservierung" style="width: 180px; height: 180px;" />
+          <p style="margin: 8px 0 0; font-size: 13px; color: #666;">Zeigen Sie diesen QR-Code bei Ihrer Ankunft im Restaurant vor.</p>
+        </div>
+        ` : ''}
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${umbuchLink}" style="background: #3B82F6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+            Reservierung ändern
+          </a>
+        </p>
+        <p style="text-align: center;">
+          <a href="${stornoLink}" style="color: #666; font-size: 14px;">Reservierung stornieren</a>
+        </p>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">Wir freuen uns auf Ihren Besuch!</p>
+      </div>
+    `,
+  });
+}
+
+/** Reservierungs-Erinnerung — 24h oder 3h vorher */
+export async function reservierungErinnerungSenden(
+  email: string, gastName: string, restaurantName: string,
+  datum: string, personen: number, buchungsToken: string, typ: '24h' | '3h'
+): Promise<void> {
+  const stornoLink = `${FRONTEND_URL}/reservierung/${buchungsToken}/stornieren`;
+  const zeitText = typ === '24h' ? 'morgen' : 'heute';
+  await senden({
+    an: email,
+    betreff: `Erinnerung: Ihre Reservierung ${zeitText} – ${restaurantName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2>Hallo ${gastName},</h2>
+        <p>Kurze Erinnerung an Ihre Reservierung ${zeitText} bei <strong>${restaurantName}</strong>:</p>
+        <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px;">📅 <strong>${datumFormatiert(datum)}</strong></p>
+          <p style="margin: 0;">👥 <strong>${personen} ${personen === 1 ? 'Person' : 'Personen'}</strong></p>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          Sie können nicht kommen? <a href="${stornoLink}" style="color: #3B82F6;">Hier stornieren</a>
+        </p>
+        <p style="color: #666; font-size: 14px;">Wir freuen uns auf Sie!</p>
+      </div>
+    `,
+  });
+}
+
+/** Stornierungsbestätigung */
+export async function reservierungStornierungSenden(
+  email: string, gastName: string, restaurantName: string, datum: string
+): Promise<void> {
+  await senden({
+    an: email,
+    betreff: `Reservierung storniert – ${restaurantName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2>Hallo ${gastName},</h2>
+        <p>Ihre Reservierung bei <strong>${restaurantName}</strong> am <strong>${datumFormatiert(datum)}</strong> wurde storniert.</p>
+        <p>Wir würden uns freuen, Sie ein anderes Mal begrüßen zu dürfen.</p>
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">Falls Sie erneut reservieren möchten, besuchen Sie gerne unsere Buchungsseite.</p>
+      </div>
+    `,
+  });
+}
+
+/** Umbuchungsbestätigung — neues Datum */
+export async function reservierungUmbuchungSenden(
+  email: string, gastName: string, restaurantName: string,
+  neuesDatum: string, personen: number, buchungsToken: string
+): Promise<void> {
+  const stornoLink = `${FRONTEND_URL}/reservierung/${buchungsToken}/stornieren`;
+  await senden({
+    an: email,
+    betreff: `Reservierung geändert – ${restaurantName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2>Hallo ${gastName},</h2>
+        <p>Ihre Reservierung bei <strong>${restaurantName}</strong> wurde auf den neuen Termin geändert:</p>
+        <div style="background: #f3f4f6; border-radius: 12px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px;">📅 <strong>${datumFormatiert(neuesDatum)}</strong></p>
+          <p style="margin: 0;">👥 <strong>${personen} ${personen === 1 ? 'Person' : 'Personen'}</strong></p>
+        </div>
+        <p style="text-align: center;">
+          <a href="${stornoLink}" style="color: #666; font-size: 14px;">Reservierung stornieren</a>
+        </p>
+        <p style="color: #666; font-size: 14px; margin-top: 20px;">Wir freuen uns auf Ihren Besuch!</p>
       </div>
     `,
   });

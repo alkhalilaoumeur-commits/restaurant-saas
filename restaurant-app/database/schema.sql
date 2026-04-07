@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS restaurants (
   email           TEXT,
   waehrung        TEXT NOT NULL DEFAULT 'EUR',
   primaerfarbe    TEXT NOT NULL DEFAULT '#ea580c',
+  layout_id       TEXT NOT NULL DEFAULT 'modern',
+  restaurant_code TEXT NOT NULL UNIQUE,
   lizenz_code     TEXT UNIQUE,
   max_mitarbeiter INTEGER NOT NULL DEFAULT 5,
   abo_status      TEXT NOT NULL DEFAULT 'trial'
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS kategorien (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
+  bild_url      TEXT,
   reihenfolge   INTEGER NOT NULL DEFAULT 0,
   erstellt_am   TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -128,9 +131,13 @@ CREATE TABLE IF NOT EXISTS mitarbeiter (
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
   email         TEXT NOT NULL UNIQUE,
-  passwort_hash TEXT NOT NULL,
+  passwort_hash TEXT,
   rolle         TEXT NOT NULL CHECK (rolle IN ('admin', 'kellner', 'kueche')),
   aktiv         BOOLEAN NOT NULL DEFAULT true,
+  einladung_token      TEXT UNIQUE,
+  einladung_gueltig_bis TIMESTAMP,
+  email_verifiziert    BOOLEAN NOT NULL DEFAULT false,
+  verifizierung_token  TEXT UNIQUE,
   erstellt_am   TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_mitarbeiter_restaurant ON mitarbeiter(restaurant_id);
@@ -151,3 +158,39 @@ CREATE TABLE IF NOT EXISTS schichten (
 CREATE INDEX IF NOT EXISTS idx_schichten_restaurant ON schichten(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_schichten_datum      ON schichten(datum);
 CREATE INDEX IF NOT EXISTS idx_schichten_mitarbeiter ON schichten(mitarbeiter_id);
+
+-- ─── Öffnungszeiten ─────────────────────────────────────────────────────────
+-- Pro Wochentag: von/bis Uhrzeit. wochentag 0=Montag, 6=Sonntag
+CREATE TABLE IF NOT EXISTS oeffnungszeiten (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  wochentag     INTEGER NOT NULL CHECK (wochentag BETWEEN 0 AND 6),
+  von           TIME NOT NULL,
+  bis           TIME NOT NULL,
+  geschlossen   BOOLEAN NOT NULL DEFAULT false,
+  UNIQUE (restaurant_id, wochentag)
+);
+CREATE INDEX IF NOT EXISTS idx_oeffnungszeiten_restaurant ON oeffnungszeiten(restaurant_id);
+
+-- ─── Passwort-vergessen Tokens ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS passwort_resets (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  mitarbeiter_id UUID NOT NULL REFERENCES mitarbeiter(id) ON DELETE CASCADE,
+  token         TEXT NOT NULL UNIQUE,
+  gueltig_bis   TIMESTAMP NOT NULL,
+  benutzt       BOOLEAN NOT NULL DEFAULT false,
+  erstellt_am   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_passwort_resets_token ON passwort_resets(token);
+CREATE INDEX IF NOT EXISTS idx_passwort_resets_mitarbeiter ON passwort_resets(mitarbeiter_id);
+
+-- ─── Login-Versuche (Rate Limiting) ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS login_versuche (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email         TEXT NOT NULL,
+  ip_adresse    TEXT,
+  erfolgreich   BOOLEAN NOT NULL DEFAULT false,
+  erstellt_am   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_login_versuche_email ON login_versuche(email);
+CREATE INDEX IF NOT EXISTS idx_login_versuche_zeit ON login_versuche(erstellt_am);

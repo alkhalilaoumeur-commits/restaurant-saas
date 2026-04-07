@@ -75,13 +75,13 @@
 
 ## Phase 8 – Reservierungssystem Pro (Marktanalyse 2026-04-06)
 
-### Phase A: Basis-Reservierung (Minimum Viable)
-- [ ] Zeitslot-System (Kapazitaet pro 15-Min-Slot konfigurierbar, Turn-Times pro Tischgroesse)
-- [ ] Oeffentliche Buchungsseite fuer Gaeste (3-Schritt-Flow: Datum+Personen → Slot waehlen → Kontaktdaten)
-- [ ] E-Mail-Bestaetigung + Erinnerung (sofort + 24h + 2-3h vorher, automatisch)
-- [ ] Gast-Self-Service (Stornierung + Umbuchung per Link in der E-Mail, 1-Klick)
-- [ ] Einbettbares Buchungswidget (JS-Snippet fuer Restaurant-Website, responsiv, Modal-Overlay)
-- [ ] Kapazitaetsmanagement (Max Covers pro Slot, Pufferzeiten zwischen Reservierungen)
+### Phase A: Basis-Reservierung (Minimum Viable) ✅ (erledigt 2026-04-07)
+- [x] Zeitslot-System (15-Min-Slots on-the-fly aus Öffnungszeiten, Verweilzeit nach Gruppengröße) ✅ erledigt 2026-04-07
+- [x] Öffentliche Buchungsseite für Gäste (3-Schritt-Flow: Datum+Personen → Slot wählen → Kontaktdaten) ✅ erledigt 2026-04-07
+- [x] E-Mail-Bestätigung + Erinnerung (sofort + 24h + 3h vorher via node-cron) ✅ erledigt 2026-04-07
+- [x] Gast-Self-Service (Stornierung + Umbuchung per Buchungs-Token in der E-Mail) ✅ erledigt 2026-04-07
+- [x] Einbettbares Buchungswidget (iframe-Snippet, kopierbar aus Einstellungen) ✅ erledigt 2026-04-07
+- [x] Kapazitätsmanagement (Max Covers pro Slot, Pufferzeiten, Auto-Tischzuweisung) ✅ erledigt 2026-04-07
 
 ### Phase B: Professionelles Reservierungssystem
 - [ ] **Räumlicher Tischplan / Floor Plan Editor** (Priorität!)
@@ -121,7 +121,9 @@
 - [x] DB-Migration (migration-auth.sql)
 
 ## Nächstes Todo
-- [ ] 🔴 Speisekarte-Bug fixen — Kategorien + Gerichte können nicht hinzugefügt werden (Frontend)
+- [x] 🔴 Speisekarte-Auth-Bug fixen — GET-Routes fehlte `optionalAuth`, Mitarbeiter bekamen 400-Fehler ✅ erledigt 2026-04-07
+- [x] 🔴 Schema.sql synchronisieren — migration-auth.sql Änderungen in schema.sql eingebaut ✅ erledigt 2026-04-07
+- [x] 🟡 BestellenPro raw fetch — `fetch()` durch `api.post()` ersetzt ✅ erledigt 2026-04-07
 - [x] 🔴 Phase 6 Theme-Umbau debuggen — Problem war fehlende npm install, Code war korrekt ✅ erledigt 2026-04-07
 - [x] Kategorie-First Bestellseite — Kacheln mit Hintergrundbild, 2-Schritt-Flow ✅ erledigt 2026-04-07
 - [x] DB-Migration ausführen (`psql $DATABASE_URL -f database/migration-auth.sql`) ✅ erledigt 2026-04-06
@@ -131,6 +133,7 @@
 - [x] Mitarbeiter-Seite im Frontend an Einladungssystem anpassen ✅ erledigt 2026-04-06
 
 ## Vor Release (Pflicht!)
+- [ ] E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
 - [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)
 

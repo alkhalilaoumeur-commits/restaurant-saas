@@ -46,3 +46,18 @@
 - Dashboard zeigt jetzt ALLES: Roadmap mit allen Phasen/Todos, Entscheidungen-Timeline, DSGVO-Status
 - SYNCED_DATA hat Priorität über DEFAULT_DATA — Dashboard ist immer aktuell
 - Grund: Vorher musste man manuell `node dashboard/sync-dashboard.js` ausführen → wurde oft vergessen
+
+## asyncHandler für Express 4 (2026-04-07)
+- Express 4 fängt keine Errors aus async Route-Handlern ab → Server crashte bei DB-Fehlern (z.B. duplicate key)
+- Lösung: `asyncHandler()` Wrapper in `middleware/errorHandler.ts` — ruft `.catch(next)` auf
+- Auf alle 30+ Route-Handler in 8 Route-Dateien angewendet
+- Error-Handler erkennt jetzt PostgreSQL-Fehlercodes: 23505 (unique → 409), 23503 (FK → 400)
+
+## Reservierungssystem Pro — Architektur (2026-04-07)
+- Slots werden **on-the-fly berechnet** aus `oeffnungszeiten` + bestehenden Reservierungen (kein Slot-Table)
+- Tischzuweisung: **Auto-Assign** (kleinster passender Tisch), nicht manuell
+- Kapazitätsmodell: Summe Tischkapazitäten als Default, optionaler `max_gaeste_pro_slot` Override
+- Self-Service: **Buchungs-Token** (64 Hex-Zeichen) in URL statt Login — sicher + einfach für Gäste
+- Erinnerungen: **node-cron** im Express-Prozess (alle 15 Min), nicht separater Service
+- Widget: **iframe** auf `/buchen/:restaurantId` — kein separates Build nötig
+- DSGVO: Personenbezogene Daten (Name, Email, Telefon) werden 30 Tage nach Reservierungsdatum automatisch gelöscht (Cron täglich 3:00)

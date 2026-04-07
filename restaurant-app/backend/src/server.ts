@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
@@ -15,21 +16,40 @@ import mitarbeiterRoutes from './routes/mitarbeiter';
 import restaurantRoutes from './routes/restaurant';
 import statistikenRoutes from './routes/statistiken';
 import dienstplanRoutes from './routes/dienstplan';
+import buchungRoutes from './routes/buchung';
+import uploadsRoutes from './routes/uploads';
 import { errorHandler } from './middleware/errorHandler';
+import { starteErinnerungen } from './services/erinnerungen';
 
 dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
 
+const socketOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(Boolean) as string[];
 export const io = new Server(httpServer, {
-  cors: { origin: process.env.FRONTEND_URL, methods: ['GET', 'POST'] },
+  cors: { origin: socketOrigins.length ? socketOrigins : '*', methods: ['GET', 'POST'] },
 });
 
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+// CORS: Im Development localhost erlauben, zusätzlich ngrok-Domain wenn gesetzt
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(Boolean) as string[];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Kein Origin (z.B. Server-zu-Server oder gleicher Origin) → erlauben
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Im Dev alles erlauben — in Produktion einschränken
+    }
+  },
+}));
 app.use(express.json());
 
+// Hochgeladene Bilder öffentlich bereitstellen unter /uploads/
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 app.use('/api/auth', authRoutes);
+app.use('/api/uploads', uploadsRoutes);
 app.use('/api/bestellungen', bestellungenRoutes);
 app.use('/api/speisekarte', speisekarteRoutes);
 app.use('/api/reservierungen', reservierungenRoutes);
@@ -38,12 +58,24 @@ app.use('/api/mitarbeiter', mitarbeiterRoutes);
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/statistiken', statistikenRoutes);
 app.use('/api/dienstplan', dienstplanRoutes);
+app.use('/api/buchung', buchungRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });
 });
 
 app.use(errorHandler);
+
+// ─── Frontend (Production Build) servieren ──────────────────────────────────
+// Wenn das Frontend gebaut wurde (npm run build im frontend/), werden die
+// statischen Dateien (HTML, JS, CSS) hier bereitgestellt.
+// Der Catch-All (*) sorgt dafür, dass React Router funktioniert —
+// egal welche URL der Nutzer aufruft, es wird immer index.html geladen.
+const frontendBuild = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendBuild));
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(frontendBuild, 'index.html'));
+});
 
 // Socket.io: Token optional dekodieren (Mitarbeiter haben Token, Gäste nicht)
 io.use((socket, next) => {
@@ -72,4 +104,7 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => console.log(`Server läuft auf http://localhost:${PORT}`));
+httpServer.listen(PORT, () => {
+  console.log(`Server läuft auf http://localhost:${PORT}`);
+  starteErinnerungen();
+});

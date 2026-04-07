@@ -14,6 +14,7 @@ export interface Restaurant {
   oeffnungszeiten: string | null;
   waehrung: string;
   primaerfarbe: string;
+  layout_id: string;
   lizenz_code: string | null;
   restaurant_code: string;
   max_mitarbeiter: number;
@@ -25,6 +26,7 @@ export interface RestaurantDesign {
   name: string;
   logo_url: string | null;
   primaerfarbe: string;
+  layout_id: string;
 }
 
 function genLizenzCode(): string {
@@ -51,14 +53,14 @@ export const RestaurantModel = {
 
   async designNachId(restaurantId: string): Promise<RestaurantDesign | null> {
     return q1<RestaurantDesign>(
-      'SELECT name, logo_url, primaerfarbe FROM restaurants WHERE id = $1',
+      'SELECT name, logo_url, primaerfarbe, layout_id FROM restaurants WHERE id = $1',
       [restaurantId],
     );
   },
 
   async aktualisieren(
     restaurantId: string,
-    felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string },
+    felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string },
   ): Promise<Restaurant | null> {
     const sets: string[] = [];
     const vals: unknown[] = [];
@@ -66,6 +68,7 @@ export const RestaurantModel = {
     if (felder.name !== undefined) { sets.push(`name = $${idx++}`); vals.push(felder.name); }
     if (felder.oeffnungszeiten !== undefined) { sets.push(`oeffnungszeiten = $${idx++}`); vals.push(felder.oeffnungszeiten); }
     if (felder.primaerfarbe !== undefined) { sets.push(`primaerfarbe = $${idx++}`); vals.push(felder.primaerfarbe); }
+    if (felder.layout_id !== undefined) { sets.push(`layout_id = $${idx++}`); vals.push(felder.layout_id); }
     if (sets.length === 0) return null;
     vals.push(restaurantId);
     return q1<Restaurant>(

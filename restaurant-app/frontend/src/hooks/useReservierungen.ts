@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
 import { Reservierung, ReservierungStatus } from '../types';
 import { useAuthStore } from '../store/auth';
+import { useSocket } from './useSocket';
 import { DEMO_RESERVIERUNGEN } from '../lib/demo-daten';
 
 export function useReservierungen(datum?: string) {
@@ -9,6 +10,7 @@ export function useReservierungen(datum?: string) {
   const [laden, setLaden] = useState(true);
   const [fehler, setFehler] = useState<string | null>(null);
   const demo = useAuthStore((s) => s.demo);
+  const socket = useSocket();
 
   const laden_ = useCallback(async () => {
     if (demo) {
@@ -28,6 +30,22 @@ export function useReservierungen(datum?: string) {
   }, [datum, demo]);
 
   useEffect(() => { laden_(); }, [laden_]);
+
+  // Socket.io Live-Updates — neue Reservierung oder Statusänderung → Liste neu laden
+  useEffect(() => {
+    if (demo || !socket) return;
+
+    const onNeu = () => { laden_(); };
+    const onAktualisiert = () => { laden_(); };
+
+    socket.on('neue_reservierung', onNeu);
+    socket.on('reservierung_aktualisiert', onAktualisiert);
+
+    return () => {
+      socket.off('neue_reservierung', onNeu);
+      socket.off('reservierung_aktualisiert', onAktualisiert);
+    };
+  }, [demo, socket, laden_]);
 
   const statusAendern = useCallback(async (id: string, status: ReservierungStatus) => {
     if (demo) {

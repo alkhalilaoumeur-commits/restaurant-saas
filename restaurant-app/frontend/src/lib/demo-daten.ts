@@ -110,8 +110,8 @@ export const DEMO_BESTELLUNGEN: Bestellung[] = [
 const heute = new Date().toISOString().slice(0, 10);
 
 export const DEMO_RESERVIERUNGEN: Reservierung[] = [
-  { id: 'r1', restaurant_id: 'demo', tisch_id: 't2', gast_name: 'Familie Müller', telefon: null, datum: `${heute}T18:30:00`, personen: 4, status: 'bestaetigt', anmerkung: 'Hochstuhl benötigt', quelle: 'telefon', erstellt_am: jetzt },
-  { id: 'r2', restaurant_id: 'demo', tisch_id: null, gast_name: 'Schmidt, Thomas', telefon: null, datum: `${heute}T19:00:00`, personen: 2, status: 'ausstehend', anmerkung: null, quelle: 'app', erstellt_am: jetzt },
-  { id: 'r3', restaurant_id: 'demo', tisch_id: 't4', gast_name: 'Geburtstagsfeier Weber', telefon: null, datum: `${heute}T20:00:00`, personen: 8, status: 'bestaetigt', anmerkung: 'Torte wird selbst mitgebracht', quelle: 'whatsapp', erstellt_am: vorher },
-  { id: 'r4', restaurant_id: 'demo', tisch_id: null, gast_name: 'Dr. Bauer', telefon: null, datum: `${heute}T19:30:00`, personen: 3, status: 'ausstehend', anmerkung: 'Vegetarisch', quelle: 'telefon', erstellt_am: frueher },
+  { id: 'r1', restaurant_id: 'demo', tisch_id: 't2', gast_name: 'Familie Müller', telefon: null, email: null, datum: `${heute}T18:30:00`, personen: 4, status: 'bestaetigt', anmerkung: 'Hochstuhl benötigt', quelle: 'telefon', buchungs_token: null, dsgvo_einwilligung: false, erinnerung_gesendet: {}, verweilzeit_min: 90, erstellt_am: jetzt },
+  { id: 'r2', restaurant_id: 'demo', tisch_id: null, gast_name: 'Schmidt, Thomas', telefon: null, email: null, datum: `${heute}T19:00:00`, personen: 2, status: 'ausstehend', anmerkung: null, quelle: 'app', buchungs_token: null, dsgvo_einwilligung: false, erinnerung_gesendet: {}, verweilzeit_min: 75, erstellt_am: jetzt },
+  { id: 'r3', restaurant_id: 'demo', tisch_id: 't4', gast_name: 'Geburtstagsfeier Weber', telefon: null, email: 'weber@test.de', datum: `${heute}T20:00:00`, personen: 8, status: 'bestaetigt', anmerkung: 'Torte wird selbst mitgebracht', quelle: 'online', buchungs_token: 'demo-token', dsgvo_einwilligung: true, erinnerung_gesendet: {}, verweilzeit_min: 120, erstellt_am: vorher },
+  { id: 'r4', restaurant_id: 'demo', tisch_id: null, gast_name: 'Dr. Bauer', telefon: null, email: null, datum: `${heute}T19:30:00`, personen: 3, status: 'ausstehend', anmerkung: 'Vegetarisch', quelle: 'telefon', buchungs_token: null, dsgvo_einwilligung: false, erinnerung_gesendet: {}, verweilzeit_min: 90, erstellt_am: frueher },
 ];

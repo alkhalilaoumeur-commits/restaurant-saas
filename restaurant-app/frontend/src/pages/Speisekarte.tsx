@@ -90,6 +90,7 @@ export default function Speisekarte() {
           gerichteProKategorie={gerichteProKategorie}
           onErstellen={kategorieErstellen}
           onUmbenennen={(id, name) => kategorieAktualisieren(id, { name })}
+          onBildAktualisieren={(id, bild_url) => kategorieAktualisieren(id, { bild_url })}
           onLoeschen={kategorieLoeschen}
         />
       </Modal>

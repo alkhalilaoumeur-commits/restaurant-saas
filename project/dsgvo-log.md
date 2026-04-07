@@ -70,7 +70,7 @@ Vollstaendiges Verarbeitungsverzeichnis: siehe `project/dsgvo-datenkatalog.md`
 | HTTPS / TLS | ⬜ Offen (Hetzner-Setup) |
 | Rate Limiting (Login) | ⬜ Offen |
 | Sichere HTTP-Headers (helmet.js) | ⬜ Offen |
-| Automatische Datenloeschung (Cron) | ⬜ Offen |
+| Automatische Datenloeschung (Cron) | ✅ Umgesetzt (node-cron, täglich 3:00, 30 Tage) |
 | Datenschutzerklaerung | ⬜ Offen |
 | Impressum | ⬜ Offen |
 | AV-Vertrag Supabase | ⬜ Offen |
@@ -86,6 +86,32 @@ Vollstaendiges Verarbeitungsverzeichnis: siehe `project/dsgvo-datenkatalog.md`
 | Art. 17 Loeschrecht | ⬜ Loeschfunktion fehlt |
 | Art. 18 Einschraenkung | ⚠️ Teilweise (Mitarbeiter deaktivieren) |
 | Art. 20 Datenuebertragbarkeit | ⬜ JSON-Export fehlt |
+
+---
+
+## 2026-04-07 – Reservierungssystem Pro (Online-Buchung)
+
+### Was wurde gemacht
+- Öffentliche Buchungsseite (`/buchen/:restaurantId`) für Gäste
+- Neues Feld `email` in `reservierungen` (personenbezogen, DSGVO-relevant)
+- Neues Feld `buchungs_token` für Self-Service-Links
+- Neues Feld `dsgvo_einwilligung` (Pflicht-Checkbox bei Online-Buchung)
+- E-Mail-Bestätigung, Erinnerungen (24h + 3h), Storno-/Umbuchungs-Emails
+- DSGVO-Cleanup: Automatische Löschung personenbezogener Daten 30 Tage nach Reservierungsdatum
+
+### DSGVO-Bewertung
+- ✅ DSGVO-Einwilligung ist Pflichtfeld bei Online-Buchungen (Checkbox)
+- ✅ Gäste werden über 30-Tage-Löschfrist informiert (im Checkbox-Text)
+- ✅ Automatische Löschung via node-cron (täglich 3:00): gast_name → "gelöscht", email → NULL, telefon → NULL
+- ✅ Self-Service: Gäste können ohne Login stornieren/umbuchen (per Token)
+- ✅ E-Mail-Versand ist fire-and-forget (keine Speicherung des Email-Inhalts)
+- ✅ Buchungs-Token ist kryptographisch sicher (32 Bytes = 64 Hex-Zeichen)
+
+### Neue personenbezogene Felder
+| Tabelle | Feld | Beschreibung | Löschfrist |
+|---|---|---|---|
+| `reservierungen` | `email` | Gast-Email für Bestätigungen/Erinnerungen | 30 Tage nach Reservierungsdatum |
+| `reservierungen` | `dsgvo_einwilligung` | Einwilligungsflag | Mit Reservierung |
 
 ---
 
@@ -130,11 +156,11 @@ Vollstaendiges Verarbeitungsverzeichnis: siehe `project/dsgvo-datenkatalog.md`
 - [ ] AV-Vertrag mit Supabase abschliessen (Serverstandort pruefen: EU?)
 - [ ] AV-Vertrag mit Hetzner abschliessen
 - [ ] HTTPS / TLS auf Produktionsserver konfigurieren
-- [ ] Automatische Loeschung: Reservierungsdaten nach 30 Tagen
+- [x] Automatische Löschung: Reservierungsdaten nach 30 Tagen ✅ erledigt 2026-04-07 (node-cron in erinnerungen.ts)
 - [ ] Hinweis im Anmerkungsfeld: "Bitte keine Gesundheitsdaten ohne Einwilligung"
 
 ### Wichtig (zeitnah)
-- [ ] Rate Limiting auf Login-Endpunkt (Brute-Force-Schutz)
+- [x] Rate Limiting auf Login-Endpunkt (Brute-Force-Schutz) ✅ erledigt 2026-04-06
 - [ ] Sichere HTTP-Headers (helmet.js) einbinden
 - [ ] Passwort-Hash bei Mitarbeiter-Deaktivierung auf NULL setzen
 - [ ] Art. 15 Auskunftsrecht: Export-Funktion (JSON) implementieren

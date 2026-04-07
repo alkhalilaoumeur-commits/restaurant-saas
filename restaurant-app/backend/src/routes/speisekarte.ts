@@ -2,13 +2,13 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { GerichtModel } from '../models/Gericht';
 import { q1 } from '../models/db';
-import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
+import { requireAuth, optionalAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
 // GET /api/speisekarte  (öffentlich – Gäste + Mitarbeiter)
-router.get('/', asyncHandler(async (req: Request, res: Response) => {
+router.get('/', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
   const restaurantId = (req as AuthRequest).auth?.restaurantId || req.query.restaurantId as string;
   if (!restaurantId) { res.status(400).json({ fehler: 'restaurantId erforderlich' }); return; }
   const gerichte = await GerichtModel.alle(restaurantId);
@@ -18,7 +18,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 // GET /api/speisekarte/kategorien  (öffentlich mit restaurantId ODER auth)
 // Gäste: ?restaurantId=xxx → Kategorien mit Gerichteanzahl (nur Kategorien mit verfügbaren Gerichten)
 // Mitarbeiter: Auth → alle Kategorien (auch leere)
-router.get('/kategorien', asyncHandler(async (req: Request, res: Response) => {
+router.get('/kategorien', optionalAuth, asyncHandler(async (req: Request, res: Response) => {
   const restaurantId = (req as AuthRequest).auth?.restaurantId || req.query.restaurantId as string;
   if (!restaurantId) { res.status(400).json({ fehler: 'restaurantId erforderlich' }); return; }
 

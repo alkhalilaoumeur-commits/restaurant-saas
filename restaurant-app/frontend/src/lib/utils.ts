@@ -1,4 +1,4 @@
-import { BestellungStatus, TischStatus, ReservierungStatus } from '../types';
+import { BestellungStatus, TischStatus, ReservierungStatus, ReservierungQuelle } from '../types';
 
 // ─── Formatierung ─────────────────────────────────────────────────────────────
 
@@ -57,6 +57,20 @@ export const RESERVIERUNG_STATUS_FARBE: Record<ReservierungStatus, string> = {
   ausstehend: 'bg-yellow-100 text-yellow-700',
   bestaetigt: 'bg-green-100 text-green-700',
   storniert:  'bg-gray-100 text-gray-500',
+};
+
+export const RESERVIERUNG_QUELLE_LABEL: Record<ReservierungQuelle, string> = {
+  app:      'Manuell',
+  whatsapp: 'WhatsApp',
+  telefon:  'Telefon',
+  online:   'Online',
+};
+
+export const RESERVIERUNG_QUELLE_FARBE: Record<ReservierungQuelle, string> = {
+  app:      'bg-gray-100 text-gray-600',
+  whatsapp: 'bg-green-100 text-green-700',
+  telefon:  'bg-blue-100 text-blue-700',
+  online:   'bg-purple-100 text-purple-700',
 };
 
 // ─── Nächster Bestellstatus ───────────────────────────────────────────────────

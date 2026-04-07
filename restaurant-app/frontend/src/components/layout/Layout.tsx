@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import ReservierungToast from './ReservierungToast';
 
 export default function Layout() {
   const [sidebarOffen, setSidebarOffen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#f8f8fa] dark:bg-[#0A0F1A] overflow-hidden">
+      {/* Toast-Benachrichtigungen für neue Online-Reservierungen */}
+      <ReservierungToast />
+
       {/* Desktop: Sidebar immer sichtbar */}
       <div className="hidden lg:flex">
         <Sidebar />

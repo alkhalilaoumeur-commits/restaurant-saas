@@ -51,4 +51,22 @@ export const api = {
   put:    <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT',    body: JSON.stringify(body) }),
   patch:  <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH',  body: JSON.stringify(body) }),
   delete: <T>(path: string)               => request<T>(path, { method: 'DELETE' }),
+
+  /** Datei hochladen — nutzt FormData statt JSON */
+  upload: async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append('bild', file);
+    const token = getToken();
+    const res = await fetch(`${BASE}/uploads`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(body.fehler || `Upload fehlgeschlagen (HTTP ${res.status})`, body);
+    }
+    const data = await res.json();
+    return data.url; // z.B. "/uploads/abc123.jpg"
+  },
 };
