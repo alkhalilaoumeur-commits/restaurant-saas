@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { BestellungModel, BestellungStatus } from '../models/Bestellung';
-import { pool, q } from '../models/db';
+import { pool, q, q1 } from '../models/db';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
+import { asyncHandler } from '../middleware/errorHandler';
 import { io } from '../server';
 
 const router = Router();
@@ -10,16 +11,23 @@ const router = Router();
 const ERLAUBTE_STATUS: BestellungStatus[] = ['offen', 'in_zubereitung', 'serviert', 'bezahlt'];
 
 // GET /api/bestellungen  (Mitarbeiter)
-router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
   const bestellungen = await BestellungModel.alleAktiven(req.auth!.restaurantId);
   res.json(bestellungen);
-});
+}));
 
 // POST /api/bestellungen  (Gäste – kein Auth)
-router.post('/', async (req: Request, res: Response): Promise<void> => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const { restaurant_id, tisch_id, positionen, anmerkung } = req.body;
   if (!restaurant_id || !tisch_id || !positionen?.length) {
     res.status(400).json({ fehler: 'restaurant_id, tisch_id und positionen sind erforderlich' });
+    return;
+  }
+
+  // Prüfen: Gehört der Tisch wirklich zu diesem Restaurant?
+  const tisch = await q1('SELECT id FROM tische WHERE id = $1 AND restaurant_id = $2', [tisch_id, restaurant_id]);
+  if (!tisch) {
+    res.status(404).json({ fehler: 'Tisch nicht gefunden' });
     return;
   }
 
@@ -72,11 +80,11 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   io.to(`restaurant:${restaurant_id}`).emit('neue_bestellung', { bestellungId, tisch_id });
 
   res.status(201).json({ id: bestellungId, gesamtpreis });
-});
+}));
 
 // PATCH /api/bestellungen/:id/status  (Mitarbeiter)
 router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner', 'kueche'),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status } = req.body;
     if (!ERLAUBTE_STATUS.includes(status)) {
       res.status(400).json({ fehler: `Ungültiger Status. Erlaubt: ${ERLAUBTE_STATUS.join(', ')}` });
@@ -86,8 +94,12 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner', 'kuech
     if (!bestellung) { res.status(404).json({ fehler: 'Bestellung nicht gefunden' }); return; }
 
     io.to(`restaurant:${req.auth!.restaurantId}`).emit('bestellung_aktualisiert', bestellung);
+    // Auch an den Tisch-Raum senden, damit Gäste den Status sehen
+    if (bestellung.tisch_id) {
+      io.to(`tisch:${req.auth!.restaurantId}:${bestellung.tisch_id}`).emit('bestellung_aktualisiert', bestellung);
+    }
     res.json(bestellung);
-  }
+  })
 );
 
 export default router;

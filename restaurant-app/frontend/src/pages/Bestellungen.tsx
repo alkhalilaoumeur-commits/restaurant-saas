@@ -6,14 +6,14 @@ export default function Bestellungen() {
   const { bestellungen, laden, fehler, statusAendern } = useBestellungen();
 
   return (
-    <div>
+    <div className="animate-fade-in-up">
       <Topbar titel="Bestellungen" />
 
-      {laden && <p className="text-sm text-gray-400">Wird geladen...</p>}
+      {laden && <p className="text-sm text-gray-400 dark:text-slate-500">Wird geladen...</p>}
       {fehler && <p className="text-sm text-red-500">{fehler}</p>}
 
       {!laden && bestellungen.length === 0 && (
-        <p className="text-sm text-gray-400">Keine aktiven Bestellungen.</p>
+        <p className="text-sm text-gray-400 dark:text-slate-500">Keine aktiven Bestellungen.</p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

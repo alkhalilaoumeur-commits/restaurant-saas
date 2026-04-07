@@ -1,54 +1,262 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth';
+import { Rolle } from '../../types';
+import ServeFlowLogo from '../brand/ServeFlowLogo';
 
-const NAV = [
-  { to: '/dashboard',     label: 'Dashboard',      rollen: ['admin', 'kellner', 'kueche'] },
-  { to: '/bestellungen',  label: 'Bestellungen',   rollen: ['admin', 'kellner', 'kueche'] },
-  { to: '/tischplan',     label: 'Tischplan',      rollen: ['admin', 'kellner'] },
-  { to: '/reservierungen',label: 'Reservierungen', rollen: ['admin', 'kellner'] },
-  { to: '/speisekarte',   label: 'Speisekarte',    rollen: ['admin'] },
-  { to: '/statistiken',   label: 'Statistiken',    rollen: ['admin'] },
-] as const;
+// ─── Icon-Komponenten (inline SVG) ──────────────────────────────────────────
 
-export default function Sidebar() {
-  const { mitarbeiter, logout } = useAuthStore();
-
-  const sichtbar = NAV.filter((item) =>
-    mitarbeiter ? item.rollen.includes(mitarbeiter.rolle as never) : false
+function IconDashboard({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="4" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="11" width="7" height="10" rx="1" />
+    </svg>
   );
+}
+
+function IconBestellungen({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8Z" />
+      <path d="M15 3v4a2 2 0 002 2h4" />
+      <path d="M8 13h8" />
+      <path d="M8 17h5" />
+    </svg>
+  );
+}
+
+function IconTischplan({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="7" width="20" height="4" rx="1" />
+      <path d="M4 11v6" />
+      <path d="M20 11v6" />
+      <path d="M12 7V4" />
+    </svg>
+  );
+}
+
+function IconReservierungen({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4" />
+      <path d="M8 2v4" />
+      <path d="M3 10h18" />
+      <path d="M8 14h.01" />
+      <path d="M12 14h.01" />
+      <path d="M16 14h.01" />
+      <path d="M8 18h.01" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
+function IconDienstplan({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4" />
+      <path d="M8 2v4" />
+      <path d="M3 10h18" />
+      <path d="M7 14h2v2H7z" />
+      <path d="M11 14h2v2h-2z" />
+      <path d="M15 14h2v2h-2z" />
+    </svg>
+  );
+}
+
+function IconSpeisekarte({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2" />
+      <path d="M7 2v20" />
+      <path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3" />
+      <path d="M18 22v-7" />
+    </svg>
+  );
+}
+
+function IconStatistiken({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <path d="M7 16l4-5 4 3 5-6" />
+    </svg>
+  );
+}
+
+function IconMitarbeiter({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
+function IconEinstellungen({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconAbmelden({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+// ─── Navigations-Konfiguration ──────────────────────────────────────────────
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.FC<{ className?: string }>;
+  rollen: Rolle[];
+}
+
+interface NavSection {
+  titel: string;
+  items: NavItem[];
+}
+
+const SEKTIONEN: NavSection[] = [
+  {
+    titel: 'Betrieb',
+    items: [
+      { to: '/dashboard',      label: 'Dashboard',      icon: IconDashboard,      rollen: ['admin', 'kellner', 'kueche'] },
+      { to: '/bestellungen',   label: 'Bestellungen',   icon: IconBestellungen,   rollen: ['admin', 'kellner', 'kueche'] },
+      { to: '/tischplan',      label: 'Tischplan',      icon: IconTischplan,      rollen: ['admin', 'kellner'] },
+      { to: '/reservierungen', label: 'Reservierungen', icon: IconReservierungen, rollen: ['admin', 'kellner'] },
+      { to: '/dienstplan',    label: 'Dienstplan',    icon: IconDienstplan,    rollen: ['admin'] },
+    ],
+  },
+  {
+    titel: 'Verwaltung',
+    items: [
+      { to: '/speisekarte',  label: 'Speisekarte',  icon: IconSpeisekarte,  rollen: ['admin'] },
+      { to: '/mitarbeiter',  label: 'Mitarbeiter',  icon: IconMitarbeiter,  rollen: ['admin'] },
+      { to: '/statistiken',    label: 'Statistiken',    icon: IconStatistiken,    rollen: ['admin'] },
+      { to: '/einstellungen',  label: 'Einstellungen',  icon: IconEinstellungen,  rollen: ['admin'] },
+    ],
+  },
+];
+
+const ROLLEN_LABEL: Record<Rolle, string> = {
+  admin: 'Administrator',
+  kellner: 'Kellner',
+  kueche: 'Küche',
+};
+
+const ROLLEN_FARBE: Record<Rolle, string> = {
+  admin: 'bg-violet-400/20 text-violet-300',
+  kellner: 'bg-sky-400/20 text-sky-300',
+  kueche: 'bg-amber-400/20 text-amber-300',
+};
+
+// ─── Sidebar ────────────────────────────────────────────────────────────────
+
+interface SidebarProps {
+  onSchliessen?: () => void;
+}
+
+export default function Sidebar({ onSchliessen }: SidebarProps) {
+  const { mitarbeiter, logout } = useAuthStore();
+  const location = useLocation();
 
   return (
-    <aside className="w-56 bg-white border-r flex flex-col shrink-0">
-      <div className="px-5 py-4 border-b">
-        <p className="text-base font-bold text-orange-600">Restaurant</p>
-        <p className="text-xs text-gray-400 truncate mt-0.5">{mitarbeiter?.name}</p>
+    <aside className="w-[260px] bg-[#1e293b] dark:bg-[#0F1724] flex flex-col shrink-0 select-none">
+
+      {/* ── Logo & App-Name ──────────────────────────────────────── */}
+      <div className="px-5 pt-5 pb-4 bg-gradient-to-b from-white/[0.04] to-transparent">
+        <ServeFlowLogo variante="voll" groesse="md" />
       </div>
 
-      <nav className="flex-1 py-3 space-y-0.5">
-        {sichtbar.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `block mx-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-orange-50 text-orange-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`
-            }
-          >
-            {label}
-          </NavLink>
-        ))}
+      <div className="h-px bg-white/10 mx-4" />
+
+      {/* ── Navigation ──────────────────────────────────────────── */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+        {SEKTIONEN.map((sektion) => {
+          const sichtbar = sektion.items.filter((item) =>
+            mitarbeiter ? item.rollen.includes(mitarbeiter.rolle) : false
+          );
+          if (sichtbar.length === 0) return null;
+
+          return (
+            <div key={sektion.titel}>
+              <p className="px-3 mb-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                {sektion.titel}
+              </p>
+              <div className="space-y-0.5">
+                {sichtbar.map(({ to, label, icon: Icon }) => {
+                  const aktiv = location.pathname === to;
+                  return (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={onSchliessen}
+                      className={`
+                        group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-200
+                        ${aktiv
+                          ? 'bg-white/10 text-white shadow-sm shadow-black/10'
+                          : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                        }
+                      `}
+                    >
+                      {/* Aktive Indikator-Linie */}
+                      {aktiv && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                      )}
+                      <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${aktiv ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                      <span>{label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="p-4 border-t">
-        <button
-          onClick={logout}
-          className="w-full text-xs text-gray-400 hover:text-red-500 transition-colors"
-        >
-          Abmelden
-        </button>
+      {/* ── Benutzer-Bereich (unten) ────────────────────────────── */}
+      <div className="border-t border-white/10">
+        <div className="px-4 py-4">
+          {/* Benutzer-Info */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200 shrink-0 ring-1 ring-white/10">
+              {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-medium text-slate-200 truncate">{mitarbeiter?.name}</p>
+              {mitarbeiter?.rolle && (
+                <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${ROLLEN_FARBE[mitarbeiter.rolle]}`}>
+                  {ROLLEN_LABEL[mitarbeiter.rolle]}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Abmelden */}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:text-red-400 hover:bg-white/5 transition-all duration-150 cursor-pointer"
+          >
+            <IconAbmelden className="w-4 h-4" />
+            <span>Abmelden</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

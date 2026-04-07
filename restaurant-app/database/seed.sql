@@ -4,42 +4,45 @@
 -- bcrypt-Hash von "test1234" mit 12 Runden
 
 -- ─── Demo-Restaurant ─────────────────────────────────────────────────────────
-INSERT INTO restaurants (id, name, waehrung, lizenz_code, abo_status)
-VALUES ('00000000-0000-0000-0000-000000000001', 'Trattoria Demo', 'EUR', 'DEMO-0001', 'trial')
+INSERT INTO restaurants (id, name, waehrung, lizenz_code, abo_status, restaurant_code)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Trattoria Demo', 'EUR', 'DEMO-0001', 'trial', 'DEMO001')
 ON CONFLICT DO NOTHING;
 
 -- ─── Mitarbeiter ─────────────────────────────────────────────────────────────
 -- Admin: admin@demo.de / test1234
-INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle)
+INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle, email_verifiziert)
 VALUES (
   '00000000-0000-0000-0000-000000000010',
   '00000000-0000-0000-0000-000000000001',
   'Admin',
   'admin@demo.de',
   '$2a$12$232gnizz0bXTrs0YGDc4Su7w73wAcoZlsKpZa464apEK7TL9ojT2S',
-  'admin'
+  'admin',
+  true
 ) ON CONFLICT DO NOTHING;
 
 -- Kellner: kellner@demo.de / test1234
-INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle)
+INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle, email_verifiziert)
 VALUES (
   '00000000-0000-0000-0000-000000000011',
   '00000000-0000-0000-0000-000000000001',
   'Maria Müller',
   'kellner@demo.de',
   '$2a$12$232gnizz0bXTrs0YGDc4Su7w73wAcoZlsKpZa464apEK7TL9ojT2S',
-  'kellner'
+  'kellner',
+  true
 ) ON CONFLICT DO NOTHING;
 
 -- Küche: kueche@demo.de / test1234
-INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle)
+INSERT INTO mitarbeiter (id, restaurant_id, name, email, passwort_hash, rolle, email_verifiziert)
 VALUES (
   '00000000-0000-0000-0000-000000000012',
   '00000000-0000-0000-0000-000000000001',
   'Marco Koch',
   'kueche@demo.de',
   '$2a$12$232gnizz0bXTrs0YGDc4Su7w73wAcoZlsKpZa464apEK7TL9ojT2S',
-  'kueche'
+  'kueche',
+  true
 ) ON CONFLICT DO NOTHING;
 
 -- ─── Kategorien ──────────────────────────────────────────────────────────────

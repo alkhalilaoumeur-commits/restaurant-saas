@@ -1,15 +1,26 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
+import { useThemeStore } from './store/theme';
 
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
+import Registrieren from './pages/Registrieren';
+import PasswortVergessen from './pages/PasswortVergessen';
+import PasswortZuruecksetzen from './pages/PasswortZuruecksetzen';
+import Einladung from './pages/Einladung';
+import EmailVerifizieren from './pages/EmailVerifizieren';
 import Dashboard from './pages/Dashboard';
 import Bestellungen from './pages/Bestellungen';
 import Speisekarte from './pages/Speisekarte';
 import Reservierungen from './pages/Reservierungen';
 import Tischplan from './pages/Tischplan';
 import Statistiken from './pages/Statistiken';
+import Mitarbeiter from './pages/Mitarbeiter';
 import Bestellen from './pages/Bestellen';
+import BestellenPro from './pages/BestellenPro';
+import Dienstplan from './pages/Dienstplan';
+import Einstellungen from './pages/Einstellungen';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -17,11 +28,27 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Theme beim Start aus localStorage laden und auf <html> anwenden
+  const theme = useThemeStore((s) => s.theme);
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   return (
     <Routes>
       {/* Öffentlich */}
       <Route path="/login" element={<Login />} />
+      <Route path="/registrieren" element={<Registrieren />} />
+      <Route path="/passwort-vergessen" element={<PasswortVergessen />} />
+      <Route path="/passwort-zuruecksetzen/:token" element={<PasswortZuruecksetzen />} />
+      <Route path="/einladung/:token" element={<Einladung />} />
+      <Route path="/email-verifizieren/:token" element={<EmailVerifizieren />} />
       <Route path="/bestellen/:restaurantId/:tischId" element={<Bestellen />} />
+      <Route path="/bestellen-pro/:restaurantId/:tischId" element={<BestellenPro />} />
 
       {/* Geschützter Admin-Bereich */}
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
@@ -30,7 +57,10 @@ export default function App() {
         <Route path="/speisekarte"    element={<Speisekarte />} />
         <Route path="/reservierungen" element={<Reservierungen />} />
         <Route path="/tischplan"      element={<Tischplan />} />
+        <Route path="/dienstplan"      element={<Dienstplan />} />
+        <Route path="/mitarbeiter"     element={<Mitarbeiter />} />
         <Route path="/statistiken"    element={<Statistiken />} />
+        <Route path="/einstellungen"  element={<Einstellungen />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

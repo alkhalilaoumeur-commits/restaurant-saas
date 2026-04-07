@@ -1,5 +1,14 @@
 const BASE = '/api';
 
+/** Erweiterter Fehler mit zusätzlichen Daten aus der API-Response */
+export class ApiError extends Error {
+  data: Record<string, unknown>;
+  constructor(message: string, data: Record<string, unknown> = {}) {
+    super(message);
+    this.data = data;
+  }
+}
+
 function getToken(): string | null {
   try {
     const raw = localStorage.getItem('restaurant-auth');
@@ -29,7 +38,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.fehler || `HTTP ${res.status}`);
+    throw new ApiError(body.fehler || `HTTP ${res.status}`, body);
   }
 
   if (res.status === 204) return undefined as T;
@@ -39,6 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const api = {
   get:    <T>(path: string)                => request<T>(path),
   post:   <T>(path: string, body: unknown) => request<T>(path, { method: 'POST',   body: JSON.stringify(body) }),
+  put:    <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT',    body: JSON.stringify(body) }),
   patch:  <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH',  body: JSON.stringify(body) }),
   delete: <T>(path: string)               => request<T>(path, { method: 'DELETE' }),
 };

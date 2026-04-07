@@ -21,6 +21,7 @@ Lies zuerst die Dateien, die betroffen sein könnten:
 - `project/todos.md` – Aufgabenliste
 - `project/entscheidungen.md` – Entscheidungslog
 - `project/dsgvo-log.md` – DSGVO-Protokoll
+- `project/dsgvo-datenkatalog.md` – Verarbeitungsverzeichnis (Art. 30 DSGVO)
 - `project/projektgrundlage.md` – Vision, Features, Preismodell
 - `project/marktanalyse.md` – Wettbewerber
 - `datenstruktur/datenbank-schema.md` – DB-Tabellen
@@ -40,6 +41,7 @@ Lies zuerst die Dateien, die betroffen sein könnten:
 | Neue API-Route | `datenstruktur/api-endpunkte.md` |
 | Rollen/Berechtigungen | `datenstruktur/rollen.md` |
 | DSGVO-relevante Änderung | `project/dsgvo-log.md` → Neuen Eintrag mit Datum |
+| Neues personenbezogenes Datenfeld | `project/dsgvo-datenkatalog.md` → Verarbeitungsverzeichnis aktualisieren |
 | Neue Datei/Ordner erstellt | `LIES_MICH_ZUERST.md` → Ordnerübersicht erweitern |
 | Problem gelöst | `project/status.md` → Aus "Bekannte Probleme" entfernen |
 | Feature/Vision ändert sich | `project/projektgrundlage.md` |

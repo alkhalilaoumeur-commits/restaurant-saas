@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/opt/homebrew/bin/node /Users/ilias/restaurant-saas/dashboard/sync-dashboard.js 2>/dev/null || true",
+            "timeout": 15,
+            "statusMessage": "Dashboard synchronisieren..."
+          }
+        ]
+      }
+    ]
+  }
+}

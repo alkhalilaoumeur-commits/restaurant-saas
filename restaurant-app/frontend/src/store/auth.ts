@@ -5,7 +5,9 @@ import { Mitarbeiter } from '../types';
 interface AuthState {
   token: string | null;
   mitarbeiter: Mitarbeiter | null;
+  demo: boolean;
   login: (token: string, mitarbeiter: Mitarbeiter) => void;
+  demoLogin: (mitarbeiter: Mitarbeiter) => void;
   logout: () => void;
 }
 
@@ -14,8 +16,10 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       mitarbeiter: null,
-      login: (token, mitarbeiter) => set({ token, mitarbeiter }),
-      logout: () => set({ token: null, mitarbeiter: null }),
+      demo: false,
+      login: (token, mitarbeiter) => set({ token, mitarbeiter, demo: false }),
+      demoLogin: (mitarbeiter) => set({ token: 'demo', mitarbeiter, demo: true }),
+      logout: () => set({ token: null, mitarbeiter: null, demo: false }),
     }),
     { name: 'restaurant-auth' }
   )

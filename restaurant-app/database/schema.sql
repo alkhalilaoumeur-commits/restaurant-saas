@@ -9,7 +9,13 @@ CREATE TABLE IF NOT EXISTS restaurants (
   name            TEXT NOT NULL,
   logo_url        TEXT,
   oeffnungszeiten TEXT,
+  strasse         TEXT,
+  plz             TEXT,
+  stadt           TEXT,
+  telefon         TEXT,
+  email           TEXT,
   waehrung        TEXT NOT NULL DEFAULT 'EUR',
+  primaerfarbe    TEXT NOT NULL DEFAULT '#ea580c',
   lizenz_code     TEXT UNIQUE,
   max_mitarbeiter INTEGER NOT NULL DEFAULT 5,
   abo_status      TEXT NOT NULL DEFAULT 'trial'
@@ -129,3 +135,19 @@ CREATE TABLE IF NOT EXISTS mitarbeiter (
 );
 CREATE INDEX IF NOT EXISTS idx_mitarbeiter_restaurant ON mitarbeiter(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_mitarbeiter_email      ON mitarbeiter(email);
+
+-- ─── Schichten (Dienstplan) ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS schichten (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id   UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  mitarbeiter_id  UUID NOT NULL REFERENCES mitarbeiter(id) ON DELETE CASCADE,
+  datum           DATE NOT NULL,
+  beginn          TIME NOT NULL,
+  ende            TIME NOT NULL,
+  notiz           TEXT,
+  erstellt_am     TIMESTAMP NOT NULL DEFAULT NOW(),
+  CHECK (ende > beginn)
+);
+CREATE INDEX IF NOT EXISTS idx_schichten_restaurant ON schichten(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_schichten_datum      ON schichten(datum);
+CREATE INDEX IF NOT EXISTS idx_schichten_mitarbeiter ON schichten(mitarbeiter_id);

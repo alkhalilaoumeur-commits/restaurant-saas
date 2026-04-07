@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projekt-Dashboard — Restaurant SaaS</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            sidebar: '#1B2A4A',
+            'sidebar-hover': '#243556',
+            'sidebar-dark': '#0F1629',
+            'sidebar-dark-hover': '#1A2340',
+            primary: '#2B579A',
+            'primary-hover': '#1E4278',
+            bg: '#F8F9FA',
+            'bg-dark': '#0F172A',
+            'card-dark': '#1E293B',
+            'border-dark': '#334155',
+          }
+        }
+      }
+    }
+  </script>
+  <script src="./dashboard-data.js"></script>
+  <script>
+    // Dark-Klasse sofort setzen, damit kein Flash entsteht
+    if (localStorage.getItem('dashboard-dark') === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    /* ======= THEME SYSTEM (CSS Variables) ======= */
+    :root {
+      --t-bg: #F8F9FA;
+      --t-card: #ffffff;
+      --t-card-hover: #f9fafb;
+      --t-input: #f9fafb;
+      --t-text: #1f2937;
+      --t-text-2: #374151;
+      --t-text-3: #6b7280;
+      --t-text-4: #9ca3af;
+      --t-border: #e5e7eb;
+      --t-hover: #f3f4f6;
+      --t-sidebar: #1B2A4A;
+      --t-sidebar-hover: #243556;
+      --t-scrollbar: #cbd5e1;
+      --t-scrollbar-hover: #94a3b8;
+      --t-drag-bg: #EBF0F9;
+    }
+    html.dark {
+      --t-bg: #0F172A;
+      --t-card: #1E293B;
+      --t-card-hover: #334155;
+      --t-input: #1e293b;
+      --t-text: #f1f5f9;
+      --t-text-2: #d1d5db;
+      --t-text-3: #94a3b8;
+      --t-text-4: #64748b;
+      --t-border: #334155;
+      --t-hover: #334155;
+      --t-sidebar: #0F1629;
+      --t-sidebar-hover: #1A2340;
+      --t-scrollbar: #475569;
+      --t-scrollbar-hover: #64748b;
+      --t-drag-bg: #1E293B;
+    }
+
+    /* Force theme colors on key Tailwind classes */
+    body { background-color: var(--t-bg) !important; color: var(--t-text) !important; }
+    .bg-bg { background-color: var(--t-bg) !important; }
+    .bg-white { background-color: var(--t-card) !important; }
+    .bg-gray-50 { background-color: var(--t-input) !important; }
+    .bg-gray-100 { background-color: var(--t-hover) !important; }
+    .bg-gray-200 { background-color: var(--t-border) !important; }
+    .bg-sidebar { background-color: var(--t-sidebar) !important; }
+    .text-gray-800 { color: var(--t-text) !important; }
+    .text-gray-700 { color: var(--t-text-2) !important; }
+    .text-gray-600 { color: var(--t-text-3) !important; }
+    .text-gray-500 { color: var(--t-text-3) !important; }
+    .text-gray-400 { color: var(--t-text-4) !important; }
+    .border-gray-200, .border { border-color: var(--t-border) !important; }
+    .divide-gray-200 > :not(:first-child) { border-color: var(--t-border) !important; }
+    .hover\:bg-gray-50:hover { background-color: var(--t-card-hover) !important; }
+    .hover\:bg-gray-100:hover { background-color: var(--t-hover) !important; }
+    input, select, textarea { background-color: var(--t-input) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
+    input::placeholder, textarea::placeholder { color: var(--t-text-4) !important; }
+
+    /* Colored backgrounds in dark mode */
+    html.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.2) !important; }
+    html.dark .bg-red-50 { background-color: rgba(153, 27, 27, 0.2) !important; }
+    html.dark .bg-emerald-50 { background-color: rgba(6, 78, 59, 0.2) !important; }
+    html.dark .bg-orange-50 { background-color: rgba(154, 52, 18, 0.2) !important; }
+    html.dark .bg-purple-50 { background-color: rgba(88, 28, 135, 0.2) !important; }
+    html.dark .bg-yellow-50 { background-color: rgba(113, 63, 18, 0.2) !important; }
+    html.dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.3) !important; }
+    /* Colored text in dark mode */
+    html.dark .text-blue-800 { color: #93c5fd !important; }
+    html.dark .text-blue-600 { color: #60a5fa !important; }
+    html.dark .text-red-700 { color: #f87171 !important; }
+    html.dark .text-red-600 { color: #f87171 !important; }
+    html.dark .text-emerald-700 { color: #34d399 !important; }
+    html.dark .text-emerald-600 { color: #6ee7b7 !important; }
+    html.dark .text-orange-600 { color: #fb923c !important; }
+    html.dark .text-purple-600 { color: #c084fc !important; }
+    /* Colored borders in dark mode */
+    html.dark .border-blue-200 { border-color: #1e3a8a !important; }
+    html.dark .border-red-200 { border-color: #991b1b !important; }
+    html.dark .border-emerald-200 { border-color: #065f46 !important; }
+    html.dark .border-orange-200 { border-color: #9a3412 !important; }
+    html.dark .border-purple-200 { border-color: #581c87 !important; }
+    /* Slate backgrounds for dark mode inputs/lists */
+    html.dark .bg-slate-800 { background-color: #1e293b !important; }
+
+    /* ======= END THEME ======= */
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--t-scrollbar); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--t-scrollbar-hover); }
+    .drag-over { border: 2px dashed #2B579A !important; background: var(--t-drag-bg) !important; }
+    .dragging { opacity: 0.5; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade { animation: fadeIn 0.2s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-slide { animation: slideIn 0.2s ease-out; }
+  </style>
+</head>
+<body class="bg-bg dark:bg-bg-dark">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useContext, createContext, useRef, useMemo } = React;
+
+// ============================================================
+// DEFAULT DATA — Restaurant SaaS Pre-Loaded
+// ============================================================
+
+const generateId = () => Math.random().toString(36).substr(2, 9);
+
+const DEFAULT_DATA = {
+  project: {
+    name: "Restaurant SaaS",
+    status: "In Entwicklung",
+    techStack: "React + Node.js + Express + PostgreSQL + Tailwind",
+    team: [{ id: generateId(), name: "Ilias", rolle: "Entwickler & Gruender" }]
+  },
+
+  dataTypes: [
+    {
+      id: "dt-restaurant", name: "Restaurant",
+      fields: [
+        { id: "f1", name: "id", type: "Zahl", description: "Eindeutige ID (automatisch)", required: true },
+        { id: "f2", name: "name", type: "Text", description: "Name des Restaurants", required: true },
+        { id: "f3", name: "adresse", type: "Text", description: "Strasse und Hausnummer", required: true },
+        { id: "f4", name: "stadt", type: "Text", description: "Stadt", required: true },
+        { id: "f5", name: "plz", type: "Text", description: "Postleitzahl", required: true },
+        { id: "f6", name: "telefon", type: "Text", description: "Telefonnummer", required: false },
+        { id: "f7", name: "email", type: "Text", description: "E-Mail-Adresse", required: false },
+        { id: "f8", name: "oeffnungszeiten", type: "Text", description: "Oeffnungszeiten als JSON", required: false },
+        { id: "f9", name: "logo_url", type: "Text", description: "URL zum Restaurant-Logo", required: false },
+        { id: "f10", name: "aktiv", type: "Ja/Nein", description: "Ist das Restaurant aktiv?", required: true },
+      ],
+      relationships: ["User", "Tisch", "Gericht", "Kategorie", "Bestellung", "Reservierung"]
+    },
+    {
+      id: "dt-user", name: "User",
+      fields: [
+        { id: "f11", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f12", name: "email", type: "Text", description: "Login-E-Mail", required: true },
+        { id: "f13", name: "passwort_hash", type: "Text", description: "Verschluesseltes Passwort", required: true },
+        { id: "f14", name: "vorname", type: "Text", description: "Vorname", required: true },
+        { id: "f15", name: "nachname", type: "Text", description: "Nachname", required: true },
+        { id: "f16", name: "rolle", type: "Option Set", description: "Benutzerrolle (Admin/Besitzer/Kellner)", required: true },
+        { id: "f17", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+        { id: "f18", name: "aktiv", type: "Ja/Nein", description: "Account aktiv?", required: true },
+        { id: "f19", name: "erstellt_am", type: "Datum", description: "Registrierungsdatum", required: true },
+      ],
+      relationships: ["Restaurant"]
+    },
+    {
+      id: "dt-kategorie", name: "Kategorie",
+      fields: [
+        { id: "f20", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f21", name: "name", type: "Text", description: "Kategoriename (z.B. Vorspeisen)", required: true },
+        { id: "f22", name: "beschreibung", type: "Text", description: "Kurzbeschreibung", required: false },
+        { id: "f23", name: "farbe", type: "Text", description: "Hex-Farbcode fuer UI", required: false },
+        { id: "f24", name: "reihenfolge", type: "Zahl", description: "Sortierung in der Speisekarte", required: true },
+        { id: "f25", name: "aktiv", type: "Ja/Nein", description: "Kategorie sichtbar?", required: true },
+        { id: "f26", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+      ],
+      relationships: ["Restaurant", "Gericht"]
+    },
+    {
+      id: "dt-tisch", name: "Tisch",
+      fields: [
+        { id: "f27", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f28", name: "nummer", type: "Zahl", description: "Tischnummer", required: true },
+        { id: "f29", name: "name", type: "Text", description: "Optionaler Tischname", required: false },
+        { id: "f30", name: "plaetze", type: "Zahl", description: "Anzahl Sitzplaetze", required: true },
+        { id: "f31", name: "status", type: "Option Set", description: "Aktueller Status (Tisch_Status)", required: true },
+        { id: "f32", name: "qr_code", type: "Text", description: "QR-Code URL", required: false },
+        { id: "f33", name: "bereich", type: "Text", description: "Bereich (Innen/Aussen/Bar)", required: false },
+        { id: "f34", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+      ],
+      relationships: ["Restaurant", "Bestellung", "Reservierung"]
+    },
+    {
+      id: "dt-gericht", name: "Gericht",
+      fields: [
+        { id: "f35", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f36", name: "name", type: "Text", description: "Gerichtname", required: true },
+        { id: "f37", name: "beschreibung", type: "Text", description: "Beschreibung des Gerichts", required: false },
+        { id: "f38", name: "preis", type: "Zahl", description: "Preis in Euro", required: true },
+        { id: "f39", name: "kategorie_id", type: "Beziehung", description: "Gehoert zu Kategorie", required: true },
+        { id: "f40", name: "bild_url", type: "Text", description: "URL zum Produktbild", required: false },
+        { id: "f41", name: "verfuegbar", type: "Ja/Nein", description: "Aktuell bestellbar?", required: true },
+        { id: "f42", name: "allergene", type: "Liste", description: "Liste der Allergene", required: false },
+        { id: "f43", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+      ],
+      relationships: ["Restaurant", "Kategorie", "BestellPosition"]
+    },
+    {
+      id: "dt-bestellung", name: "Bestellung",
+      fields: [
+        { id: "f44", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f45", name: "tisch_id", type: "Beziehung", description: "An welchem Tisch", required: true },
+        { id: "f46", name: "status", type: "Option Set", description: "Bestellstatus (Bestellung_Status)", required: true },
+        { id: "f47", name: "gesamtbetrag", type: "Zahl", description: "Summe in Euro", required: false },
+        { id: "f48", name: "erstellt_am", type: "Datum", description: "Bestellzeitpunkt", required: true },
+        { id: "f49", name: "abgeschlossen_am", type: "Datum", description: "Wann bezahlt/abgeschlossen", required: false },
+        { id: "f50", name: "notizen", type: "Text", description: "Anmerkungen zur Bestellung", required: false },
+        { id: "f51", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+      ],
+      relationships: ["Restaurant", "Tisch", "BestellPosition"]
+    },
+    {
+      id: "dt-bestellposition", name: "BestellPosition",
+      fields: [
+        { id: "f52", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f53", name: "bestellung_id", type: "Beziehung", description: "Gehoert zu Bestellung", required: true },
+        { id: "f54", name: "gericht_id", type: "Beziehung", description: "Welches Gericht", required: true },
+        { id: "f55", name: "menge", type: "Zahl", description: "Anzahl bestellt", required: true },
+        { id: "f56", name: "preis", type: "Zahl", description: "Einzelpreis zum Bestellzeitpunkt", required: true },
+        { id: "f57", name: "notizen", type: "Text", description: "Sonderwuensche", required: false },
+        { id: "f58", name: "status", type: "Option Set", description: "Status dieser Position", required: true },
+      ],
+      relationships: ["Bestellung", "Gericht"]
+    },
+    {
+      id: "dt-reservierung", name: "Reservierung",
+      fields: [
+        { id: "f59", name: "id", type: "Zahl", description: "Eindeutige ID", required: true },
+        { id: "f60", name: "gast_name", type: "Text", description: "Name des Gastes", required: true },
+        { id: "f61", name: "gast_email", type: "Text", description: "E-Mail des Gastes", required: false },
+        { id: "f62", name: "gast_telefon", type: "Text", description: "Telefonnummer", required: false },
+        { id: "f63", name: "datum", type: "Datum", description: "Reservierungsdatum", required: true },
+        { id: "f64", name: "uhrzeit", type: "Text", description: "Uhrzeit (z.B. 19:30)", required: true },
+        { id: "f65", name: "personenanzahl", type: "Zahl", description: "Wie viele Gaeste", required: true },
+        { id: "f66", name: "tisch_id", type: "Beziehung", description: "Reservierter Tisch", required: false },
+        { id: "f67", name: "status", type: "Option Set", description: "Reservierung_Status", required: true },
+        { id: "f68", name: "quelle", type: "Option Set", description: "Woher kam die Reservierung", required: true },
+        { id: "f69", name: "notizen", type: "Text", description: "Sonderwuensche", required: false },
+        { id: "f70", name: "restaurant_id", type: "Beziehung", description: "Gehoert zu Restaurant", required: true },
+      ],
+      relationships: ["Restaurant", "Tisch"]
+    },
+  ],
+
+  optionSets: [
+    { id: "os-1", name: "Tisch_Status", values: ["frei", "besetzt", "wartet_auf_zahlung"] },
+    { id: "os-2", name: "Bestellung_Status", values: ["offen", "in_zubereitung", "serviert", "bezahlt"] },
+    { id: "os-3", name: "Reservierung_Status", values: ["ausstehend", "bestaetigt", "storniert"] },
+    { id: "os-4", name: "Reservierung_Quelle", values: ["app", "telefon", "walk_in", "email", "whatsapp"] },
+    { id: "os-5", name: "Mitarbeiter_Rolle", values: ["admin", "kellner", "kueche"] },
+    { id: "os-6", name: "Abo_Status", values: ["trial", "active", "expired"] },
+  ],
+
+  workflows: [
+    {
+      id: "wf-1", name: "Gast scannt QR-Code", folder: "Bestellungen", trigger: "Seiten-Load", status: "Fertig",
+      triggerDesc: "Wenn: Gast die QR-Code-URL im Browser oeffnet",
+      steps: [
+        { id: "s1", type: "condition", desc: "Pruefe ob QR-Code gueltig ist und Tisch existiert" },
+        { id: "s2", type: "database", desc: "Lade Tisch-Daten und Restaurant-Info" },
+        { id: "s3", type: "database", desc: "Lade Speisekarte (alle aktiven Gerichte + Kategorien)" },
+        { id: "s4", type: "navigation", desc: "Zeige Speisekarte fuer diesen Tisch an" },
+      ]
+    },
+    {
+      id: "wf-2", name: "Gast bestellt", folder: "Bestellungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Button 'Bestellen' geklickt wird",
+      steps: [
+        { id: "s5", type: "condition", desc: "Pruefe ob Warenkorb nicht leer ist" },
+        { id: "s6", type: "database", desc: "Erstelle neue Bestellung mit Status 'offen'" },
+        { id: "s7", type: "database", desc: "Erstelle BestellPositionen fuer jedes Gericht" },
+        { id: "s8", type: "database", desc: "Aktualisiere Tisch-Status auf 'besetzt'" },
+        { id: "s9", type: "confirm", desc: "Zeige Bestellbestaetigung an" },
+      ]
+    },
+    {
+      id: "wf-3", name: "Kellner nimmt Bestellung auf", folder: "Bestellungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Kellner im Admin-Panel eine Bestellung erstellt",
+      steps: [
+        { id: "s10", type: "navigation", desc: "Oeffne Bestellformular mit Tischauswahl" },
+        { id: "s11", type: "database", desc: "Erstelle Bestellung + Positionen" },
+        { id: "s12", type: "confirm", desc: "Bestaetigung: Bestellung wurde angelegt" },
+      ]
+    },
+    {
+      id: "wf-4", name: "Kueche markiert Gericht fertig", folder: "Bestellungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Koch den 'Fertig'-Button drueckt",
+      steps: [
+        { id: "s13", type: "database", desc: "Setze BestellPosition-Status auf 'fertig'" },
+        { id: "s14", type: "condition", desc: "Pruefe ob alle Positionen der Bestellung fertig sind" },
+        { id: "s15", type: "database", desc: "Wenn ja: Setze Bestellung-Status auf 'serviert'" },
+        { id: "s16", type: "confirm", desc: "Benachrichtige Kellner (spaeter: Push/Socket)" },
+      ]
+    },
+    {
+      id: "wf-5", name: "Kellner serviert Bestellung", folder: "Bestellungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Kellner 'Serviert' drueckt",
+      steps: [
+        { id: "s17", type: "database", desc: "Setze Bestellung-Status auf 'serviert'" },
+        { id: "s18", type: "confirm", desc: "Status-Update in Echtzeit anzeigen" },
+      ]
+    },
+    {
+      id: "wf-6", name: "Gast bezahlt", folder: "Bestellungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Bezahlung abgeschlossen (Status auf 'bezahlt')",
+      steps: [
+        { id: "s19", type: "condition", desc: "Pruefe Bestellstatus (muss 'serviert' sein)" },
+        { id: "s20", type: "database", desc: "Status auf 'bezahlt' setzen (via PATCH /api/bestellungen/:id/status)" },
+        { id: "s21", type: "database", desc: "Setze Bestellung auf 'bezahlt', Tisch auf 'frei'" },
+        { id: "s22", type: "database", desc: "Speichere abgeschlossen_am Zeitstempel" },
+        { id: "s23", type: "confirm", desc: "Zeige Rechnung / Quittung an" },
+      ]
+    },
+    {
+      id: "wf-7", name: "Reservierung geht ein", folder: "Reservierungen", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Gast Reservierungsformular abschickt",
+      steps: [
+        { id: "s24", type: "condition", desc: "Pruefe ob Datum + Uhrzeit + Personenanzahl gueltig" },
+        { id: "s25", type: "database", desc: "Pruefe verfuegbare Tische" },
+        { id: "s26", type: "database", desc: "Erstelle Reservierung mit Status 'angefragt'" },
+        { id: "s27", type: "confirm", desc: "Zeige Bestaetigung an den Gast" },
+      ]
+    },
+    {
+      id: "wf-8", name: "Tisch wird frei", folder: "Tischverwaltung", trigger: "Backend", status: "Fertig",
+      triggerDesc: "Wenn: Bestellung bezahlt und Gaeste gegangen",
+      steps: [
+        { id: "s28", type: "database", desc: "Setze Tisch-Status auf 'frei'" },
+        { id: "s29", type: "condition", desc: "Pruefe ob naechste Reservierung fuer diesen Tisch ansteht" },
+        { id: "s30", type: "database", desc: "Wenn ja: Setze Status auf 'reserviert'" },
+      ]
+    },
+    {
+      id: "wf-9", name: "Admin Login", folder: "Authentifizierung", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Login-Formular abgeschickt wird",
+      steps: [
+        { id: "s31", type: "condition", desc: "Pruefe E-Mail + Passwort gegen Datenbank" },
+        { id: "s32", type: "api", desc: "Erstelle JWT-Token" },
+        { id: "s33", type: "database", desc: "Lade User-Daten + Restaurant-Daten" },
+        { id: "s34", type: "navigation", desc: "Weiterleitung zum Admin-Dashboard" },
+      ]
+    },
+    {
+      id: "wf-10", name: "Speisekarte bearbeiten", folder: "Admin", trigger: "Button-Klick", status: "Fertig",
+      triggerDesc: "Wenn: Admin ein Gericht erstellt/bearbeitet/loescht",
+      steps: [
+        { id: "s35", type: "navigation", desc: "Oeffne Gericht-Formular (Modal)" },
+        { id: "s36", type: "condition", desc: "Validiere Eingaben (Name, Preis, Kategorie)" },
+        { id: "s37", type: "database", desc: "Speichere Gericht (Create/Update/Delete)" },
+        { id: "s38", type: "confirm", desc: "Erfolgs-Meldung + Liste aktualisieren" },
+      ]
+    },
+  ],
+
+  pages: [
+    { id: "pg-1", name: "Dashboard", desc: "Live-Stats: Offene Bestellungen, Tagesumsatz, Reservierungen, Tischbelegung, Umsatz-Chart", status: "Fertig", dataTypes: ["Restaurant", "Bestellung", "Reservierung", "Tisch"], reusables: ["Sidebar", "Topbar", "StatKarte", "UmsatzChart", "Auslastung"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-2", name: "Gast-Bestellseite", desc: "Speisekarte mit Warenkorb — Gaeste bestellen per QR-Code, Live-Status-Tracker", status: "Fertig", dataTypes: ["Gericht", "Kategorie", "Bestellung", "BestellPosition", "Tisch"], reusables: ["GerichtAuswahl", "Warenkorb", "BestellStatusTracker"], responsive: { desktop: true, tablet: true, mobile: true } },
+    { id: "pg-3", name: "Login", desc: "Email + Passwort, JWT-Auth, Demo-Modus ohne Datenbank", status: "Fertig", dataTypes: ["User"], reusables: [], responsive: { desktop: true, tablet: true, mobile: true } },
+    { id: "pg-4", name: "Tischplan", desc: "Visuelle Grid-Ansicht, Status-Wechsel, QR-Code-Generierung + Einzel-/Sammeldruck", status: "Fertig", dataTypes: ["Tisch", "Bestellung"], reusables: ["TischKarte", "TischFormular"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-5", name: "Speisekarte", desc: "Kategorien + Gerichte CRUD, Verfuegbarkeit-Toggle, Allergene", status: "Fertig", dataTypes: ["Gericht", "Kategorie"], reusables: ["GerichtFormular", "GerichtKarte", "KategorieVerwaltung"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-6", name: "Reservierungen", desc: "Wochenleiste, Tagesnavigation, Status-Wechsel, Tagesstatistiken", status: "Fertig", dataTypes: ["Reservierung", "Tisch"], reusables: ["ReservierungFormular", "ReservierungZeile"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-7", name: "Bestellungen", desc: "Karten-Grid aktiver Bestellungen, Status-Workflow, Socket.io Live-Updates", status: "Fertig", dataTypes: ["Bestellung", "BestellPosition", "Tisch"], reusables: ["BestellungKarte", "StatusBadge"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-8", name: "Mitarbeiterverwaltung", desc: "Anlegen, Rollen zuweisen, deaktivieren, Passwort aendern, Lizenz-Limit", status: "Fertig", dataTypes: ["User", "Restaurant"], reusables: ["MitarbeiterZeile", "MitarbeiterFormular"], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-9", name: "Statistiken", desc: "Umsatz pro Tag, Top-Gerichte, Stosszeiten, Kategorie-Umsatz (Recharts)", status: "Fertig", dataTypes: ["Bestellung", "Gericht", "Kategorie"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-10", name: "Dienstplan", desc: "Wochenansicht, Schicht-CRUD, Stundenzaehler pro Mitarbeiter", status: "Fertig", dataTypes: ["User"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-11", name: "Einstellungen", desc: "Restaurant-Name, Primaerfarbe, Oeffnungszeiten, Lizenz-Info", status: "Fertig", dataTypes: ["Restaurant"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-12", name: "Registrierung", desc: "Neues Restaurant + Admin-Account anlegen, Lizenzcode automatisch", status: "Fertig", dataTypes: ["Restaurant", "User"], reusables: [], responsive: { desktop: true, tablet: true, mobile: true } },
+  ],
+
+  integrations: [
+    { id: "int-1", name: "QR-Code (qrcode.react)", typ: "SDK", status: "Verbunden", desc: "Generiert QR-Codes pro Tisch im Frontend. URL-Format: /bestellen/{restaurantId}/{tischId}.", url: "npm: qrcode.react" },
+    { id: "int-2", name: "Socket.io", typ: "WebSocket", status: "Verbunden", desc: "Echtzeit-Updates: Neue Bestellungen, Status-Aenderungen. Mitarbeiter-Raum + Gast-Tisch-Raum.", url: "localhost:3001" },
+    { id: "int-3", name: "JWT + bcrypt", typ: "Auth", status: "Verbunden", desc: "Authentifizierung: JWT-Token (7 Tage), Passwort-Hashing mit bcrypt (12 Runden).", url: "" },
+    { id: "int-4", name: "Recharts", typ: "SDK", status: "Verbunden", desc: "Dashboard-Charts: Umsatz-Balkendiagramm, Auslastung-Donut, Bestellverteilung.", url: "npm: recharts" },
+    { id: "int-5", name: "Mollie", typ: "REST API", status: "Nicht eingerichtet", desc: "Abo-Zahlungen fuer Restaurants. DSGVO-konform (NL). Kern des SaaS-Geschaeftsmodells.", url: "api.mollie.com" },
+    { id: "int-6", name: "WhatsApp Business API", typ: "REST API", status: "Nicht eingerichtet", desc: "Reservierungsbestaetigungen und Benachrichtigungen per WhatsApp.", url: "graph.facebook.com" },
+    { id: "int-7", name: "E-Mail SMTP", typ: "REST API", status: "Nicht eingerichtet", desc: "Reservierungsbestaetigungen, Passwort-Reset und Benachrichtigungen per E-Mail.", url: "" },
+  ],
+
+  roles: [
+    { id: "r-1", name: "Admin", perms: { Restaurant: { read: true, create: false, update: true, delete: false }, User: { read: true, create: true, update: true, delete: false }, Kategorie: { read: true, create: true, update: true, delete: true }, Tisch: { read: true, create: true, update: true, delete: true }, Gericht: { read: true, create: true, update: true, delete: true }, Bestellung: { read: true, create: false, update: true, delete: false }, BestellPosition: { read: true, create: false, update: false, delete: false }, Reservierung: { read: true, create: true, update: true, delete: true } } },
+    { id: "r-2", name: "Kellner", perms: { Restaurant: { read: false, create: false, update: false, delete: false }, User: { read: false, create: false, update: false, delete: false }, Kategorie: { read: true, create: false, update: false, delete: false }, Tisch: { read: true, create: false, update: true, delete: false }, Gericht: { read: true, create: false, update: false, delete: false }, Bestellung: { read: true, create: false, update: true, delete: false }, BestellPosition: { read: true, create: false, update: false, delete: false }, Reservierung: { read: true, create: true, update: true, delete: false } } },
+    { id: "r-3", name: "Kueche", perms: { Restaurant: { read: false, create: false, update: false, delete: false }, User: { read: false, create: false, update: false, delete: false }, Kategorie: { read: true, create: false, update: false, delete: false }, Tisch: { read: false, create: false, update: false, delete: false }, Gericht: { read: true, create: false, update: false, delete: false }, Bestellung: { read: true, create: false, update: true, delete: false }, BestellPosition: { read: true, create: false, update: false, delete: false }, Reservierung: { read: false, create: false, update: false, delete: false } } },
+    { id: "r-4", name: "Gast (ohne Login)", perms: { Restaurant: { read: true, create: false, update: false, delete: false }, User: { read: false, create: false, update: false, delete: false }, Kategorie: { read: true, create: false, update: false, delete: false }, Tisch: { read: false, create: false, update: false, delete: false }, Gericht: { read: true, create: false, update: false, delete: false }, Bestellung: { read: false, create: true, update: false, delete: false }, BestellPosition: { read: false, create: true, update: false, delete: false }, Reservierung: { read: false, create: true, update: false, delete: false } } },
+  ],
+
+  issues: [
+    { id: "is-3", title: "Multi-Tenancy — oeffentliche Endpunkte abgesichert", desc: "Alle authentifizierten Routen nutzen restaurant_id aus JWT. Oeffentliche Endpunkte (Bestellungen, Reservierungen) pruefen jetzt Tisch-Restaurant-Zugehoerigkeit und Restaurant-Existenz.", priority: "Kritisch", area: "Allgemein", status: "Erledigt", created: "2026-04-01" },
+    { id: "is-4", title: "Login & Privacy Rules implementiert", desc: "JWT-Auth mit 3 Rollen (Admin, Kellner, Kueche). requireAuth + requireRolle Middleware auf allen geschuetzten Routen.", priority: "Hoch", area: "Seite", status: "Erledigt", created: "2026-04-02" },
+    { id: "is-5", title: "Tischplan-Seite gebaut", desc: "Visuelle Uebersicht mit Status-Farben, QR-Code-Generierung, Einzel- und Sammeldruck.", priority: "Normal", area: "Seite", status: "Erledigt", created: "2026-04-04" },
+    { id: "is-6", title: "Supabase entfernt — alles ueber Express API", desc: "Frontend lief doppelt (Supabase + Express). Komplett auf Express API migriert. Supabase-Abhaengigkeit entfernt.", priority: "Hoch", area: "Allgemein", status: "Erledigt", created: "2026-04-05" },
+    { id: "is-7", title: "Abonnement-Verwaltung (Mollie) einbauen", desc: "Restaurants muessen bezahlen koennen. Mollie-Integration fuer Abo-Zahlungen. Kern des Geschaeftsmodells.", priority: "Kritisch", area: "Workflow", status: "Backlog", created: "2026-04-05" },
+    { id: "is-8", title: "Hosting-Setup (Hetzner + Coolify)", desc: "App muss online deploybar sein. Hetzner Cloud Frankfurt (DSGVO), Coolify fuer Deployment.", priority: "Hoch", area: "Allgemein", status: "Backlog", created: "2026-04-05" },
+  ],
+
+  roadmap: [],
+  decisions: [],
+  dsgvo: { entries: [], tomDone: 0, tomOpen: 0, tomPartial: 0, openCritical: [], openImportant: [] },
+
+  changelog: [
+    { id: "cl-0a", text: "Multi-Tenancy: Oeffentliche Endpunkte abgesichert (Tisch-Restaurant-Check)", date: "2026-04-05" },
+    { id: "cl-0b", text: "Supabase komplett entfernt — alles ueber Express API", date: "2026-04-05" },
+    { id: "cl-0c", text: "Statistiken & Berichte (Umsatz, Top-Gerichte, Stosszeiten)", date: "2026-04-05" },
+    { id: "cl-0d", text: "Dienstplan mit Wochenansicht und Schicht-CRUD", date: "2026-04-05" },
+    { id: "cl-0e", text: "Restaurant-Registrierung + Lizenzcode-System + Design-Anpassung", date: "2026-04-05" },
+    { id: "cl-0f", text: "QR-Codes generieren & drucken + Bestellstatus-Tracker fuer Gaeste", date: "2026-04-05" },
+    { id: "cl-1", text: "Mitarbeiterverwaltung (CRUD, Rollen, Passwort-Reset)", date: "2026-04-05" },
+    { id: "cl-2", text: "Reservierungsverwaltung mit Kalenderansicht", date: "2026-04-05" },
+    { id: "cl-3", text: "Dashboard mit Live-Stats und Charts (Recharts)", date: "2026-04-05" },
+    { id: "cl-4", text: "Tischplan mit Status-Wechsel und QR-Codes", date: "2026-04-04" },
+    { id: "cl-5", text: "Speisekarten-Verwaltung (Kategorien + Gerichte CRUD)", date: "2026-04-04" },
+    { id: "cl-6", text: "Bestellseite fuer Gaeste fertiggestellt", date: "2026-04-04" },
+    { id: "cl-7", text: "Backend komplett: Express + TypeScript + Socket.io", date: "2026-04-04" },
+    { id: "cl-8", text: "Login-Seite mit JWT-Authentifizierung gebaut", date: "2026-04-04" },
+  ]
+};
+
+// ============================================================
+// STORAGE
+// ============================================================
+
+const STORAGE_KEY = 'projekt-dashboard-restaurant-saas';
+const DATA_VERSION = 3; // Erhoehen bei jedem groesseren DEFAULT_DATA-Update
+
+function loadData() {
+  try {
+    // SYNCED_DATA hat IMMER Vorrang — wird bei jedem Sync von sync-dashboard.js geschrieben
+    const synced = window.SYNCED_DATA;
+    if (synced) {
+      // Merge: Synced-Daten als Basis, Default-Daten als Fallback fuer fehlende Felder
+      const base = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      const merged = { ...base, ...JSON.parse(JSON.stringify(synced)) };
+      // Sicherstellen dass neue Felder (roadmap, decisions, dsgvo) vorhanden sind
+      if (!merged.roadmap) merged.roadmap = [];
+      if (!merged.decisions) merged.decisions = [];
+      if (!merged.dsgvo) merged.dsgvo = { entries: [], tomDone: 0, tomOpen: 0, tomPartial: 0, openCritical: [], openImportant: [] };
+      return merged;
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  } catch { return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ============================================================
+// CONTEXT
+// ============================================================
+
+const AppContext = createContext();
+
+function useApp() { return useContext(AppContext); }
+
+// ============================================================
+// ICONS (inline SVG)
+// ============================================================
+
+function Icon({ name, size = 20, className = "" }) {
+  const paths = {
+    home: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4m-4 0v-5a1 1 0 011-1h2a1 1 0 011 1v5",
+    database: "M4 7v10c0 2 3.2 4 8 4s8-2 8-4V7M4 7c0 2 3.2 4 8 4s8-2 8-4M4 7c0-2 3.2-4 8-4s8 2 8 4m0 5c0 2-3.2 4-8 4s-8-2-8-4",
+    workflow: "M13 10V3L4 14h7v7l9-11h-7z",
+    layout: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z",
+    plug: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
+    shield: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+    bug: "M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    settings: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
+    "settings-inner": "M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+    plus: "M12 4v16m8-8H4",
+    edit: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z",
+    trash: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+    x: "M6 18L18 6M6 6l12 12",
+    check: "M5 13l4 4L19 7",
+    search: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    folder: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z",
+    chevron: "M9 5l7 7-7 7",
+    clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    download: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4",
+    upload: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12",
+    eye: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
+    link: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
+    sun: "M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z",
+    moon: "M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z",
+  };
+  const d = paths[name] || paths.home;
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d={d} />
+      {name === "settings" && <path d={paths["settings-inner"]} />}
+    </svg>
+  );
+}
+
+// ============================================================
+// SHARED COMPONENTS
+// ============================================================
+
+function Modal({ open, onClose, title, children, wide }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className={`bg-white dark:bg-card-dark rounded-xl shadow-2xl animate-slide ${wide ? 'w-[700px]' : 'w-[500px]'} max-h-[85vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border-dark">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 dark:text-gray-100">{title}</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400"><Icon name="x" size={18} /></button>
+        </div>
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Badge({ text, color }) {
+  const colors = {
+    green: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+    red: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+    orange: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
+    blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+    gray: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    purple: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
+    yellow: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+  };
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[color] || colors.gray}`}>{text}</span>;
+}
+
+function statusBadge(s) {
+  const map = { "Fertig": "green", "In Arbeit": "orange", "Geplant": "blue", "In Entwicklung": "orange", "Verbunden": "green", "Nicht eingerichtet": "gray", "Beta": "purple", "Live": "green", "Planung": "blue" };
+  return <Badge text={s} color={map[s] || "gray"} />;
+}
+
+function priorityBadge(p) {
+  const map = { "Kritisch": "red", "Hoch": "orange", "Normal": "blue", "Niedrig": "gray" };
+  return <Badge text={p} color={map[p] || "gray"} />;
+}
+
+function Btn({ children, onClick, variant = "primary", small, className = "" }) {
+  const base = small ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm";
+  const styles = {
+    primary: "bg-primary text-white hover:bg-primary-hover",
+    secondary: "bg-gray-100 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600",
+    danger: "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50",
+    ghost: "text-gray-500 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-slate-700",
+  };
+  return <button onClick={onClick} className={`${base} rounded-lg font-medium transition-colors ${styles[variant]} ${className}`}>{children}</button>;
+}
+
+function Input({ label, value, onChange, type = "text", placeholder, required }) {
+  return (
+    <div className="mb-3">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">{label} {required && <span className="text-red-400">*</span>}</label>
+      {type === "textarea" ? (
+        <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} className="w-full px-3 py-2 border dark:border-border-dark rounded-lg text-sm dark:bg-slate-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+      ) : (
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full px-3 py-2 border dark:border-border-dark rounded-lg text-sm dark:bg-slate-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+      )}
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options, required }) {
+  return (
+    <div className="mb-3">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-300 mb-1">{label} {required && <span className="text-red-400">*</span>}</label>
+      <select value={value} onChange={e => onChange(e.target.value)} className="w-full px-3 py-2 border dark:border-border-dark rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white dark:bg-slate-800 dark:text-gray-200">
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function EmptyState({ icon, text, action, onAction }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+      <Icon name={icon} size={40} className="mb-3" />
+      <p className="text-sm mb-3">{text}</p>
+      {action && <Btn onClick={onAction} small>{action}</Btn>}
+    </div>
+  );
+}
+
+function Confirm({ open, onClose, onConfirm, text }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Bestaetigung">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{text}</p>
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn variant="danger" onClick={() => { onConfirm(); onClose(); }} small>Loeschen</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 1: UEBERSICHT
+// ============================================================
+
+function Tab1_Uebersicht() {
+  const { data, setActiveTab } = useApp();
+  const roadmap = data.roadmap || [];
+  const totalTodos = roadmap.reduce((s, p) => s + p.total, 0);
+  const doneTodos = roadmap.reduce((s, p) => s + p.done, 0);
+  const todoPct = totalTodos > 0 ? Math.round((doneTodos / totalTodos) * 100) : 0;
+  const openIssues = data.issues.filter(i => i.status !== "Erledigt").length;
+  const dsgvo = data.dsgvo || {};
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{data.project.name}</h1>
+        {statusBadge(data.project.status)}
+      </div>
+
+      {/* Fortschritt */}
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Gesamtfortschritt (Todos)</span>
+          <span className="text-sm font-bold text-primary">{todoPct}%</span>
+        </div>
+        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3">
+          <div className="bg-primary rounded-full h-3 transition-all" style={{ width: `${todoPct}%` }} />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doneTodos} von {totalTodos} Aufgaben erledigt — {roadmap.length} Phasen</p>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        {[
+          { label: "Phasen", value: roadmap.length, icon: "check", color: "text-primary bg-blue-50 dark:bg-blue-900/30", tab: 1 },
+          { label: "Offene Todos", value: totalTodos - doneTodos, icon: "clock", color: "text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400", tab: 1 },
+          { label: "Seiten", value: data.pages.length, icon: "layout", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400", tab: 5 },
+          { label: "Offene Issues", value: openIssues, icon: "bug", color: "text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400", tab: 8 },
+          { label: "DSGVO offen", value: (dsgvo.openCritical || []).length + (dsgvo.openImportant || []).length, icon: "shield", color: "text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-400", tab: 1 },
+        ].map(s => (
+          <button key={s.label} onClick={() => setActiveTab(s.tab)} className="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border dark:border-border-dark hover:shadow-md transition-shadow text-left">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${s.color}`}><Icon name={s.icon} size={20} /></div>
+              <div>
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{s.value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{s.label}</p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Roadmap Schnell-Uebersicht */}
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100">Phasen-Uebersicht</h3>
+          <Btn onClick={() => setActiveTab(1)} small variant="ghost">Alle anzeigen &rarr;</Btn>
+        </div>
+        <div className="space-y-2">
+          {roadmap.filter(p => p.total > 0).map(phase => {
+            const pct = Math.round((phase.done / phase.total) * 100);
+            const isDone = phase.done === phase.total;
+            return (
+              <div key={phase.id} className="flex items-center gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${isDone ? 'bg-emerald-100 text-emerald-600' : phase.done > 0 ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>
+                  {isDone ? '✓' : ''}
+                </div>
+                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{phase.name}</span>
+                <div className="w-24 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5 flex-shrink-0">
+                  <div className={`rounded-full h-1.5 ${isDone ? 'bg-emerald-500' : phase.done > 0 ? 'bg-orange-500' : 'bg-gray-300'}`} style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">{pct}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <Btn onClick={() => setActiveTab(1)} small>Roadmap</Btn>
+        <Btn onClick={() => setActiveTab(2)} small>Entscheidungen</Btn>
+        <Btn onClick={() => setActiveTab(3)} small>Data Types</Btn>
+        <Btn onClick={() => setActiveTab(8)} small>Issues</Btn>
+      </div>
+
+      {/* Changelog */}
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Zuletzt bearbeitet</h3>
+        <div className="space-y-3">
+          {data.changelog.slice(0, 8).map(c => (
+            <div key={c.id} className="flex items-center gap-3 text-sm">
+              <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+              <span className="text-gray-700 dark:text-gray-300 flex-1">{c.text}</span>
+              <span className="text-gray-400 text-xs">{c.date}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: ROADMAP & TODOS
+// ============================================================
+
+function Tab_Roadmap() {
+  const { data } = useApp();
+  const roadmap = data.roadmap || [];
+  const [expandedPhase, setExpandedPhase] = useState(null);
+
+  // Gesamtfortschritt berechnen
+  const totalDone = roadmap.reduce((sum, p) => sum + p.done, 0);
+  const totalAll = roadmap.reduce((sum, p) => sum + p.total, 0);
+  const totalPct = totalAll > 0 ? Math.round((totalDone / totalAll) * 100) : 0;
+
+  // Phase-Status ableiten
+  function phaseStatus(phase) {
+    if (phase.total === 0) return { label: "Leer", color: "gray" };
+    if (phase.done === phase.total) return { label: "Fertig", color: "green" };
+    if (phase.done > 0) return { label: "In Arbeit", color: "orange" };
+    return { label: "Geplant", color: "blue" };
+  }
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Roadmap & Todos</h2>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{totalDone} / {totalAll} Aufgaben erledigt</span>
+      </div>
+
+      {/* Gesamtfortschritt */}
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Gesamtfortschritt</span>
+          <span className="text-sm font-bold text-primary">{totalPct}%</span>
+        </div>
+        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3">
+          <div className="bg-primary rounded-full h-3 transition-all" style={{ width: `${totalPct}%` }} />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{totalDone} von {totalAll} Aufgaben erledigt</p>
+      </div>
+
+      {/* DSGVO-Zusammenfassung */}
+      {data.dsgvo && (
+        <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark mb-6">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <Icon name="shield" size={18} className="text-blue-600" />
+            DSGVO-Status
+          </h3>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+              <p className="text-2xl font-bold text-emerald-600">{data.dsgvo.tomDone}</p>
+              <p className="text-xs text-emerald-700">Umgesetzt</p>
+            </div>
+            <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <p className="text-2xl font-bold text-orange-600">{data.dsgvo.tomPartial}</p>
+              <p className="text-xs text-orange-700">Teilweise</p>
+            </div>
+            <div className="text-center p-3 bg-red-50 rounded-lg">
+              <p className="text-2xl font-bold text-red-600">{data.dsgvo.tomOpen}</p>
+              <p className="text-xs text-red-700">Offen</p>
+            </div>
+          </div>
+          {data.dsgvo.openCritical.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-red-600 mb-1">Kritisch (vor Produktivbetrieb):</p>
+              <ul className="space-y-1">
+                {data.dsgvo.openCritical.map((item, i) => (
+                  <li key={i} className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5 flex-shrink-0">&#9679;</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {data.dsgvo.openImportant.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-orange-600 mb-1">Wichtig (zeitnah):</p>
+              <ul className="space-y-1">
+                {data.dsgvo.openImportant.map((item, i) => (
+                  <li key={i} className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                    <span className="text-orange-400 mt-0.5 flex-shrink-0">&#9679;</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Phasen-Liste */}
+      <div className="space-y-3">
+        {roadmap.map((phase, idx) => {
+          const status = phaseStatus(phase);
+          const pct = phase.total > 0 ? Math.round((phase.done / phase.total) * 100) : 0;
+          const isExpanded = expandedPhase === phase.id;
+
+          return (
+            <div key={phase.id} className="bg-white dark:bg-card-dark rounded-xl shadow-sm border dark:border-border-dark overflow-hidden">
+              {/* Phase Header */}
+              <button
+                onClick={() => setExpandedPhase(isExpanded ? null : phase.id)}
+                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                  status.color === 'green' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                  status.color === 'orange' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' :
+                  status.color === 'blue' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' :
+                  'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400'
+                }`}>
+                  {status.color === 'green' ? '✓' : idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 truncate">{phase.name}</h3>
+                    <Badge text={status.label} color={status.color} />
+                  </div>
+                  {phase.total > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 dark:bg-slate-700 rounded-full h-1.5">
+                        <div className={`rounded-full h-1.5 transition-all ${
+                          status.color === 'green' ? 'bg-emerald-500' :
+                          status.color === 'orange' ? 'bg-orange-500' :
+                          'bg-blue-500'
+                        }`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{phase.done}/{phase.total}</span>
+                    </div>
+                  )}
+                </div>
+                <Icon name="chevron" size={16} className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Todo-Liste (aufklappbar) */}
+              {isExpanded && phase.todos.length > 0 && (
+                <div className="border-t px-5 py-3 bg-gray-50">
+                  <div className="space-y-2">
+                    {phase.todos.map(todo => (
+                      <div key={todo.id} className="flex items-start gap-3 py-1">
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          todo.done ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800'
+                        }`}>
+                          {todo.done && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>}
+                        </div>
+                        <span className={`text-sm ${todo.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {todo.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {isExpanded && phase.todos.length === 0 && (
+                <div className="border-t dark:border-border-dark px-5 py-4 bg-gray-50 dark:bg-slate-800 text-center">
+                  <p className="text-xs text-gray-400">Keine Aufgaben in dieser Phase</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {roadmap.length === 0 && (
+        <EmptyState icon="check" text="Keine Roadmap-Daten vorhanden. Fuehre 'node dashboard/sync-dashboard.js' aus." />
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB: ENTSCHEIDUNGEN
+// ============================================================
+
+function Tab_Entscheidungen() {
+  const { data } = useApp();
+  const decisions = data.decisions || [];
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Entscheidungen</h2>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{decisions.length} Eintraege</span>
+      </div>
+
+      {decisions.length === 0 ? (
+        <EmptyState icon="folder" text="Keine Entscheidungen gefunden. Siehe project/entscheidungen.md" />
+      ) : (
+        <div className="relative">
+          {/* Timeline-Linie */}
+          <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-slate-700" />
+
+          <div className="space-y-6">
+            {decisions.map((d, idx) => (
+              <div key={d.id} className="relative pl-12">
+                {/* Timeline-Punkt */}
+                <div className="absolute left-3.5 top-1 w-3 h-3 rounded-full bg-primary border-2 border-white dark:border-bg-dark shadow" />
+
+                <div className="bg-white dark:bg-card-dark rounded-xl p-5 shadow-sm border dark:border-border-dark">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">{d.title}</h3>
+                    {d.date && <span className="text-xs text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">{d.date}</span>}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed">
+                    {d.content.split('\n').map((line, i) => {
+                      const trimmed = line.trim();
+                      if (trimmed.startsWith('- ')) {
+                        return <div key={i} className="flex items-start gap-2 py-0.5"><span className="text-primary mt-1 flex-shrink-0">&#8226;</span><span>{trimmed.slice(2)}</span></div>;
+                      }
+                      if (trimmed === '') return <div key={i} className="h-2" />;
+                      return <p key={i} className="py-0.5">{trimmed}</p>;
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 2: DATA EDITOR
+// ============================================================
+
+function Tab2_DataEditor() {
+  const { data, update } = useApp();
+  const [selId, setSelId] = useState(data.dataTypes[0]?.id || null);
+  const [showFieldModal, setShowFieldModal] = useState(false);
+  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [showOSModal, setShowOSModal] = useState(false);
+  const [editField, setEditField] = useState(null);
+  const [editType, setEditType] = useState(null);
+  const [editOS, setEditOS] = useState(null);
+  const [delConfirm, setDelConfirm] = useState(null);
+  const [viewOS, setViewOS] = useState(false);
+
+  const sel = data.dataTypes.find(d => d.id === selId);
+  const fieldTypes = ["Text", "Zahl", "Datum", "Ja/Nein", "Liste", "Beziehung", "Option Set"];
+
+  function saveField(f) {
+    const dts = [...data.dataTypes];
+    const dt = dts.find(d => d.id === selId);
+    if (f.id && dt.fields.find(x => x.id === f.id)) {
+      dt.fields = dt.fields.map(x => x.id === f.id ? f : x);
+    } else {
+      dt.fields.push({ ...f, id: generateId() });
+    }
+    update("dataTypes", dts);
+    setShowFieldModal(false); setEditField(null);
+  }
+
+  function deleteField(fid) {
+    const dts = [...data.dataTypes];
+    const dt = dts.find(d => d.id === selId);
+    dt.fields = dt.fields.filter(f => f.id !== fid);
+    update("dataTypes", dts);
+  }
+
+  function saveType(t) {
+    let dts = [...data.dataTypes];
+    if (t.id && dts.find(x => x.id === t.id)) {
+      dts = dts.map(x => x.id === t.id ? { ...x, name: t.name } : x);
+    } else {
+      dts.push({ id: generateId(), name: t.name, fields: [], relationships: [] });
+    }
+    update("dataTypes", dts);
+    setShowTypeModal(false); setEditType(null);
+  }
+
+  function deleteType(tid) {
+    update("dataTypes", data.dataTypes.filter(d => d.id !== tid));
+    if (selId === tid) setSelId(data.dataTypes[0]?.id || null);
+  }
+
+  function saveOS(os) {
+    let sets = [...data.optionSets];
+    if (os.id && sets.find(x => x.id === os.id)) {
+      sets = sets.map(x => x.id === os.id ? os : x);
+    } else {
+      sets.push({ ...os, id: generateId() });
+    }
+    update("optionSets", sets);
+    setShowOSModal(false); setEditOS(null);
+  }
+
+  return (
+    <div className="flex gap-6 animate-fade" style={{ minHeight: "calc(100vh - 140px)" }}>
+      {/* Left: Data Types List */}
+      <div className="w-64 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">Data Types</h3>
+          <button onClick={() => { setEditType(null); setShowTypeModal(true); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400"><Icon name="plus" size={16} /></button>
+        </div>
+        <div className="space-y-1.5">
+          {data.dataTypes.map(dt => (
+            <div key={dt.id} onClick={() => { setSelId(dt.id); setViewOS(false); }}
+              className={`px-3 py-2.5 rounded-lg cursor-pointer flex items-center justify-between group transition-colors ${selId === dt.id && !viewOS ? 'bg-primary text-white' : 'bg-white border hover:border-primary/30'}`}>
+              <div className="flex items-center gap-2">
+                <Icon name="database" size={14} />
+                <span className="text-sm font-medium">{dt.name}</span>
+              </div>
+              <span className={`text-xs ${selId === dt.id && !viewOS ? 'text-white/70' : 'text-gray-400'}`}>{dt.fields.length} Felder</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">Option Sets</h3>
+            <button onClick={() => { setEditOS(null); setShowOSModal(true); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400"><Icon name="plus" size={16} /></button>
+          </div>
+          <div className="space-y-1.5">
+            {data.optionSets.map(os => (
+              <div key={os.id} onClick={() => { setViewOS(true); setSelId(os.id); }}
+                className={`px-3 py-2.5 rounded-lg cursor-pointer flex items-center gap-2 transition-colors ${selId === os.id && viewOS ? 'bg-primary text-white' : 'bg-white border hover:border-primary/30'}`}>
+                <span className="text-sm">{os.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Detail View */}
+      <div className="flex-1 bg-white dark:bg-card-dark rounded-xl p-6 shadow-sm border dark:border-border-dark">
+        {viewOS ? (() => {
+          const os = data.optionSets.find(o => o.id === selId);
+          if (!os) return <EmptyState icon="database" text="Waehle ein Option Set" />;
+          return (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{os.name}</h2>
+                <div className="flex gap-2">
+                  <Btn small variant="secondary" onClick={() => { setEditOS(os); setShowOSModal(true); }}>Bearbeiten</Btn>
+                  <Btn small variant="danger" onClick={() => { update("optionSets", data.optionSets.filter(x => x.id !== os.id)); setViewOS(false); }}>Loeschen</Btn>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {os.values.map((v, i) => (
+                  <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">{v}</span>
+                ))}
+              </div>
+            </div>
+          );
+        })() : sel ? (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{sel.name}</h2>
+              <div className="flex gap-2">
+                <Btn small onClick={() => { setEditField(null); setShowFieldModal(true); }}>+ Feld</Btn>
+                <Btn small variant="secondary" onClick={() => { setEditType(sel); setShowTypeModal(true); }}>Bearbeiten</Btn>
+                <Btn small variant="danger" onClick={() => setDelConfirm(sel.id)}>Loeschen</Btn>
+              </div>
+            </div>
+            {sel.relationships.length > 0 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Verbunden mit: {sel.relationships.map((r, i) => (
+                <span key={i} className="inline-block bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs mr-1">{r}</span>
+              ))}</p>
+            )}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b dark:border-border-dark">
+                  <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">Name</th>
+                  <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">Typ</th>
+                  <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">Beschreibung</th>
+                  <th className="text-center py-2 text-gray-500 dark:text-gray-400 font-medium">Pflicht</th>
+                  <th className="text-right py-2 text-gray-500 dark:text-gray-400 font-medium">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sel.fields.map(f => (
+                  <tr key={f.id} className="border-b dark:border-border-dark last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800">
+                    <td className="py-2 font-medium text-gray-800 dark:text-gray-100">{f.name}</td>
+                    <td className="py-2"><Badge text={f.type} color="blue" /></td>
+                    <td className="py-2 text-gray-500 text-xs">{f.description}</td>
+                    <td className="py-2 text-center">{f.required ? <span className="text-emerald-500">Ja</span> : <span className="text-gray-300">Nein</span>}</td>
+                    <td className="py-2 text-right">
+                      <button onClick={() => { setEditField(f); setShowFieldModal(true); }} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"><Icon name="edit" size={14} /></button>
+                      <button onClick={() => deleteField(f.id)} className="p-1 hover:bg-red-50 rounded text-red-400"><Icon name="trash" size={14} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <EmptyState icon="database" text="Waehle einen Data Type" />}
+      </div>
+
+      {/* Field Modal */}
+      <FieldModal open={showFieldModal} onClose={() => { setShowFieldModal(false); setEditField(null); }} onSave={saveField} field={editField} fieldTypes={fieldTypes} />
+
+      {/* Type Modal */}
+      <TypeModal open={showTypeModal} onClose={() => { setShowTypeModal(false); setEditType(null); }} onSave={saveType} type={editType} />
+
+      {/* Option Set Modal */}
+      <OSModal open={showOSModal} onClose={() => { setShowOSModal(false); setEditOS(null); }} onSave={saveOS} os={editOS} />
+
+      <Confirm open={!!delConfirm} onClose={() => setDelConfirm(null)} onConfirm={() => deleteType(delConfirm)} text="Data Type und alle Felder loeschen?" />
+    </div>
+  );
+}
+
+function FieldModal({ open, onClose, onSave, field, fieldTypes }) {
+  const [name, setName] = useState("");
+  const [type, setType] = useState("Text");
+  const [desc, setDesc] = useState("");
+  const [req, setReq] = useState(false);
+  useEffect(() => { if (field) { setName(field.name); setType(field.type); setDesc(field.description); setReq(field.required); } else { setName(""); setType("Text"); setDesc(""); setReq(false); } }, [field, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={field ? "Feld bearbeiten" : "Neues Feld"}>
+      <Input label="Feldname" value={name} onChange={setName} required />
+      <Select label="Typ" value={type} onChange={setType} options={fieldTypes} required />
+      <Input label="Beschreibung" value={desc} onChange={setDesc} type="textarea" />
+      <div className="mb-3 flex items-center gap-2">
+        <input type="checkbox" checked={req} onChange={e => setReq(e.target.checked)} id="req" className="rounded" />
+        <label htmlFor="req" className="text-sm text-gray-700 dark:text-gray-300">Pflichtfeld</label>
+      </div>
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && onSave({ id: field?.id, name, type, description: desc, required: req })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function TypeModal({ open, onClose, onSave, type }) {
+  const [name, setName] = useState("");
+  useEffect(() => { setName(type?.name || ""); }, [type, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={type ? "Data Type bearbeiten" : "Neuer Data Type"}>
+      <Input label="Name" value={name} onChange={setName} required placeholder="z.B. Gutschein" />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && onSave({ id: type?.id, name })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function OSModal({ open, onClose, onSave, os }) {
+  const [name, setName] = useState("");
+  const [vals, setVals] = useState("");
+  useEffect(() => { setName(os?.name || ""); setVals(os?.values?.join(", ") || ""); }, [os, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={os ? "Option Set bearbeiten" : "Neues Option Set"}>
+      <Input label="Name" value={name} onChange={setName} required placeholder="z.B. Zahlungsart" />
+      <Input label="Werte (Komma-getrennt)" value={vals} onChange={setVals} required placeholder="bar, karte, online" />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && vals && onSave({ id: os?.id, name, values: vals.split(",").map(v => v.trim()).filter(Boolean) })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 3: WORKFLOW EDITOR
+// ============================================================
+
+function Tab3_WorkflowEditor() {
+  const { data, update } = useApp();
+  const [selId, setSelId] = useState(data.workflows[0]?.id || null);
+  const [showWFModal, setShowWFModal] = useState(false);
+  const [showStepModal, setShowStepModal] = useState(false);
+  const [editWF, setEditWF] = useState(null);
+  const [editStep, setEditStep] = useState(null);
+  const [expandedFolders, setExpandedFolders] = useState({});
+
+  const sel = data.workflows.find(w => w.id === selId);
+  const folders = [...new Set(data.workflows.map(w => w.folder))];
+
+  function toggleFolder(f) { setExpandedFolders(p => ({ ...p, [f]: !p[f] })); }
+
+  // Initialize all folders as expanded
+  useEffect(() => {
+    const init = {};
+    folders.forEach(f => { init[f] = true; });
+    setExpandedFolders(init);
+  }, []);
+
+  function saveWF(wf) {
+    let wfs = [...data.workflows];
+    if (wf.id && wfs.find(x => x.id === wf.id)) {
+      wfs = wfs.map(x => x.id === wf.id ? { ...x, ...wf, steps: x.steps } : x);
+    } else {
+      wfs.push({ ...wf, id: generateId(), steps: [] });
+    }
+    update("workflows", wfs);
+    setShowWFModal(false); setEditWF(null);
+  }
+
+  function deleteWF(wid) {
+    update("workflows", data.workflows.filter(w => w.id !== wid));
+    if (selId === wid) setSelId(null);
+  }
+
+  function saveStep(s) {
+    const wfs = [...data.workflows];
+    const wf = wfs.find(w => w.id === selId);
+    if (s.id && wf.steps.find(x => x.id === s.id)) {
+      wf.steps = wf.steps.map(x => x.id === s.id ? s : x);
+    } else {
+      wf.steps.push({ ...s, id: generateId() });
+    }
+    update("workflows", wfs);
+    setShowStepModal(false); setEditStep(null);
+  }
+
+  function deleteStep(sid) {
+    const wfs = [...data.workflows];
+    const wf = wfs.find(w => w.id === selId);
+    wf.steps = wf.steps.filter(s => s.id !== sid);
+    update("workflows", wfs);
+  }
+
+  function toggleWFStatus(wid) {
+    const cycle = ["Geplant", "In Arbeit", "Fertig"];
+    const wfs = data.workflows.map(w => {
+      if (w.id === wid) { const i = cycle.indexOf(w.status); return { ...w, status: cycle[(i + 1) % 3] }; }
+      return w;
+    });
+    update("workflows", wfs);
+  }
+
+  const stepIcons = { condition: "shield", database: "database", navigation: "layout", api: "plug", confirm: "check", popup: "layout" };
+
+  return (
+    <div className="flex gap-6 animate-fade" style={{ minHeight: "calc(100vh - 140px)" }}>
+      {/* Left: Workflow List */}
+      <div className="w-72 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">Workflows</h3>
+          <button onClick={() => { setEditWF(null); setShowWFModal(true); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 dark:text-gray-400"><Icon name="plus" size={16} /></button>
+        </div>
+        <div className="space-y-2">
+          {folders.map(folder => (
+            <div key={folder}>
+              <div onClick={() => toggleFolder(folder)} className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-sm font-medium text-gray-600 dark:text-gray-400">
+                <Icon name="chevron" size={12} className={`transition-transform ${expandedFolders[folder] ? 'rotate-90' : ''}`} />
+                <Icon name="folder" size={14} />
+                {folder}
+                <span className="text-xs text-gray-400 ml-auto">{data.workflows.filter(w => w.folder === folder).length}</span>
+              </div>
+              {expandedFolders[folder] && data.workflows.filter(w => w.folder === folder).map(wf => (
+                <div key={wf.id} onClick={() => setSelId(wf.id)}
+                  className={`ml-5 px-3 py-2 rounded-lg cursor-pointer flex items-center justify-between transition-colors ${selId === wf.id ? 'bg-primary text-white' : 'bg-white border hover:border-primary/30'}`}>
+                  <span className="text-sm truncate">{wf.name}</span>
+                  <div onClick={e => { e.stopPropagation(); toggleWFStatus(wf.id); }}>{statusBadge(wf.status)}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: Workflow Detail */}
+      <div className="flex-1 bg-white dark:bg-card-dark rounded-xl p-6 shadow-sm border dark:border-border-dark">
+        {sel ? (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{sel.name}</h2>
+              <div className="flex gap-2">
+                <Btn small onClick={() => { setEditStep(null); setShowStepModal(true); }}>+ Schritt</Btn>
+                <Btn small variant="secondary" onClick={() => { setEditWF(sel); setShowWFModal(true); }}>Bearbeiten</Btn>
+                <Btn small variant="danger" onClick={() => deleteWF(sel.id)}>Loeschen</Btn>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mb-6 text-sm text-gray-500 dark:text-gray-400">
+              <Badge text={sel.trigger} color="purple" />
+              {statusBadge(sel.status)}
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-4 py-3 mb-6 text-sm text-blue-800 dark:text-blue-300">
+              <strong>Trigger:</strong> {sel.triggerDesc}
+            </div>
+            <div className="space-y-3">
+              {sel.steps.map((s, i) => (
+                <div key={s.id} className="flex items-start gap-3 group">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">{i + 1}</div>
+                    {i < sel.steps.length - 1 && <div className="w-0.5 h-6 bg-gray-200 dark:bg-slate-700 mt-1" />}
+                  </div>
+                  <div className="flex-1 bg-gray-50 dark:bg-slate-800 rounded-lg px-4 py-3 border dark:border-border-dark hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon name={stepIcons[s.type] || "workflow"} size={14} className="text-gray-400" />
+                        <Badge text={s.type} color={s.type === 'condition' ? 'orange' : s.type === 'database' ? 'blue' : s.type === 'api' ? 'purple' : 'green'} />
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button onClick={() => { setEditStep(s); setShowStepModal(true); }} className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded"><Icon name="edit" size={12} /></button>
+                        <button onClick={() => deleteStep(s.id)} className="p-1 hover:bg-red-100 rounded text-red-400"><Icon name="trash" size={12} /></button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {sel.steps.length === 0 && <EmptyState icon="workflow" text="Noch keine Schritte" action="+ Schritt" onAction={() => { setEditStep(null); setShowStepModal(true); }} />}
+          </div>
+        ) : <EmptyState icon="workflow" text="Waehle einen Workflow" />}
+      </div>
+
+      {/* WF Modal */}
+      <WFModal open={showWFModal} onClose={() => { setShowWFModal(false); setEditWF(null); }} onSave={saveWF} wf={editWF} folders={folders} />
+      <StepModal open={showStepModal} onClose={() => { setShowStepModal(false); setEditStep(null); }} onSave={saveStep} step={editStep} />
+    </div>
+  );
+}
+
+function WFModal({ open, onClose, onSave, wf, folders }) {
+  const [name, setName] = useState("");
+  const [folder, setFolder] = useState("");
+  const [trigger, setTrigger] = useState("Button-Klick");
+  const [triggerDesc, setTriggerDesc] = useState("");
+  const [status, setStatus] = useState("Geplant");
+  useEffect(() => {
+    if (wf) { setName(wf.name); setFolder(wf.folder); setTrigger(wf.trigger); setTriggerDesc(wf.triggerDesc); setStatus(wf.status); }
+    else { setName(""); setFolder(folders[0] || ""); setTrigger("Button-Klick"); setTriggerDesc(""); setStatus("Geplant"); }
+  }, [wf, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={wf ? "Workflow bearbeiten" : "Neuer Workflow"}>
+      <Input label="Name" value={name} onChange={setName} required />
+      <Input label="Ordner" value={folder} onChange={setFolder} required placeholder="z.B. Bestellungen" />
+      <Select label="Trigger" value={trigger} onChange={setTrigger} options={["Button-Klick", "Seiten-Load", "Backend", "Scheduled"]} />
+      <Input label="Trigger-Beschreibung" value={triggerDesc} onChange={setTriggerDesc} placeholder="Wenn: ..." />
+      <Select label="Status" value={status} onChange={setStatus} options={["Geplant", "In Arbeit", "Fertig"]} />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && folder && onSave({ id: wf?.id, name, folder, trigger, triggerDesc, status })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function StepModal({ open, onClose, onSave, step }) {
+  const [type, setType] = useState("database");
+  const [desc, setDesc] = useState("");
+  useEffect(() => { if (step) { setType(step.type); setDesc(step.desc); } else { setType("database"); setDesc(""); } }, [step, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={step ? "Schritt bearbeiten" : "Neuer Schritt"}>
+      <Select label="Typ" value={type} onChange={setType} options={["condition", "database", "navigation", "api", "confirm", "popup"]} />
+      <Input label="Beschreibung" value={desc} onChange={setDesc} type="textarea" required placeholder="Was passiert in diesem Schritt?" />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => desc && onSave({ id: step?.id, type, desc })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 4: SEITEN & UI
+// ============================================================
+
+function Tab4_SeitenUI() {
+  const { data, update } = useApp();
+  const [showModal, setShowModal] = useState(false);
+  const [editPage, setEditPage] = useState(null);
+
+  function savePage(p) {
+    let pages = [...data.pages];
+    if (p.id && pages.find(x => x.id === p.id)) {
+      pages = pages.map(x => x.id === p.id ? p : x);
+    } else {
+      pages.push({ ...p, id: generateId() });
+    }
+    update("pages", pages);
+    setShowModal(false); setEditPage(null);
+  }
+
+  function deletePage(pid) {
+    update("pages", data.pages.filter(p => p.id !== pid));
+  }
+
+  function respIcon(ok) {
+    return ok ? <span className="text-emerald-500 text-xs font-medium">OK</span> : <span className="text-red-400 text-xs font-medium">Fehlt</span>;
+  }
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Seiten & UI</h2>
+        <Btn onClick={() => { setEditPage(null); setShowModal(true); }} small>+ Seite</Btn>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+        {data.pages.map(p => (
+          <div key={p.id} className="bg-white dark:bg-card-dark rounded-xl border dark:border-border-dark shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div className="h-32 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <Icon name="layout" size={32} className="mx-auto mb-1" />
+                <span className="text-xs">{p.name}</span>
+              </div>
+            </div>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100">{p.name}</h3>
+                {statusBadge(p.status)}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{p.desc}</p>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <span className="font-medium">Data Types: </span>
+                {p.dataTypes.map((d, i) => <span key={i} className="inline-block bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded mr-1 mb-1">{d}</span>)}
+              </div>
+              {p.reusables.length > 0 && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <span className="font-medium">Komponenten: </span>
+                  {p.reusables.map((r, i) => <span key={i} className="inline-block bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded mr-1 mb-1">{r}</span>)}
+                </div>
+              )}
+              <div className="flex items-center gap-3 text-xs border-t dark:border-border-dark pt-2 mt-2">
+                <span className="text-gray-400">Responsive:</span>
+                <span>Desktop {respIcon(p.responsive?.desktop)}</span>
+                <span>Tablet {respIcon(p.responsive?.tablet)}</span>
+                <span>Mobile {respIcon(p.responsive?.mobile)}</span>
+              </div>
+              <div className="flex gap-1 mt-3">
+                <Btn small variant="secondary" onClick={() => { setEditPage(p); setShowModal(true); }}>Bearbeiten</Btn>
+                <Btn small variant="danger" onClick={() => deletePage(p.id)}>Loeschen</Btn>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <PageModal open={showModal} onClose={() => { setShowModal(false); setEditPage(null); }} onSave={savePage} page={editPage} />
+    </div>
+  );
+}
+
+function PageModal({ open, onClose, onSave, page }) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [status, setStatus] = useState("Geplant");
+  const [dt, setDt] = useState("");
+  const [reuse, setReuse] = useState("");
+  useEffect(() => {
+    if (page) { setName(page.name); setDesc(page.desc); setStatus(page.status); setDt(page.dataTypes.join(", ")); setReuse(page.reusables.join(", ")); }
+    else { setName(""); setDesc(""); setStatus("Geplant"); setDt(""); setReuse(""); }
+  }, [page, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={page ? "Seite bearbeiten" : "Neue Seite"}>
+      <Input label="Seitenname" value={name} onChange={setName} required />
+      <Input label="Beschreibung" value={desc} onChange={setDesc} type="textarea" />
+      <Select label="Status" value={status} onChange={setStatus} options={["Geplant", "In Arbeit", "Fertig"]} />
+      <Input label="Data Types (Komma-getrennt)" value={dt} onChange={setDt} placeholder="Gericht, Kategorie" />
+      <Input label="Reusable Elements (Komma-getrennt)" value={reuse} onChange={setReuse} placeholder="Sidebar, Header" />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && onSave({ id: page?.id, name, desc, status, dataTypes: dt.split(",").map(s => s.trim()).filter(Boolean), reusables: reuse.split(",").map(s => s.trim()).filter(Boolean), responsive: page?.responsive || { desktop: true, tablet: false, mobile: false } })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 5: API & INTEGRATIONEN
+// ============================================================
+
+function Tab5_API() {
+  const { data, update } = useApp();
+  const [showModal, setShowModal] = useState(false);
+  const [editInt, setEditInt] = useState(null);
+  const [showKeys, setShowKeys] = useState({});
+
+  function saveInt(intg) {
+    let ints = [...data.integrations];
+    if (intg.id && ints.find(x => x.id === intg.id)) {
+      ints = ints.map(x => x.id === intg.id ? intg : x);
+    } else {
+      ints.push({ ...intg, id: generateId() });
+    }
+    update("integrations", ints);
+    setShowModal(false); setEditInt(null);
+  }
+
+  function deleteInt(iid) {
+    update("integrations", data.integrations.filter(i => i.id !== iid));
+  }
+
+  const statusIcon = (s) => {
+    if (s === "Verbunden") return <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full inline-block" />;
+    if (s === "Nicht eingerichtet") return <span className="w-2.5 h-2.5 bg-gray-300 rounded-full inline-block" />;
+    return <span className="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block" />;
+  };
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">API & Integrationen</h2>
+        <Btn onClick={() => { setEditInt(null); setShowModal(true); }} small>+ Integration</Btn>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {data.integrations.map(intg => (
+          <div key={intg.id} className="bg-white dark:bg-card-dark rounded-xl p-5 border dark:border-border-dark shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {statusIcon(intg.status)}
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100">{intg.name}</h3>
+              </div>
+              <Badge text={intg.typ} color="purple" />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{intg.desc}</p>
+            {intg.url && (
+              <div className="text-xs mb-3">
+                <span className="text-gray-400">Endpoint: </span>
+                <span className="font-mono text-gray-600 dark:text-gray-400">{showKeys[intg.id] ? intg.url : "***"}</span>
+                <button onClick={() => setShowKeys(p => ({ ...p, [intg.id]: !p[intg.id] }))} className="ml-2 text-primary text-xs hover:underline">
+                  {showKeys[intg.id] ? "Verstecken" : "Anzeigen"}
+                </button>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              {statusBadge(intg.status)}
+              <div className="flex gap-1">
+                <Btn small variant="secondary" onClick={() => { setEditInt(intg); setShowModal(true); }}>Bearbeiten</Btn>
+                <Btn small variant="danger" onClick={() => deleteInt(intg.id)}>Loeschen</Btn>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <IntModal open={showModal} onClose={() => { setShowModal(false); setEditInt(null); }} onSave={saveInt} intg={editInt} />
+    </div>
+  );
+}
+
+function IntModal({ open, onClose, onSave, intg }) {
+  const [name, setName] = useState("");
+  const [typ, setTyp] = useState("REST API");
+  const [status, setStatus] = useState("Nicht eingerichtet");
+  const [desc, setDesc] = useState("");
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    if (intg) { setName(intg.name); setTyp(intg.typ); setStatus(intg.status); setDesc(intg.desc); setUrl(intg.url); }
+    else { setName(""); setTyp("REST API"); setStatus("Nicht eingerichtet"); setDesc(""); setUrl(""); }
+  }, [intg, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={intg ? "Integration bearbeiten" : "Neue Integration"}>
+      <Input label="Name" value={name} onChange={setName} required />
+      <Select label="Typ" value={typ} onChange={setTyp} options={["REST API", "Webhook", "Plugin", "OAuth", "SDK"]} />
+      <Select label="Status" value={status} onChange={setStatus} options={["Verbunden", "Nicht eingerichtet", "In Arbeit"]} />
+      <Input label="Beschreibung" value={desc} onChange={setDesc} type="textarea" />
+      <Input label="URL / Endpoint" value={url} onChange={setUrl} placeholder="api.example.com" />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => name && onSave({ id: intg?.id, name, typ, status, desc, url })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 6: PRIVACY & ROLLEN
+// ============================================================
+
+function Tab6_Privacy() {
+  const { data, update } = useApp();
+  const dtNames = data.dataTypes.map(d => d.name);
+  const ops = ["read", "create", "update", "delete"];
+  const opLabels = { read: "Lesen", create: "Erstellen", update: "Aendern", delete: "Loeschen" };
+
+  function togglePerm(roleId, dtName, op) {
+    const roles = data.roles.map(r => {
+      if (r.id === roleId) {
+        const perms = { ...r.perms };
+        if (!perms[dtName]) perms[dtName] = { read: false, create: false, update: false, delete: false };
+        perms[dtName] = { ...perms[dtName], [op]: !perms[dtName][op] };
+        return { ...r, perms };
+      }
+      return r;
+    });
+    update("roles", roles);
+  }
+
+  return (
+    <div className="animate-fade">
+      <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-6">Privacy & Rollen</h2>
+
+      {data.roles.map(role => (
+        <div key={role.id} className="bg-white dark:bg-card-dark rounded-xl p-5 border dark:border-border-dark shadow-sm mb-4">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">{role.name}</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b dark:border-border-dark">
+                  <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium w-40">Data Type</th>
+                  {ops.map(op => <th key={op} className="text-center py-2 text-gray-500 dark:text-gray-400 font-medium w-24">{opLabels[op]}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {dtNames.map(dn => (
+                  <tr key={dn} className="border-b dark:border-border-dark last:border-0 hover:bg-gray-50 dark:hover:bg-slate-800">
+                    <td className="py-2 font-medium text-gray-700 dark:text-gray-300">{dn}</td>
+                    {ops.map(op => (
+                      <td key={op} className="py-2 text-center">
+                        <input type="checkbox" checked={role.perms[dn]?.[op] || false} onChange={() => togglePerm(role.id, dn, op)}
+                          className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 mt-4">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Privacy Rules Zusammenfassung</h3>
+        <div className="space-y-2 text-sm text-blue-700">
+          {dtNames.map(dn => {
+            const rules = data.roles.filter(r => r.perms[dn]?.read).map(r => r.name);
+            return <p key={dn}><strong>{dn}:</strong> Lesezugriff fuer {rules.join(", ") || "niemand"}</p>;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 7: ISSUES & TODOS (Kanban)
+// ============================================================
+
+function Tab7_Issues() {
+  const { data, update } = useApp();
+  const [showModal, setShowModal] = useState(false);
+  const [editIssue, setEditIssue] = useState(null);
+  const [dragId, setDragId] = useState(null);
+
+  const columns = ["Backlog", "In Arbeit", "Blockiert", "Erledigt"];
+
+  function saveIssue(issue) {
+    let issues = [...data.issues];
+    if (issue.id && issues.find(x => x.id === issue.id)) {
+      issues = issues.map(x => x.id === issue.id ? issue : x);
+    } else {
+      issues.push({ ...issue, id: generateId(), created: new Date().toISOString().split('T')[0] });
+    }
+    update("issues", issues);
+    setShowModal(false); setEditIssue(null);
+  }
+
+  function deleteIssue(iid) {
+    update("issues", data.issues.filter(i => i.id !== iid));
+  }
+
+  function moveIssue(issueId, newStatus) {
+    const issues = data.issues.map(i => i.id === issueId ? { ...i, status: newStatus } : i);
+    update("issues", issues);
+  }
+
+  function onDragStart(e, id) { setDragId(id); e.dataTransfer.effectAllowed = "move"; }
+  function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add("drag-over"); }
+  function onDragLeave(e) { e.currentTarget.classList.remove("drag-over"); }
+  function onDrop(e, col) { e.currentTarget.classList.remove("drag-over"); if (dragId) { moveIssue(dragId, col); setDragId(null); } }
+
+  return (
+    <div className="animate-fade">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Issues & Todos</h2>
+        <Btn onClick={() => { setEditIssue(null); setShowModal(true); }} small>+ Issue</Btn>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4" style={{ minHeight: "500px" }}>
+        {columns.map(col => (
+          <div key={col}
+            onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={e => onDrop(e, col)}
+            className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 border-2 border-transparent transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-300">{col}</h3>
+              <span className="text-xs bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">{data.issues.filter(i => i.status === col).length}</span>
+            </div>
+            <div className="space-y-2">
+              {data.issues.filter(i => i.status === col).map(issue => (
+                <div key={issue.id} draggable onDragStart={e => onDragStart(e, issue.id)}
+                  className={`bg-white dark:bg-card-dark rounded-lg p-3 border dark:border-border-dark shadow-sm cursor-grab hover:shadow-md transition-shadow ${dragId === issue.id ? 'dragging' : ''}`}>
+                  <div className="flex items-start justify-between mb-1">
+                    {priorityBadge(issue.priority)}
+                    <div className="flex gap-1">
+                      <button onClick={() => { setEditIssue(issue); setShowModal(true); }} className="p-0.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"><Icon name="edit" size={12} /></button>
+                      <button onClick={() => deleteIssue(issue.id)} className="p-0.5 hover:bg-red-50 rounded text-red-400"><Icon name="trash" size={12} /></button>
+                    </div>
+                  </div>
+                  <h4 className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1">{issue.title}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{issue.desc}</p>
+                  <div className="flex items-center justify-between">
+                    <Badge text={issue.area} color="blue" />
+                    <span className="text-xs text-gray-400">{issue.created}</span>
+                  </div>
+                  <div className="flex gap-1 mt-2">
+                    {columns.filter(c => c !== col).map(c => (
+                      <button key={c} onClick={() => moveIssue(issue.id, c)} className="text-xs text-gray-400 hover:text-primary hover:underline">{c === "Erledigt" ? "Erledigt" : c === "In Arbeit" ? "Start" : c === "Blockiert" ? "Block" : "Back"}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <IssueModal open={showModal} onClose={() => { setShowModal(false); setEditIssue(null); }} onSave={saveIssue} issue={editIssue} />
+    </div>
+  );
+}
+
+function IssueModal({ open, onClose, onSave, issue }) {
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [priority, setPriority] = useState("Normal");
+  const [area, setArea] = useState("Allgemein");
+  const [status, setStatus] = useState("Backlog");
+  useEffect(() => {
+    if (issue) { setTitle(issue.title); setDesc(issue.desc); setPriority(issue.priority); setArea(issue.area); setStatus(issue.status); }
+    else { setTitle(""); setDesc(""); setPriority("Normal"); setArea("Allgemein"); setStatus("Backlog"); }
+  }, [issue, open]);
+  return (
+    <Modal open={open} onClose={onClose} title={issue ? "Issue bearbeiten" : "Neues Issue"}>
+      <Input label="Titel" value={title} onChange={setTitle} required />
+      <Input label="Beschreibung" value={desc} onChange={setDesc} type="textarea" />
+      <Select label="Prioritaet" value={priority} onChange={setPriority} options={["Kritisch", "Hoch", "Normal", "Niedrig"]} />
+      <Select label="Bereich" value={area} onChange={setArea} options={["Data Type", "Workflow", "Seite", "Allgemein"]} />
+      <Select label="Status" value={status} onChange={setStatus} options={["Backlog", "In Arbeit", "Blockiert", "Erledigt"]} />
+      <div className="flex justify-end gap-2">
+        <Btn variant="secondary" onClick={onClose} small>Abbrechen</Btn>
+        <Btn onClick={() => title && onSave({ id: issue?.id, title, desc, priority, area, status, created: issue?.created })} small>Speichern</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+// ============================================================
+// TAB 8: EINSTELLUNGEN
+// ============================================================
+
+function Tab8_Einstellungen() {
+  const { data, update, resetData, syncFromProject, dark, setDark } = useApp();
+  const [showReset, setShowReset] = useState(false);
+  const [newMember, setNewMember] = useState({ name: "", rolle: "" });
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${data.project.name.replace(/\s+/g, '-').toLowerCase()}-export.json`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (imported.project && imported.dataTypes) {
+          saveData(imported);
+          window.location.reload();
+        } else {
+          alert("Ungueltiges Format");
+        }
+      } catch { alert("Fehler beim Importieren"); }
+    };
+    reader.readAsText(file);
+  }
+
+  function addMember() {
+    if (!newMember.name) return;
+    const proj = { ...data.project, team: [...data.project.team, { id: generateId(), ...newMember }] };
+    update("project", proj);
+    setNewMember({ name: "", rolle: "" });
+  }
+
+  function removeMember(mid) {
+    const proj = { ...data.project, team: data.project.team.filter(m => m.id !== mid) };
+    update("project", proj);
+  }
+
+  return (
+    <div className="animate-fade max-w-2xl">
+      <h2 className="text-lg font-bold mb-6">Einstellungen</h2>
+
+      <div className="rounded-xl p-5 border shadow-sm mb-4" style={{ backgroundColor: 'var(--t-card)', borderColor: 'var(--t-border)' }}>
+        <h3 className="font-semibold mb-3">Darstellung</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Dark Mode</p>
+            <p className="text-xs" style={{ color: 'var(--t-text-3)' }}>Zwischen hellem und dunklem Design wechseln</p>
+          </div>
+          <button
+            onClick={() => setDark(d => !d)}
+            className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200"
+            style={{ backgroundColor: dark ? '#3B82F6' : '#d1d5db' }}
+          >
+            <span
+              className="inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform duration-200"
+              style={{ transform: dark ? 'translateX(22px)' : 'translateX(3px)' }}
+            />
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-xl p-5 border shadow-sm mb-4" style={{ backgroundColor: 'var(--t-card)', borderColor: 'var(--t-border)' }}>
+        <h3 className="font-semibold mb-3">Projekt</h3>
+        <Input label="Projektname" value={data.project.name} onChange={v => update("project", { ...data.project, name: v })} />
+        <Input label="Tech Stack" value={data.project.techStack} onChange={v => update("project", { ...data.project, techStack: v })} />
+        <Select label="Status" value={data.project.status} onChange={v => update("project", { ...data.project, status: v })} options={["Planung", "In Entwicklung", "Beta", "Live"]} />
+      </div>
+
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 border dark:border-border-dark shadow-sm mb-4">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Team</h3>
+        <div className="space-y-2 mb-3">
+          {data.project.team.map(m => (
+            <div key={m.id} className="flex items-center justify-between bg-gray-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
+              <div>
+                <span className="font-medium text-sm text-gray-800 dark:text-gray-100">{m.name}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{m.rolle}</span>
+              </div>
+              <button onClick={() => removeMember(m.id)} className="text-red-400 hover:text-red-600"><Icon name="trash" size={14} /></button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input value={newMember.name} onChange={e => setNewMember(p => ({ ...p, name: e.target.value }))} placeholder="Name" className="flex-1 px-3 py-2 border dark:border-border-dark rounded-lg text-sm dark:bg-slate-800 dark:text-gray-200" />
+          <input value={newMember.rolle} onChange={e => setNewMember(p => ({ ...p, rolle: e.target.value }))} placeholder="Rolle" className="flex-1 px-3 py-2 border dark:border-border-dark rounded-lg text-sm dark:bg-slate-800 dark:text-gray-200" />
+          <Btn onClick={addMember} small>Hinzufuegen</Btn>
+        </div>
+      </div>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800 mb-4">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Projekt-Sync</h3>
+        <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">Aktualisiert das Dashboard mit den neuesten Daten aus dem Code. Claude fuehrt <code className="bg-blue-100 px-1 rounded">sync-dashboard.js</code> automatisch aus wenn sich etwas aendert.</p>
+        <Btn onClick={syncFromProject}>
+          <span className="flex items-center gap-2"><Icon name="download" size={14} /> Vom Projekt synchronisieren</span>
+        </Btn>
+      </div>
+
+      <div className="bg-white dark:bg-card-dark rounded-xl p-5 border dark:border-border-dark shadow-sm mb-4">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">Daten</h3>
+        <div className="flex gap-3">
+          <Btn onClick={exportData} variant="secondary">
+            <span className="flex items-center gap-2"><Icon name="download" size={14} /> Export (JSON)</span>
+          </Btn>
+          <label className="cursor-pointer">
+            <Btn variant="secondary" onClick={() => document.getElementById('import-file').click()}>
+              <span className="flex items-center gap-2"><Icon name="upload" size={14} /> Import (JSON)</span>
+            </Btn>
+            <input id="import-file" type="file" accept=".json" onChange={importData} className="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-5 border border-red-200 dark:border-red-800">
+        <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">Gefahrenzone</h3>
+        <p className="text-sm text-red-600 dark:text-red-400 mb-3">Alle Daten zuruecksetzen auf die Standardwerte. Das kann nicht rueckgaengig gemacht werden.</p>
+        <Btn variant="danger" onClick={() => setShowReset(true)} small>Alle Daten zuruecksetzen</Btn>
+      </div>
+
+      <Confirm open={showReset} onClose={() => setShowReset(false)} onConfirm={resetData} text="Wirklich ALLE Daten zuruecksetzen? Das kann nicht rueckgaengig gemacht werden!" />
+    </div>
+  );
+}
+
+// ============================================================
+// APP SHELL
+// ============================================================
+
+const TABS = [
+  { id: 0, name: "Uebersicht", icon: "home" },
+  { id: 1, name: "Roadmap & Todos", icon: "check" },
+  { id: 2, name: "Entscheidungen", icon: "folder" },
+  { id: 3, name: "Data Editor", icon: "database" },
+  { id: 4, name: "Workflows", icon: "workflow" },
+  { id: 5, name: "Seiten & UI", icon: "layout" },
+  { id: 6, name: "API & Integrationen", icon: "plug" },
+  { id: 7, name: "Privacy & Rollen", icon: "shield" },
+  { id: 8, name: "Issues (Kanban)", icon: "bug" },
+  { id: 9, name: "Einstellungen", icon: "settings" },
+];
+
+function App() {
+  const [data, setData] = useState(loadData);
+  const [activeTab, setActiveTab] = useState(0);
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [dark, setDark] = useState(() => localStorage.getItem('dashboard-dark') === 'true');
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('dashboard-dark', dark ? 'true' : 'false');
+  }, [dark]);
+
+  useEffect(() => { saveData(data); }, [data]);
+
+  function update(key, value) {
+    setData(prev => ({ ...prev, [key]: value }));
+  }
+
+  function resetData() {
+    const fresh = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    setData(fresh);
+    saveData(fresh);
+  }
+
+  function syncFromProject() {
+    // Laedt die neuesten synchronisierten Daten aus dashboard-data.js
+    // Der User muss vorher "node dashboard/sync-dashboard.js" ausfuehren
+    const synced = window.SYNCED_DATA;
+    if (synced) {
+      setData(JSON.parse(JSON.stringify(synced)));
+      saveData(JSON.parse(JSON.stringify(synced)));
+      alert('Dashboard wurde mit den neuesten Projektdaten synchronisiert!');
+    } else {
+      alert('Keine synchronisierten Daten gefunden. Fuehre erst "node dashboard/sync-dashboard.js" aus.');
+    }
+  }
+
+  // Global Search
+  function doSearch(q) {
+    setSearch(q);
+    if (!q.trim()) { setSearchResults(null); return; }
+    const s = q.toLowerCase();
+    const results = [];
+    // Roadmap/Todos durchsuchen
+    (data.roadmap || []).forEach(phase => { if (phase.name.toLowerCase().includes(s)) results.push({ type: "Phase", name: phase.name, tab: 1 }); phase.todos.forEach(t => { if (t.title.toLowerCase().includes(s)) results.push({ type: "Todo", name: t.title, tab: 1 }); }); });
+    // Entscheidungen durchsuchen
+    (data.decisions || []).forEach(d => { if (d.title.toLowerCase().includes(s) || d.content.toLowerCase().includes(s)) results.push({ type: "Entscheidung", name: d.title, tab: 2 }); });
+    data.dataTypes.forEach(dt => { if (dt.name.toLowerCase().includes(s)) results.push({ type: "Data Type", name: dt.name, tab: 3 }); dt.fields.forEach(f => { if (f.name.toLowerCase().includes(s) || f.description.toLowerCase().includes(s)) results.push({ type: "Feld", name: `${dt.name}.${f.name}`, tab: 3 }); }); });
+    data.workflows.forEach(wf => { if (wf.name.toLowerCase().includes(s)) results.push({ type: "Workflow", name: wf.name, tab: 4 }); });
+    data.pages.forEach(p => { if (p.name.toLowerCase().includes(s)) results.push({ type: "Seite", name: p.name, tab: 5 }); });
+    data.integrations.forEach(i => { if (i.name.toLowerCase().includes(s)) results.push({ type: "Integration", name: i.name, tab: 6 }); });
+    data.issues.forEach(i => { if (i.title.toLowerCase().includes(s)) results.push({ type: "Issue", name: i.title, tab: 8 }); });
+    // DSGVO durchsuchen
+    (data.dsgvo?.openCritical || []).forEach(item => { if (item.toLowerCase().includes(s)) results.push({ type: "DSGVO", name: item, tab: 1 }); });
+    (data.dsgvo?.openImportant || []).forEach(item => { if (item.toLowerCase().includes(s)) results.push({ type: "DSGVO", name: item, tab: 1 }); });
+    setSearchResults(results);
+  }
+
+  const tabComponents = [Tab1_Uebersicht, Tab_Roadmap, Tab_Entscheidungen, Tab2_DataEditor, Tab3_WorkflowEditor, Tab4_SeitenUI, Tab5_API, Tab6_Privacy, Tab7_Issues, Tab8_Einstellungen];
+  const ActiveComponent = tabComponents[activeTab];
+
+  return (
+    <AppContext.Provider value={{ data, setData, update, resetData, syncFromProject, activeTab, setActiveTab, dark, setDark }}>
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-56 bg-sidebar dark:bg-sidebar-dark flex flex-col flex-shrink-0">
+          <div className="px-4 py-5 border-b border-white/10">
+            <h1 className="text-white font-bold text-sm">{data.project.name}</h1>
+            <p className="text-white/50 text-xs mt-0.5">Projekt-Dashboard</p>
+          </div>
+          <nav className="flex-1 py-3 overflow-y-auto">
+            {TABS.map(tab => (
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSearchResults(null); setSearch(""); }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === tab.id ? 'bg-white/15 text-white font-medium' : 'text-white/60 hover:bg-white/5 hover:text-white/80'}`}>
+                <Icon name={tab.icon} size={18} />
+                {tab.name}
+              </button>
+            ))}
+          </nav>
+          <div className="px-4 py-3 border-t border-white/10">
+            <p className="text-white/40 text-xs">v1.0 — Alle Daten lokal</p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Topbar */}
+          <div className="bg-white dark:bg-card-dark border-b dark:border-border-dark px-6 py-3 flex items-center gap-4 flex-shrink-0">
+            <div className="relative flex-1 max-w-md">
+              <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+              <input value={search} onChange={e => doSearch(e.target.value)} placeholder="Suche in allen Bereichen..."
+                className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border dark:border-border-dark rounded-lg text-sm dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:placeholder-gray-500" />
+              {searchResults && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-card-dark rounded-xl shadow-lg border dark:border-border-dark max-h-64 overflow-y-auto z-50">
+                  {searchResults.length === 0 ? (
+                    <p className="px-4 py-3 text-sm text-gray-400">Keine Ergebnisse</p>
+                  ) : searchResults.map((r, i) => (
+                    <button key={i} onClick={() => { setActiveTab(r.tab); setSearchResults(null); setSearch(""); }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2 border-b dark:border-border-dark last:border-0">
+                      <Badge text={r.type} color="blue" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 dark:text-gray-300">{r.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{TABS[activeTab].name}</div>
+            <button onClick={() => setDark(d => !d)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400 transition-colors" title={dark ? 'Light Mode' : 'Dark Mode'}>
+              {dark ? <Icon name="sun" size={18} /> : <Icon name="moon" size={18} />}
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6 bg-bg dark:bg-bg-dark">
+            <ActiveComponent />
+          </div>
+        </div>
+      </div>
+    </AppContext.Provider>
+  );
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

@@ -11,6 +11,10 @@ import speisekarteRoutes from './routes/speisekarte';
 import reservierungenRoutes from './routes/reservierungen';
 import tischeRoutes from './routes/tische';
 import authRoutes from './routes/auth';
+import mitarbeiterRoutes from './routes/mitarbeiter';
+import restaurantRoutes from './routes/restaurant';
+import statistikenRoutes from './routes/statistiken';
+import dienstplanRoutes from './routes/dienstplan';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -30,6 +34,10 @@ app.use('/api/bestellungen', bestellungenRoutes);
 app.use('/api/speisekarte', speisekarteRoutes);
 app.use('/api/reservierungen', reservierungenRoutes);
 app.use('/api/tische', tischeRoutes);
+app.use('/api/mitarbeiter', mitarbeiterRoutes);
+app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/statistiken', statistikenRoutes);
+app.use('/api/dienstplan', dienstplanRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });

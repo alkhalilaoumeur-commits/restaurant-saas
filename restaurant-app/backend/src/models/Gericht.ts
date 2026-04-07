@@ -18,6 +18,12 @@ export interface Kategorie {
   restaurant_id: string;
   name: string;
   reihenfolge: number;
+  bild_url: string | null;
+}
+
+/** Kategorie mit Anzahl verfügbarer Gerichte (für Gäste-Seite) */
+export interface KategorieMitAnzahl extends Kategorie {
+  anzahl_gerichte: number;
 }
 
 export const GerichtModel = {
@@ -70,5 +76,18 @@ export const GerichtModel = {
       'SELECT * FROM kategorien WHERE restaurant_id = $1 ORDER BY reihenfolge',
       [restaurantId]
     );
+  },
+
+  /** Kategorien mit Anzahl verfügbarer Gerichte — für die öffentliche Gäste-Seite */
+  alleKategorienOeffentlich(restaurantId: string) {
+    return q<KategorieMitAnzahl>(`
+      SELECT k.*, COUNT(g.id)::int AS anzahl_gerichte
+      FROM kategorien k
+      LEFT JOIN gerichte g ON g.kategorie_id = k.id AND g.verfuegbar = true
+      WHERE k.restaurant_id = $1
+      GROUP BY k.id
+      HAVING COUNT(g.id) > 0
+      ORDER BY k.reihenfolge
+    `, [restaurantId]);
   },
 };

@@ -40,6 +40,20 @@ export const TischModel = {
     );
   },
 
+  aktualisieren(id: string, restaurantId: string, felder: { nummer?: number; kapazitaet?: number | null }) {
+    const sets: string[] = [];
+    const vals: unknown[] = [];
+    let idx = 1;
+    if (felder.nummer !== undefined) { sets.push(`nummer = $${idx++}`); vals.push(felder.nummer); }
+    if (felder.kapazitaet !== undefined) { sets.push(`kapazitaet = $${idx++}`); vals.push(felder.kapazitaet); }
+    if (sets.length === 0) return null;
+    vals.push(id, restaurantId);
+    return q1<Tisch>(
+      `UPDATE tische SET ${sets.join(', ')} WHERE id = $${idx++} AND restaurant_id = $${idx} RETURNING *`,
+      vals
+    );
+  },
+
   loeschen(id: string, restaurantId: string) {
     return q1('DELETE FROM tische WHERE id = $1 AND restaurant_id = $2 RETURNING id', [id, restaurantId]);
   },
