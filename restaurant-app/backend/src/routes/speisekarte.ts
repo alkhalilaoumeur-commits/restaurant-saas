@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { GerichtModel } from '../models/Gericht';
+import { ExtrasModel } from '../models/Extras';
 import { q1 } from '../models/db';
 import { requireAuth, optionalAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -81,17 +82,56 @@ router.delete('/kategorien/:id', requireAuth, requireRolle('admin'), asyncHandle
   res.status(204).send();
 }));
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  UNTERKATEGORIEN (optionale Gruppierung innerhalb einer Kategorie)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// GET /api/speisekarte/kategorien/:id/unterkategorien  (öffentlich)
+router.get('/kategorien/:id/unterkategorien', asyncHandler(async (req: Request, res: Response) => {
+  const restaurantId = req.query.restaurantId as string;
+  if (!restaurantId) { res.status(400).json({ fehler: 'restaurantId erforderlich' }); return; }
+  const unterkategorien = await GerichtModel.alleUnterkategorien(req.params.id, restaurantId);
+  res.json(unterkategorien);
+}));
+
+// POST /api/speisekarte/kategorien/:id/unterkategorien  (Admin)
+router.post('/kategorien/:id/unterkategorien', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { name, reihenfolge } = req.body;
+  if (!name) { res.status(400).json({ fehler: 'Name erforderlich' }); return; }
+  const uk = await GerichtModel.unterkategorieErstellen({
+    id: uuid(), restaurant_id: req.auth!.restaurantId, kategorie_id: req.params.id,
+    name, reihenfolge: reihenfolge ?? 0,
+  });
+  res.status(201).json(uk);
+}));
+
+// PATCH /api/speisekarte/unterkategorien/:id  (Admin)
+router.patch('/unterkategorien/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const uk = await GerichtModel.unterkategorieAktualisieren(req.params.id, req.auth!.restaurantId, req.body);
+  if (!uk) { res.status(404).json({ fehler: 'Unterkategorie nicht gefunden' }); return; }
+  res.json(uk);
+}));
+
+// DELETE /api/speisekarte/unterkategorien/:id  (Admin)
+router.delete('/unterkategorien/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = await GerichtModel.unterkategorieLoeschen(req.params.id, req.auth!.restaurantId);
+  if (!result) { res.status(404).json({ fehler: 'Unterkategorie nicht gefunden' }); return; }
+  res.status(204).send();
+}));
+
 // POST /api/speisekarte  (Admin)
 router.post('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { kategorie_id, name, beschreibung, preis, bild_url, allergene } = req.body;
+  const { kategorie_id, unterkategorie_id, name, beschreibung, preis, bild_url, allergene } = req.body;
   if (!kategorie_id || !name || preis === undefined) {
     res.status(400).json({ fehler: 'kategorie_id, name und preis sind erforderlich' });
     return;
   }
   const gericht = await GerichtModel.erstellen({
     id: uuid(), restaurant_id: req.auth!.restaurantId, kategorie_id,
+    unterkategorie_id: unterkategorie_id || null,
     name, beschreibung: beschreibung || null, preis,
     bild_url: bild_url || null, allergene: allergene || null, verfuegbar: true,
+    modell_3d_url: null,
   });
   res.status(201).json(gericht);
 }));
@@ -107,6 +147,79 @@ router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req
 router.delete('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
   const result = await GerichtModel.loeschen(req.params.id, req.auth!.restaurantId);
   if (!result) { res.status(404).json({ fehler: 'Gericht nicht gefunden' }); return; }
+  res.status(204).send();
+}));
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  EXTRAS / MODIFIER
+// ═══════════════════════════════════════════════════════════════════════════
+
+// GET /api/speisekarte/:id/extras  (öffentlich – Gäste)
+// Gibt alle Extras-Gruppen + verfügbare Extras eines Gerichts zurück
+router.get('/:id/extras', asyncHandler(async (req: Request, res: Response) => {
+  const gruppen = await ExtrasModel.nachGericht(req.params.id);
+  res.json(gruppen);
+}));
+
+// GET /api/speisekarte/:id/extras/admin  (Admin – alle inkl. nicht-verfügbare)
+router.get('/:id/extras/admin', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const gruppen = await ExtrasModel.alleGruppenAdmin(req.params.id, req.auth!.restaurantId);
+  res.json(gruppen);
+}));
+
+// POST /api/speisekarte/:id/extras/gruppen  (Admin – Gruppe erstellen)
+router.post('/:id/extras/gruppen', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { name, pflicht, max_auswahl, reihenfolge } = req.body;
+  if (!name) { res.status(400).json({ fehler: 'Name erforderlich' }); return; }
+
+  // Prüfen: Gericht gehört zum Restaurant
+  const gericht = await GerichtModel.nachId(req.params.id, req.auth!.restaurantId);
+  if (!gericht) { res.status(404).json({ fehler: 'Gericht nicht gefunden' }); return; }
+
+  const gruppe = await ExtrasModel.gruppeErstellen({
+    id: uuid(), gericht_id: req.params.id, restaurant_id: req.auth!.restaurantId,
+    name, pflicht, max_auswahl, reihenfolge,
+  });
+  res.status(201).json(gruppe);
+}));
+
+// PATCH /api/speisekarte/extras/gruppen/:gruppeId  (Admin – Gruppe bearbeiten)
+router.patch('/extras/gruppen/:gruppeId', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const gruppe = await ExtrasModel.gruppeAktualisieren(req.params.gruppeId, req.auth!.restaurantId, req.body);
+  if (!gruppe) { res.status(404).json({ fehler: 'Extras-Gruppe nicht gefunden' }); return; }
+  res.json(gruppe);
+}));
+
+// DELETE /api/speisekarte/extras/gruppen/:gruppeId  (Admin – Gruppe löschen)
+router.delete('/extras/gruppen/:gruppeId', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = await ExtrasModel.gruppeLoeschen(req.params.gruppeId, req.auth!.restaurantId);
+  if (!result) { res.status(404).json({ fehler: 'Extras-Gruppe nicht gefunden' }); return; }
+  res.status(204).send();
+}));
+
+// POST /api/speisekarte/extras/gruppen/:gruppeId/extras  (Admin – Extra erstellen)
+router.post('/extras/gruppen/:gruppeId/extras', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { name, aufpreis, reihenfolge } = req.body;
+  if (!name) { res.status(400).json({ fehler: 'Name erforderlich' }); return; }
+
+  const extra = await ExtrasModel.extraErstellen({
+    id: uuid(), gruppe_id: req.params.gruppeId, restaurant_id: req.auth!.restaurantId,
+    name, aufpreis, reihenfolge,
+  });
+  res.status(201).json(extra);
+}));
+
+// PATCH /api/speisekarte/extras/:extraId  (Admin – Extra bearbeiten)
+router.patch('/extras/:extraId', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const extra = await ExtrasModel.extraAktualisieren(req.params.extraId, req.auth!.restaurantId, req.body);
+  if (!extra) { res.status(404).json({ fehler: 'Extra nicht gefunden' }); return; }
+  res.json(extra);
+}));
+
+// DELETE /api/speisekarte/extras/:extraId  (Admin – Extra löschen)
+router.delete('/extras/:extraId', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = await ExtrasModel.extraLoeschen(req.params.extraId, req.auth!.restaurantId);
+  if (!result) { res.status(404).json({ fehler: 'Extra nicht gefunden' }); return; }
   res.status(204).send();
 }));
 

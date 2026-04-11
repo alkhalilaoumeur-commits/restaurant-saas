@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import ReservierungToast from './ReservierungToast';
+import AbwesenheitToast from './AbwesenheitToast';
 
 export default function Layout() {
   const [sidebarOffen, setSidebarOffen] = useState(false);
@@ -10,6 +11,8 @@ export default function Layout() {
     <div className="flex h-screen bg-[#f8f8fa] dark:bg-[#0A0F1A] overflow-hidden">
       {/* Toast-Benachrichtigungen für neue Online-Reservierungen */}
       <ReservierungToast />
+      {/* Toast-Benachrichtigungen bei Abwesenheits-Konflikten (Schicht betroffen) */}
+      <AbwesenheitToast />
 
       {/* Desktop: Sidebar immer sichtbar */}
       <div className="hidden lg:flex">

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Topbar from '../components/layout/Topbar';
 import { useRestaurant } from '../hooks/useRestaurant';
 import { useThemeStore } from '../store/theme';
+import { api } from '../lib/api';
 
 const ABO_STATUS_LABEL: Record<string, string> = {
   trial: 'Testphase',
@@ -76,6 +77,37 @@ export default function Einstellungen() {
   const { restaurant, laden, aktualisieren } = useRestaurant();
   const { theme, toggle: toggleTheme } = useThemeStore();
   const [layoutSpeichern, setLayoutSpeichern] = useState(false);
+  const [logoLaden, setLogoLaden] = useState(false);
+  const [logoFehler, setLogoFehler] = useState('');
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  async function logoHochladen(e: React.ChangeEvent<HTMLInputElement>) {
+    const datei = e.target.files?.[0];
+    if (!datei) return;
+    setLogoFehler('');
+    setLogoLaden(true);
+    try {
+      const url = await api.upload(datei);
+      await aktualisieren({ logo_url: url });
+    } catch (err) {
+      setLogoFehler((err as Error).message || 'Upload fehlgeschlagen');
+    } finally {
+      setLogoLaden(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  }
+
+  async function logoEntfernen() {
+    setLogoFehler('');
+    setLogoLaden(true);
+    try {
+      await aktualisieren({ logo_url: null });
+    } catch (err) {
+      setLogoFehler((err as Error).message || 'Fehler beim Entfernen');
+    } finally {
+      setLogoLaden(false);
+    }
+  }
 
   if (laden) {
     return (
@@ -222,7 +254,7 @@ export default function Einstellungen() {
           </div>
 
           {/* Layout-Auswahl */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
             {/* ── Modern (helles Grid) ─────────────────────────────────── */}
             <button
@@ -475,11 +507,191 @@ export default function Einstellungen() {
                 </span>
               </div>
             </button>
+
+            {/* ── Showcase 3D (Premium, Glasmorphismus) ────────────────── */}
+            <button
+              disabled={layoutSpeichern}
+              onClick={async () => {
+                if (restaurant.layout_id === 'showcase') return;
+                setLayoutSpeichern(true);
+                try { await aktualisieren({ layout_id: 'showcase' }); } finally { setLayoutSpeichern(false); }
+              }}
+              className={`relative rounded-2xl p-4 text-left transition-all duration-200 group/sc ${
+                restaurant.layout_id === 'showcase'
+                  ? 'border-2 border-indigo-400 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/5 shadow-[0_0_20px_-5px] shadow-indigo-500/20'
+                  : 'border-2 border-gray-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40'
+              }`}
+            >
+              {/* Premium-Badge (immer sichtbar) */}
+              <div className="absolute top-3 right-3 z-10">
+                {restaurant.layout_id === 'showcase' ? (
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-0.5 rounded-full">
+                    Aktiv
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-400 dark:text-indigo-300/70 bg-indigo-100/80 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20">
+                    Premium
+                  </span>
+                )}
+              </div>
+
+              {/* Mini-Vorschau: Ultra-Dark mit 3D-Glasmorphismus-Karten */}
+              <div className="w-full aspect-[3/2] rounded-xl bg-[#07070E] p-2 mb-3 relative overflow-hidden">
+                {/* Ambient Glow Orbs */}
+                <div className="absolute top-1 left-3 w-8 h-8 rounded-full bg-indigo-500/10 blur-lg" />
+                <div className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-cyan-500/8 blur-md" />
+
+                {/* 2x2 Grid: Glass-Karten mit Glow-Border */}
+                <div className="relative z-10 grid grid-cols-2 gap-1.5 h-full">
+                  {/* Karte 1 — mit Bild-Platzhalter */}
+                  <div className="rounded-lg bg-[#111122]/80 border border-[#1E1E35] flex flex-col overflow-hidden
+                                  shadow-[0_0_8px_-2px] shadow-indigo-500/10">
+                    <div className="flex-1 bg-gradient-to-br from-indigo-900/30 via-purple-900/20 to-transparent" />
+                    <div className="px-1.5 py-1">
+                      <div className="h-1 w-8 rounded bg-[#EAEAF4]/25" />
+                      <div className="h-0.5 w-5 rounded bg-[#818CF8]/30 mt-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Karte 2 — mit Bild-Platzhalter */}
+                  <div className="rounded-lg bg-[#111122]/80 border border-[#1E1E35] flex flex-col overflow-hidden
+                                  shadow-[0_0_8px_-2px] shadow-indigo-500/10">
+                    <div className="flex-1 bg-gradient-to-br from-cyan-900/30 via-blue-900/20 to-transparent" />
+                    <div className="px-1.5 py-1">
+                      <div className="h-1 w-6 rounded bg-[#EAEAF4]/25" />
+                      <div className="h-0.5 w-4 rounded bg-[#818CF8]/30 mt-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Karte 3 — ohne Bild, mit Dot */}
+                  <div className="rounded-lg bg-[#111122]/80 border border-[#818CF8]/20 flex flex-col justify-center px-1.5 py-1
+                                  shadow-[0_0_8px_-2px] shadow-indigo-500/15">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1 h-1 rounded-full bg-[#818CF8]/40" />
+                      <div className="h-1 w-7 rounded bg-[#EAEAF4]/25" />
+                    </div>
+                    <div className="h-0.5 w-10 rounded bg-[#EAEAF4]/10 mt-1 ml-2" />
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex gap-0.5">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500/15 border border-emerald-500/20" />
+                      </div>
+                      <div className="w-3 h-3 rounded-full border border-[#818CF8]/30 flex items-center justify-center">
+                        <span className="text-[5px] text-[#818CF8]">+</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Karte 4 — ohne Bild, mit Dot */}
+                  <div className="rounded-lg bg-[#111122]/80 border border-[#1E1E35] flex flex-col justify-center px-1.5 py-1">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1 h-1 rounded-full bg-[#818CF8]/40" />
+                      <div className="h-1 w-9 rounded bg-[#EAEAF4]/25" />
+                    </div>
+                    <div className="h-0.5 w-8 rounded bg-[#EAEAF4]/10 mt-1 ml-2" />
+                    <div className="flex items-center justify-end mt-1">
+                      <div className="w-3 h-3 rounded-full border border-[#818CF8]/30 flex items-center justify-center">
+                        <span className="text-[5px] text-[#818CF8]">+</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spotlight-Effekt oben rechts */}
+                <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-radial from-indigo-400/8 to-transparent rounded-full pointer-events-none" />
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 dark:text-slate-200">
+                Showcase 3D
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                Premium 3D-Karten mit Glasmorphismus & Glow
+              </p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#818CF8]" />
+                  Space Grotesk
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#06B6D4]" />
+                  3D-Effekte
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#818CF8]" />
+                  Glasmorphismus
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Restaurant-Logo */}
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="M21 15l-3.086-3.086a2 2 0 00-2.828 0L6 21" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Restaurant-Logo</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Wird auf der Bestellseite und im Dashboard angezeigt</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-5">
+            {/* Logo-Vorschau */}
+            <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/15 flex items-center justify-center overflow-hidden shrink-0 bg-gray-50 dark:bg-white/5">
+              {restaurant.logo_url ? (
+                <img src={restaurant.logo_url} alt={restaurant.name} className="w-full h-full object-cover rounded-xl" />
+              ) : (
+                <svg className="w-8 h-8 text-gray-300 dark:text-white/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="M21 15l-3.086-3.086a2 2 0 00-2.828 0L6 21" />
+                </svg>
+              )}
+            </div>
+
+            {/* Upload-Buttons */}
+            <div className="flex-1">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={logoHochladen}
+                className="hidden"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={logoLaden}
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors"
+                >
+                  {logoLaden ? 'Wird hochgeladen...' : restaurant.logo_url ? 'Logo ändern' : 'Logo hochladen'}
+                </button>
+                {restaurant.logo_url && (
+                  <button
+                    onClick={logoEntfernen}
+                    disabled={logoLaden}
+                    className="px-4 py-2 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                  >
+                    Entfernen
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">JPG, PNG oder WebP. Max. 5 MB.</p>
+              {logoFehler && <p className="text-xs text-red-500 mt-1">{logoFehler}</p>}
+            </div>
           </div>
         </div>
 
         {/* Buchungswidget */}
         <BuchungsWidget restaurantId={restaurant.id} />
+
+        {/* Google Reserve Integration */}
+        <GoogleIntegration restaurantId={restaurant.id} />
 
         {/* Restaurant-Daten */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
@@ -513,6 +725,109 @@ function InfoZeile({ label, wert }: { label: string; wert: string | null }) {
     <div className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-white/5">
       <span className="text-xs text-gray-500 dark:text-slate-400">{label}</span>
       <span className="text-sm text-gray-800 dark:text-slate-200">{wert || '–'}</span>
+    </div>
+  );
+}
+
+// ─── Google Reserve Integration ──────────────────────────────────────────────
+
+function GoogleIntegration({ restaurantId }: { restaurantId: string }) {
+  const [kopiert, setKopiert] = useState(false);
+
+  // Der Buchungs-Link mit ?quelle=google — damit kommen Reservierungen automatisch
+  // als "Google" markiert rein. Restaurantbesitzer fügt diesen Link in Google Business Profile ein.
+  const googleLink = `${window.location.origin}/buchen/${restaurantId}?quelle=google`;
+
+  const kopieren = () => {
+    navigator.clipboard.writeText(googleLink);
+    setKopiert(true);
+    setTimeout(() => setKopiert(false), 2000);
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+      <div className="flex items-center gap-3 mb-4">
+        {/* Google-Farben Icon */}
+        <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center shrink-0">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Google Reserve</p>
+            <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+              Manuell
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Reservierungen aus Google Maps tracken</p>
+        </div>
+      </div>
+
+      {/* Info-Box */}
+      <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl px-4 py-3 mb-4">
+        <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">Wie funktioniert das?</p>
+        <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+          Füge den Link unten in dein <strong>Google Business Profile</strong> ein (unter "Reservierungen" → "Links verwalten").
+          Gäste, die über Google Maps buchen, werden dann in deinem System automatisch mit der Quelle <strong>"Google"</strong> erfasst.
+          So siehst du in den Statistiken wie viele Reservierungen über Google Maps kommen.
+        </p>
+      </div>
+
+      {/* Google-Link mit ?quelle=google */}
+      <div className="mb-4">
+        <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">
+          Dein Google-Buchungslink
+        </label>
+        <div className="flex gap-2">
+          <input
+            readOnly
+            value={googleLink}
+            className="flex-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-mono text-gray-600 dark:text-slate-300"
+          />
+          <button
+            onClick={kopieren}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 shrink-0 transition-colors"
+          >
+            {kopiert ? '✓ Kopiert' : 'Kopieren'}
+          </button>
+        </div>
+      </div>
+
+      {/* Schritt-für-Schritt Anleitung */}
+      <div>
+        <p className="text-xs font-medium text-gray-500 dark:text-slate-400 mb-2">Einrichten in 3 Schritten:</p>
+        <ol className="space-y-2">
+          {[
+            { nr: 1, text: 'Google Business Profile öffnen: business.google.com' },
+            { nr: 2, text: 'Menü → "Buchungen" oder "Links" → "Reservierungslink hinzufügen"' },
+            { nr: 3, text: 'Den Link oben einfügen und speichern — fertig!' },
+          ].map(({ nr, text }) => (
+            <li key={nr} className="flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                {nr}
+              </span>
+              <span className="text-xs text-gray-600 dark:text-slate-300">{text}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      {/* Zukunfts-Hinweis Option B */}
+      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
+        <p className="text-[11px] text-gray-400 dark:text-slate-500 flex items-center gap-1.5">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          <span>
+            <strong>Geplant:</strong> Direkte Google Reserve API-Integration (automatisch, ohne manuellen Link) — sobald das Partnerprogramm aktiv ist.
+          </span>
+        </p>
+      </div>
     </div>
   );
 }

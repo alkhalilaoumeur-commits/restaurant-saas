@@ -115,7 +115,7 @@ export default function Mitarbeiter() {
           <MitarbeiterFormular
             mitarbeiter={bearbeitung}
             onSpeichern={async (daten) => {
-              await aktualisieren(bearbeitung.id, { name: daten.name, rolle: daten.rolle });
+              await aktualisieren(bearbeitung.id, { name: daten.name, rolle: daten.rolle, stundenlohn: daten.stundenlohn });
               formularSchliessen();
             }}
             onPasswortAendern={async (pw) => {

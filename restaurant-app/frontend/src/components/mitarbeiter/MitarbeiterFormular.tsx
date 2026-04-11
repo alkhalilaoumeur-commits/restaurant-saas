@@ -8,6 +8,7 @@ interface MitarbeiterFormularProps {
     name: string;
     email?: string;
     rolle: Rolle;
+    stundenlohn?: number | null;
   }) => Promise<void>;
   onPasswortAendern?: (passwort: string) => Promise<void>;
   onAbbrechen: () => void;
@@ -19,6 +20,9 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
   const [name, setName] = useState(mitarbeiter?.name || '');
   const [email, setEmail] = useState(mitarbeiter?.email || '');
   const [rolle, setRolle] = useState<Rolle>(mitarbeiter?.rolle || 'kellner');
+  const [stundenlohn, setStundenlohn] = useState(
+    mitarbeiter?.stundenlohn != null ? String(mitarbeiter.stundenlohn) : ''
+  );
   const [laden, setLaden] = useState(false);
   const [fehler, setFehler] = useState('');
 
@@ -35,7 +39,10 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
       if (istNeu) {
         await onSpeichern({ name, email, rolle });
       } else {
-        await onSpeichern({ name, rolle });
+        const stundenlohnWert = stundenlohn.trim() === ''
+          ? null
+          : Number(stundenlohn.replace(',', '.'));
+        await onSpeichern({ name, rolle, stundenlohn: stundenlohnWert });
       }
     } catch (e: any) {
       setFehler(e.data?.fehler || e.message || 'Fehler beim Speichern');
@@ -101,6 +108,28 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
             <option value="kueche">Küche</option>
           </select>
         </div>
+
+        {/* Stundenlohn — nur im Bearbeitungsmodus, nicht beim Einladen */}
+        {!istNeu && (
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+              Stundenlohn (€)
+              <span className="ml-1 text-gray-300 dark:text-slate-600 font-normal">— nur intern, für Dienstplan-Budget</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 dark:text-slate-500">€</span>
+              <input
+                type="number"
+                value={stundenlohn}
+                onChange={(e) => setStundenlohn(e.target.value)}
+                min="0"
+                step="0.50"
+                placeholder="z.B. 14.00"
+                className="w-full border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20 focus:border-blue-400"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Hinweis: Einladung per Email */}
         {istNeu && (

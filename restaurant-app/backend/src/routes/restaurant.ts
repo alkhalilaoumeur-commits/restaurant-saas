@@ -23,7 +23,7 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
 
 // PUT /api/restaurant – Restaurant-Daten aktualisieren
 router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, oeffnungszeiten, primaerfarbe, layout_id } = req.body;
+  const { name, oeffnungszeiten, primaerfarbe, layout_id, logo_url } = req.body;
 
   // Farbwert validieren (Hex-Format)
   if (primaerfarbe !== undefined && !/^#[0-9a-fA-F]{6}$/.test(primaerfarbe)) {
@@ -32,9 +32,15 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
   }
 
   // Layout-ID validieren
-  const erlaubteLayouts = ['modern', 'elegant-dunkel', 'osteria', 'editorial'];
+  const erlaubteLayouts = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase'];
   if (layout_id !== undefined && !erlaubteLayouts.includes(layout_id)) {
     res.status(400).json({ fehler: 'Ungültige Layout-ID' });
+    return;
+  }
+
+  // Logo-URL validieren (muss /uploads/ Pfad oder null sein)
+  if (logo_url !== undefined && logo_url !== null && !logo_url.startsWith('/uploads/')) {
+    res.status(400).json({ fehler: 'Ungültige Logo-URL' });
     return;
   }
 
@@ -43,6 +49,7 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
     oeffnungszeiten,
     primaerfarbe,
     layout_id,
+    logo_url,
   });
 
   if (!restaurant) {

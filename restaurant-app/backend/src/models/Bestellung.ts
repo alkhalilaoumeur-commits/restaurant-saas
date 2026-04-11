@@ -14,12 +14,19 @@ export interface Bestellung {
   positionen?: BestellPosition[];
 }
 
+export interface BestellPositionExtra {
+  id: string;
+  extra_name: string;
+  aufpreis: number;
+}
+
 export interface BestellPosition {
   id: string;
   gericht_id: string;
   gericht_name?: string;
   menge: number;
   einzelpreis: number;
+  extras?: BestellPositionExtra[];
 }
 
 export const BestellungModel = {
@@ -29,7 +36,13 @@ export const BestellungModel = {
         COALESCE(
           json_agg(json_build_object(
             'id', bp.id, 'gericht_id', bp.gericht_id,
-            'gericht_name', g.name, 'menge', bp.menge, 'einzelpreis', bp.einzelpreis
+            'gericht_name', g.name, 'menge', bp.menge, 'einzelpreis', bp.einzelpreis,
+            'extras', (
+              SELECT COALESCE(json_agg(json_build_object(
+                'id', bpe.id, 'extra_name', bpe.extra_name, 'aufpreis', bpe.aufpreis
+              )), '[]'::json)
+              FROM bestellposition_extras bpe WHERE bpe.position_id = bp.id
+            )
           )) FILTER (WHERE bp.id IS NOT NULL),
           '[]'::json
         ) AS positionen

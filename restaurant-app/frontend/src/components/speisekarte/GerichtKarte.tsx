@@ -6,9 +6,10 @@ interface GerichtKarteProps {
   onToggle: (id: string, verfuegbar: boolean) => void;
   onBearbeiten: (gericht: Gericht) => void;
   onLoeschen: (id: string) => void;
+  onExtras: (gericht: Gericht) => void;
 }
 
-export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoeschen }: GerichtKarteProps) {
+export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoeschen, onExtras }: GerichtKarteProps) {
   return (
     <div className={`bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-4 shadow-sm flex gap-4 card-hover ${!gericht.verfuegbar ? 'opacity-60' : ''}`}>
       {gericht.bild_url && (
@@ -44,6 +45,12 @@ export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoesch
             className="text-xs px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all duration-200 font-medium"
           >
             Bearbeiten
+          </button>
+          <button
+            onClick={() => onExtras(gericht)}
+            className="text-xs px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 hover:bg-violet-100 transition-all duration-200 font-medium"
+          >
+            Extras
           </button>
           <button
             onClick={() => onLoeschen(gericht.id)}

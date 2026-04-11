@@ -172,3 +172,36 @@ Vollstaendiges Verarbeitungsverzeichnis: siehe `project/dsgvo-datenkatalog.md`
 - [ ] Datenpanne-Prozess dokumentieren (72h Meldepflicht, Art. 33/34)
 - [ ] Regelmaessige Datenschutz-Audits planen
 - [ ] Pruefen ob Datenschutzbeauftragter noetig (ab 20 MA in Datenverarbeitung)
+
+---
+
+## 2026-04-09 – Urlaubsverwaltung (Urlaubskonto)
+
+### Was wurde gemacht
+- Neue Spalte `urlaubsanspruch_tage` in Tabelle `mitarbeiter` (INTEGER, DEFAULT 20)
+- Neuer API-Endpoint: GET /api/abwesenheiten/urlaubskonto?jahr=YYYY
+- Berechnung verbrauchter Urlaubstage aus bestehender `abwesenheiten`-Tabelle (typ='urlaub')
+- Frontend: Urlaubskonto-Anzeige (Anspruch / Verbraucht / Verbleibend + Fortschrittsbalken)
+- Fix: URL-Bug in useAbwesenheiten.ts (Mitarbeiter konnten vorher keine Abwesenheiten eintragen)
+
+### Neue personenbezogene Daten
+
+| Tabelle      | Feld                  | Kategorie             | Rechtsgrundlage                              |
+|--------------|-----------------------|-----------------------|----------------------------------------------|
+| mitarbeiter  | urlaubsanspruch_tage  | Beschäftigtendaten    | Art. 6(1)(c) DSGVO i.V.m. § 3 BUrlG         |
+
+### Rechtsgrundlage
+- Art. 6 Abs. 1 lit. c DSGVO: Verarbeitung erforderlich zur Erfüllung einer rechtlichen Verpflichtung
+- § 3 Bundesurlaubsgesetz (BUrlG): Arbeitgeber ist verpflichtet, Mindesturlaub (20 AT / 5-Tage-Woche) zu gewähren und zu dokumentieren
+
+### DSGVO-Bewertung
+- Zweck: Urlaubsverwaltung, Arbeitszeitdokumentation gemäß BUrlG
+- Erforderlichkeit: ja — ohne Tracking kein Nachweis der BUrlG-Erfüllung
+- Verhältnismäßigkeit: ja — nur Arbeitstage-Anzahl, keine inhaltlichen Daten
+- Aufbewahrungsfrist: Urlaubsunterlagen mind. 2 Jahre (§ 16 ArbZG analog), Empfehlung: 3 Jahre
+- Zugriff: Mitarbeiter sehen nur eigene Daten, Admin sieht alle
+
+### Kein Risiko für Betroffene
+- Keine sensiblen Kategorien (Art. 9 DSGVO) betroffen
+- Keine Weitergabe an Dritte
+- Kein Profiling

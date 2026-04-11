@@ -10,10 +10,21 @@ import { asyncHandler } from '../middleware/errorHandler';
 const router = Router();
 const GUELTIGE_ROLLEN = ['admin', 'kellner', 'kueche'];
 
-// GET /api/mitarbeiter – Alle Mitarbeiter des Restaurants
+// GET /api/mitarbeiter – Alle Mitarbeiter des Restaurants (nur Admin)
 router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
   const mitarbeiter = await MitarbeiterModel.alle(req.auth!.restaurantId);
   res.json(mitarbeiter);
+}));
+
+// GET /api/mitarbeiter/ich – Eigene Daten inkl. Stundenlohn (alle Rollen)
+// Muss VOR /:id stehen damit Express nicht "ich" als UUID interpretiert
+router.get('/ich', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const ma = await MitarbeiterModel.nachId(req.auth!.mitarbeiterId, req.auth!.restaurantId);
+  if (!ma) {
+    res.status(404).json({ fehler: 'Mitarbeiter nicht gefunden' });
+    return;
+  }
+  res.json(ma);
 }));
 
 // POST /api/mitarbeiter – Mitarbeiter einladen (NICHT mehr anlegen mit Passwort!)
@@ -110,9 +121,9 @@ router.post('/:id/erneut-einladen', requireAuth, requireRolle('admin'), asyncHan
   res.json({ nachricht: 'Einladung erneut gesendet' });
 }));
 
-// PATCH /api/mitarbeiter/:id – Mitarbeiter aktualisieren (Name, Rolle, Aktiv)
+// PATCH /api/mitarbeiter/:id – Mitarbeiter aktualisieren (Name, Rolle, Aktiv, Stundenlohn)
 router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, rolle, aktiv } = req.body;
+  const { name, rolle, aktiv, stundenlohn, urlaubsanspruch_tage } = req.body;
 
   if (rolle !== undefined && !GUELTIGE_ROLLEN.includes(rolle)) {
     res.status(400).json({ fehler: 'Ungültige Rolle. Erlaubt: admin, kellner, kueche' });
@@ -125,10 +136,27 @@ router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req
     return;
   }
 
+  // Stundenlohn: muss positive Zahl oder null sein
+  if (stundenlohn !== undefined && stundenlohn !== null && (isNaN(Number(stundenlohn)) || Number(stundenlohn) < 0)) {
+    res.status(400).json({ fehler: 'Stundenlohn muss eine positive Zahl sein' });
+    return;
+  }
+
+  // Urlaubsanspruch: ganze Zahl zwischen 1 und 365
+  if (urlaubsanspruch_tage !== undefined) {
+    const tage = Number(urlaubsanspruch_tage);
+    if (!Number.isInteger(tage) || tage < 1 || tage > 365) {
+      res.status(400).json({ fehler: 'urlaubsanspruch_tage muss eine ganze Zahl zwischen 1 und 365 sein' });
+      return;
+    }
+  }
+
   const mitarbeiter = await MitarbeiterModel.aktualisieren(req.params.id, req.auth!.restaurantId, {
     name,
     rolle,
     aktiv,
+    stundenlohn: stundenlohn !== undefined ? (stundenlohn === null ? null : Number(stundenlohn)) : undefined,
+    urlaubsanspruch_tage: urlaubsanspruch_tage !== undefined ? Number(urlaubsanspruch_tage) : undefined,
   });
 
   if (!mitarbeiter) {

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ServeFlow – Test-Anleitung</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --cyan: #0891b2;
+      --green: #16a34a;
+      --orange: #d97706;
+      --red: #dc2626;
+      --gray: #6b7280;
+      --light: #f8fafc;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 12.5px;
+      color: #1e293b;
+      background: white;
+      line-height: 1.55;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      width: 210mm;
+      height: 297mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 60%, #0f2d4a 100%);
+      color: white;
+      text-align: center;
+      page-break-after: always;
+      position: relative;
+    }
+    .cover .logo { font-size: 52px; font-weight: 900; letter-spacing: 8px; background: linear-gradient(90deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+    .cover .tagline { font-size: 13px; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 60px; }
+    .cover h1 { font-size: 34px; font-weight: 700; margin-bottom: 14px; }
+    .cover .subtitle { font-size: 15px; color: #94a3b8; max-width: 520px; line-height: 1.6; }
+    .cover .divider { width: 80px; height: 3px; background: linear-gradient(90deg, #3b82f6, #06b6d4); margin: 30px auto; border-radius: 2px; }
+    .cover .meta { position: absolute; bottom: 40px; font-size: 11px; color: #475569; }
+    .cover .stats-row { display: flex; gap: 40px; margin-top: 50px; }
+    .cover .stat { text-align: center; }
+    .cover .stat-num { font-size: 28px; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .cover .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* ── Page ── */
+    .page { padding: 28px 36px; }
+    hr.page-break { page-break-after: always; border: none; }
+
+    /* ── TOC ── */
+    .toc { page-break-after: always; }
+    .toc h2 { font-size: 20px; font-weight: 800; border-bottom: 3px solid var(--blue); padding-bottom: 8px; margin-bottom: 20px; }
+    .toc-section { margin-bottom: 16px; }
+    .toc-section-title { font-weight: 700; font-size: 11.5px; color: var(--blue); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 5px; padding-left: 4px; border-left: 3px solid var(--blue); padding-left: 8px; }
+    .toc-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0 4px 16px; border-bottom: 1px dotted var(--border); color: #334155; font-size: 12px; }
+    .badge-sm { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+
+    /* ── Section Headers ── */
+    .section-header { background: linear-gradient(90deg, var(--blue), var(--cyan)); color: white; padding: 10px 18px; border-radius: 8px; margin: 24px 0 16px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; }
+    .section-header.orange { background: linear-gradient(90deg, #b45309, #d97706); }
+    .section-header.red { background: linear-gradient(90deg, #b91c1c, #dc2626); }
+    .section-header.purple { background: linear-gradient(90deg, #4f46e5, #7c3aed); }
+    .section-header.slate { background: linear-gradient(90deg, #334155, #475569); }
+
+    /* ── Feature Cards ── */
+    .feature-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; page-break-inside: avoid; }
+    .feature-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--light); border-bottom: 1px solid var(--border); }
+    .feature-icon { font-size: 18px; flex-shrink: 0; }
+    .feature-title { font-size: 13.5px; font-weight: 700; flex: 1; }
+    .feature-num { font-size: 11px; font-weight: 700; color: #94a3b8; margin-right: 2px; }
+    .badge { font-size: 10.5px; font-weight: 600; padding: 2px 10px; border-radius: 20px; white-space: nowrap; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-orange { background: #fef3c7; color: #b45309; }
+    .badge-red { background: #fee2e2; color: #b91c1c; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-gray { background: #f1f5f9; color: #475569; }
+
+    .feature-body { padding: 14px 16px; }
+
+    /* ── Credentials Box ── */
+    .cred-box { background: #0f172a; border-radius: 7px; padding: 10px 14px; margin-bottom: 12px; font-family: monospace; font-size: 11.5px; }
+    .cred-box .cred-title { color: #64748b; font-family: sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .cred-row { display: flex; gap: 8px; margin: 2px 0; }
+    .cred-label { color: #64748b; width: 80px; flex-shrink: 0; }
+    .cred-val { color: #7dd3fc; }
+    .cred-role { color: #86efac; font-size: 10px; padding: 1px 6px; background: #14532d; border-radius: 3px; margin-left: 6px; align-self: center; }
+
+    /* ── URL Box ── */
+    .url-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 7px 11px; font-family: monospace; font-size: 11.5px; color: #0369a1; margin-bottom: 10px; }
+    .url-box strong { color: #334155; font-family: sans-serif; font-size: 10px; display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Steps ── */
+    .steps { list-style: none; margin-bottom: 10px; }
+    .steps li { display: flex; gap: 9px; padding: 4px 0; border-bottom: 1px solid #f8fafc; font-size: 12px; }
+    .steps li:last-child { border-bottom: none; }
+    .step-num { background: var(--blue); color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Result / Warning / Todo boxes ── */
+    .expected { background: #f0fdf4; border-left: 3px solid var(--green); padding: 7px 11px; border-radius: 0 6px 6px 0; font-size: 11.5px; color: #166534; margin-top: 9px; }
+    .expected::before { content: "✓ Erwartetes Ergebnis: "; font-weight: 700; }
+    .warning-box { background: #fffbeb; border-left: 3px solid var(--orange); padding: 7px 11px; border-radius: 0 6px 6px 0; font-size: 11.5px; color: #92400e; margin-top: 9px; }
+    .warning-box::before { content: "⚠ Hinweis: "; font-weight: 700; }
+    .todo-box { background: #fef2f2; border-left: 3px solid var(--red); padding: 7px 11px; border-radius: 0 6px 6px 0; font-size: 11.5px; color: #991b1b; margin-top: 9px; }
+    .todo-box::before { content: "✗ Noch nicht implementiert: "; font-weight: 700; }
+
+    /* ── Sub-heading ── */
+    .sub { font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin: 10px 0 5px; }
+    .sub.green { color: #15803d; }
+    .sub.red { color: #b91c1c; }
+
+    /* ── Checklist ── */
+    .checklist { list-style: none; margin: 5px 0 10px; }
+    .checklist li { padding: 3px 0; display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
+    .check-box { width: 14px; height: 14px; border: 2px solid #cbd5e1; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+    .check-box.done { border-color: #16a34a; background: #dcfce7; }
+    .check-box.missing { border-color: #dc2626; }
+
+    /* ── Test Log Table ── */
+    .test-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11.5px; }
+    .test-table th { background: #0f172a; color: white; padding: 7px 9px; text-align: left; font-size: 11px; }
+    .test-table td { padding: 6px 9px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .test-table tr:nth-child(even) td { background: #f8fafc; }
+    .test-table .sect-row td { background: #dbeafe; font-weight: 700; font-size: 11px; color: #1d4ed8; }
+
+    /* ── Two-column layout ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── Print ── */
+    @media print {
+      .cover { width: 100vw; height: 100vh; }
+      .page { padding: 22px 28px; }
+    }
+    @page { size: A4; margin: 0; }
+    @page :not(:first) { margin: 12mm 14mm 12mm 14mm; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ COVER ═══════════════════ -->
+<div class="cover">
+  <div class="logo">ServeFlow</div>
+  <div class="tagline">Restaurant Management SaaS</div>
+  <h1>Vollständige Test-Anleitung</h1>
+  <div class="divider"></div>
+  <div class="subtitle">
+    Schritt-für-Schritt Testfälle für alle implementierten Features — fertige, in Arbeit und Pflicht-Features vor Release.
+  </div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">26</div><div class="stat-label">Features</div></div>
+    <div class="stat"><div class="stat-num">17</div><div class="stat-label">Fertig</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Vor Release</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Geplant</div></div>
+  </div>
+  <div class="meta">Stand: April 2026 &nbsp;·&nbsp; Intern — nicht zur Weitergabe &nbsp;·&nbsp; v2.0</div>
+</div>
+
+<!-- ═══════════════════ TEST-ACCOUNTS ═══════════════════ -->
+<div class="page" style="page-break-after: always;">
+  <h2 style="font-size:18px; font-weight:800; border-bottom:3px solid var(--blue); padding-bottom:8px; margin-bottom:16px;">🔑 Test-Zugangsdaten (Seed-Daten)</h2>
+  <p style="color:#475569; margin-bottom:14px; font-size:12px;">Diese Accounts existieren nach Ausführen von <code>seed.sql</code>. Alle Passwörter: <strong>test1234</strong></p>
+
+  <div class="cred-box">
+    <div class="cred-title">Zugangsdaten — Restaurant "Demo Restaurant"</div>
+    <div class="cred-row"><span class="cred-label">E-Mail</span><span class="cred-val">admin@demo.de</span><span class="cred-role">admin</span></div>
+    <div class="cred-row"><span class="cred-label">E-Mail</span><span class="cred-val">kellner@demo.de</span><span class="cred-role">kellner</span></div>
+    <div class="cred-row"><span class="cred-label">E-Mail</span><span class="cred-val">kueche@demo.de</span><span class="cred-role">kueche</span></div>
+    <div class="cred-row"><span class="cred-label">Passwort</span><span class="cred-val">test1234</span><span style="color:#fbbf24; font-size:10px; margin-left:6px;">(alle drei)</span></div>
+  </div>
+
+  <div class="url-box">
+    <strong>Frontend</strong>http://localhost:5173
+  </div>
+  <div class="url-box">
+    <strong>Backend API</strong>http://localhost:3001/api
+  </div>
+
+  <h2 style="font-size:18px; font-weight:800; border-bottom:3px solid var(--blue); padding-bottom:8px; margin: 20px 0 16px;">📋 Inhaltsverzeichnis</h2>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 24px;">
+    <div>
+      <div style="font-weight:700; font-size:11px; color:var(--blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; border-left:3px solid var(--blue); padding-left:8px;">🟢 Fertig (17 Features)</div>
+      <div style="font-size:11.5px; line-height:1.9; color:#334155;">
+        1. Login &amp; Rate Limiting<br>
+        2. Registrierung (3-Schritt-Wizard)<br>
+        3. E-Mail / SMS Verifizierung<br>
+        4. Passwort vergessen / Reset<br>
+        5. Admin-Dashboard (Live-Stats)<br>
+        6. Speisekarte (Kategorien + Gerichte CRUD)<br>
+        7. Extras / Modifier-System<br>
+        8. Bild-Upload (Gerichte / Logo)<br>
+        9. Tischplan — Floor Plan Editor<br>
+        10. Tischplan — Live-Modus + QR-Codes<br>
+        11. Reservierungen — Admin-Verwaltung<br>
+        12. Reservierungen — Auto-Tischzuweisung<br>
+        13. Walk-In Management<br>
+        14. Öffentliche Buchungsseite (3-Schritt-Flow)<br>
+        15. Gäste-Bestellseite (QR-basiert)<br>
+        16. Bestellungen-Verwaltung (Küche/Kellner)<br>
+        17. Mitarbeiterverwaltung + Einladung<br>
+        18. Dienstplan — Basis + Phase 7 Pro<br>
+        19. Statistiken &amp; Berichte<br>
+        20. Einstellungen (Logo, Farbe, Öffnungszeiten)
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700; font-size:11px; color:#dc2626; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; border-left:3px solid #dc2626; padding-left:8px;">🔴 Vor Release (4 Pflicht)</div>
+      <div style="font-size:11.5px; line-height:1.9; color:#334155; margin-bottom:14px;">
+        21. E-Mail-Vorlagen (professionelles Design)<br>
+        22. SMS-Versand auf Twilio umstellen<br>
+        23. SMTP auf Produktionsserver<br>
+        24. Email bei Abwesenheits-Konflikt
+      </div>
+      <div style="font-weight:700; font-size:11px; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; border-left:3px solid #d97706; padding-left:8px;">🟡 Teilweise fertig</div>
+      <div style="font-size:11.5px; line-height:1.9; color:#334155; margin-bottom:14px;">
+        25. Design-System Custom-Builder (Phase 6)<br>
+        26. Schichtplan Pro — offene Punkte (Phase 7)<br>
+        27. Reservierungssystem Pro (Phase 8B/C)
+      </div>
+      <div style="font-weight:700; font-size:11px; color:#475569; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; border-left:3px solid #475569; padding-left:8px;">⚪ Geplant (noch nicht gestartet)</div>
+      <div style="font-size:11.5px; line-height:1.9; color:#334155;">
+        28. Abonnement-Verwaltung (Mollie)<br>
+        29. Mehrsprachigkeit (DE/EN)
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════ ABSCHNITT 1 ═══════════════════ -->
+<div class="page">
+  <div class="section-header">🟢 ABSCHNITT 1 — Fertige Features (vollständig testbar)</div>
+
+  <!-- 1. Login -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🔐</span>
+      <span class="feature-num">1.</span>
+      <span class="feature-title">Login &amp; Rate Limiting</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/login</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Öffne Login-Seite — Formular mit E-Mail + Passwort erscheint</div></li>
+        <li><div class="step-num">2</div><div>Falsche Daten eingeben → Fehlermeldung auf Deutsch</div></li>
+        <li><div class="step-num">3</div><div>Genau 5× falsch einloggen → Account gesperrt-Meldung (Rate Limit: 15 Min)</div></li>
+        <li><div class="step-num">4</div><div>Richtige Daten: <code>admin@demo.de / test1234</code> → Weiterleitung zu /dashboard</div></li>
+        <li><div class="step-num">5</div><div>Browser schließen, neu öffnen → noch eingeloggt (JWT in localStorage)</div></li>
+      </ol>
+      <div class="expected">Falsche Daten → roter Hinweis. 5 Fehlversuche → gesperrt für 15 Min. Korrekte Daten → Dashboard.</div>
+    </div>
+  </div>
+
+  <!-- 2. Registrierung -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📝</span>
+      <span class="feature-num">2.</span>
+      <span class="feature-title">Registrierung (3-Schritt-Wizard)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/registrieren</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div><strong>Schritt 1 — Konto:</strong> Name, E-Mail, Passwort, Telefon. Teste schwaches Passwort ("passwort") → abgelehnt. Korrekt: mind. 8 Zeichen + 1 Großbuchstabe + 1 Zahl</div></li>
+        <li><div class="step-num">2</div><div>6-stelliger E-Mail-Verifizierungs-Code kommt in Server-Konsole → eingeben</div></li>
+        <li><div class="step-num">3</div><div><strong>Schritt 2 — Restaurant:</strong> Name, Adresse, Telefon, Cuisine-Typ</div></li>
+        <li><div class="step-num">4</div><div><strong>Schritt 3 — Details:</strong> Öffnungszeiten pro Wochentag (Wochentag ein/aus + Start-/Endzeit)</div></li>
+        <li><div class="step-num">5</div><div>Registrierung abschließen → prüfe ob Restaurant-Code generiert wurde (z.B. REST-A7K39M2P)</div></li>
+      </ol>
+      <div class="expected">Automatischer Login nach Abschluss. Restaurant-Code in Einstellungen sichtbar. 3 Standard-Tische automatisch angelegt.</div>
+      <div class="warning-box">E-Mails und SMS erscheinen im Dev-Modus nur in der Server-Konsole (nicht wirklich gesendet).</div>
+    </div>
+  </div>
+
+  <!-- 3. E-Mail / SMS Verifizierung -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📨</span>
+      <span class="feature-num">3.</span>
+      <span class="feature-title">E-Mail &amp; SMS Verifizierung</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL (E-Mail-Link)</strong>http://localhost:5173/email-verifizieren/:token</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Neue Registrierung starten → 6-stelliger Code erscheint in Server-Konsole</div></li>
+        <li><div class="step-num">2</div><div>Falschen Code eingeben (z.B. 000000) → Fehlermeldung</div></li>
+        <li><div class="step-num">3</div><div>Richtigen Code eingeben → Verifizierung erfolgreich, nächster Schritt entsperrt</div></li>
+        <li><div class="step-num">4</div><div>SMS-Code (Telefon): ebenfalls in Konsole → gleicher Test</div></li>
+        <li><div class="step-num">5</div><div>Alternativ: Verifizierungs-Link aus Konsole kopieren und im Browser öffnen</div></li>
+      </ol>
+      <div class="expected">Falscher Code → Fehlermeldung. Richtiger Code oder Link → Bestätigung + Weiterleitung.</div>
+    </div>
+  </div>
+
+  <!-- 4. Passwort vergessen -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🔑</span>
+      <span class="feature-num">4.</span>
+      <span class="feature-title">Passwort vergessen / Reset-Flow</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/passwort-vergessen</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Login-Seite → "Passwort vergessen?" klicken</div></li>
+        <li><div class="step-num">2</div><div>E-Mail eingeben → Reset-Link erscheint in Server-Konsole (gültig 1 Stunde)</div></li>
+        <li><div class="step-num">3</div><div>Link öffnen (<code>/passwort-zuruecksetzen/:token</code>) → neues Passwort setzen</div></li>
+        <li><div class="step-num">4</div><div>Alten Link nochmal öffnen → Fehlermeldung "Link bereits verwendet"</div></li>
+        <li><div class="step-num">5</div><div>Mitarbeiter-Einladung: Link aus Konsole öffnen → eigenes Passwort setzen (<code>/einladung/:token</code>)</div></li>
+      </ol>
+      <div class="expected">Links sind einmalig nutzbar. Nach Nutzung: ungültig. Passwort-Änderung funktioniert sofort beim nächsten Login.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 5. Dashboard -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📊</span>
+      <span class="feature-num">5.</span>
+      <span class="feature-title">Admin-Dashboard (Live-Stats)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/dashboard</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Dashboard öffnen → 4 Stat-Karten: Tagesumsatz, Bestellungen heute, Reservierungen heute, aktive Tische</div></li>
+        <li><div class="step-num">2</div><div>Umsatz-Diagramm oben rechts: zeigt Tagesverläufe</div></li>
+        <li><div class="step-num">3</div><div>Auslastungs-Donut: zeigt Tisch-Belegung in %</div></li>
+        <li><div class="step-num">4</div><div>Neue Testbestellung via Gäste-Seite aufgeben → Dashboard-Stats aktualisieren sich live (Socket.io, kein Reload)</div></li>
+        <li><div class="step-num">5</div><div>Restaurant-Logo + Name in der Topbar prüfen</div></li>
+        <li><div class="step-num">6</div><div>Dark Mode Toggle in Sidebar → alle Seiten wechseln sofort</div></li>
+      </ol>
+      <div class="expected">Stats aktualisieren sich per Socket.io. Ohne Seed-Daten: Kacheln zeigen 0. Diagramme erscheinen mit Platzhalter.</div>
+    </div>
+  </div>
+
+  <!-- 6. Speisekarte -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🍽️</span>
+      <span class="feature-num">6.</span>
+      <span class="feature-title">Speisekarte — Kategorien + Gerichte CRUD</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/speisekarte</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Neue Kategorie: Name, Reihenfolge, Emoji, Bild-URL → speichern</div></li>
+        <li><div class="step-num">2</div><div>Neues Gericht in Kategorie: Name, Beschreibung, Preis, Bild-URL, Allergene</div></li>
+        <li><div class="step-num">3</div><div>Dietary-Icons setzen: vegetarisch (V), vegan (VG), scharf (🌶️)</div></li>
+        <li><div class="step-num">4</div><div>Gericht als "nicht verfügbar" markieren → auf Gäste-Seite: ausgegraut / nicht bestellbar</div></li>
+        <li><div class="step-num">5</div><div>Kategorie-Reihenfolge ändern → prüfe ob Gäste-Seite neue Reihenfolge zeigt</div></li>
+        <li><div class="step-num">6</div><div>Gericht löschen → Bestätigungsdialog erscheint</div></li>
+        <li><div class="step-num">7</div><div>Kategorie löschen → nur möglich wenn leer</div></li>
+      </ol>
+      <div class="expected">Änderungen sofort auf Gäste-Bestellseite sichtbar. Nicht verfügbare Gerichte können nicht in Warenkorb gelegt werden.</div>
+    </div>
+  </div>
+
+  <!-- 7. Extras -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">➕</span>
+      <span class="feature-num">7.</span>
+      <span class="feature-title">Extras / Modifier-System</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>Admin: Speisekarte → Gericht → violetter "Extras"-Button</strong></div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Speisekarte → violetten "Extras"-Button bei einem Gericht klicken</div></li>
+        <li><div class="step-num">2</div><div>Gruppe "Größe" erstellen: Pflicht, max 1 Auswahl. Extras: Klein +0€, Mittel +2€, Groß +4€</div></li>
+        <li><div class="step-num">3</div><div>Gruppe "Toppings" erstellen: Optional, max 3. Extras: Extra Käse +1,50€, Jalapeños +0,80€</div></li>
+        <li><div class="step-num">4</div><div>Gäste-Seite öffnen → Gericht antippen → Detail-Modal (Bottom-Sheet) erscheint</div></li>
+        <li><div class="step-num">5</div><div>Extras auswählen → Live-Preis aktualisiert sich oben im Modal</div></li>
+        <li><div class="step-num">6</div><div>Pflicht-Gruppe nicht auswählen → "In den Warenkorb" blockiert</div></li>
+        <li><div class="step-num">7</div><div>Dasselbe Gericht 2× mit verschiedenen Extras hinzufügen → Warenkorb zeigt 2 separate Zeilen</div></li>
+        <li><div class="step-num">8</div><div>Bestellung abschicken → Admin sieht Extras pro Bestellposition</div></li>
+      </ol>
+      <div class="expected">Pflicht-Extras blockieren Warenkorb-Button. Preis berechnet sich korrekt. Extras in Admin-Bestellansicht sichtbar.</div>
+    </div>
+  </div>
+
+  <!-- 8. Bild-Upload -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🖼️</span>
+      <span class="feature-num">8.</span>
+      <span class="feature-title">Bild-Upload (Gerichte / Kategorien / Logo)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>API</strong>POST /api/uploads (multipart/form-data, Feld: "bild")</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Einstellungen → Logo-Bereich → Datei auswählen (JPG/PNG/WebP, max 5 MB)</div></li>
+        <li><div class="step-num">2</div><div>Upload starten → Lade-Spinner erscheint → Vorschau nach Upload</div></li>
+        <li><div class="step-num">3</div><div>Prüfe: Logo erscheint in Dashboard-Topbar und auf Gäste-Bestellseite</div></li>
+        <li><div class="step-num">4</div><div>"Logo entfernen" → Logo verschwindet aus allen Bereichen</div></li>
+        <li><div class="step-num">5</div><div>Gericht/Kategorie anlegen → Bild-URL feld nutzen (externe URL oder Upload-URL)</div></li>
+        <li><div class="step-num">6</div><div>Zu große Datei hochladen (>5 MB) → Fehlermeldung</div></li>
+      </ol>
+      <div class="expected">Bilder werden unter <code>/uploads/</code> gespeichert. URL wird automatisch in Formular eingetragen. Bild sofort sichtbar nach Upload.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 9. Floor Plan Editor -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🗺️</span>
+      <span class="feature-num">9.</span>
+      <span class="feature-title">Tischplan — Floor Plan Editor (Canvas)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/tischplan → Tab "Grundriss"</div>
+
+      <span class="sub">Tische platzieren &amp; bearbeiten</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Tisch-Vorlage aus Seitenleiste auf Canvas ziehen (Rund 2er/4er, Quadrat 4er, Rechteck 6er/8er, Bar 2er)</div></li>
+        <li><div class="step-num">2</div><div>Tisch verschieben per Drag — beobachte Grid-Snapping (springt auf 20px-Raster)</div></li>
+        <li><div class="step-num">3</div><div>Tisch anklicken → Transformer erscheint: Ecken = Größe ändern, runder Griff = drehen</div></li>
+        <li><div class="step-num">4</div><div>Tisch unter 40px verkleinern → Minimum-Größe greift</div></li>
+        <li><div class="step-num">5</div><div>"Speichern"-Button → Position wird in DB geschrieben; nach Reload beibehalten</div></li>
+      </ol>
+
+      <span class="sub">Bereiche / Zonen</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Neuen Bereich erstellen: "Terrasse" (frei benennbar)</div></li>
+        <li><div class="step-num">2</div><div>Tisch einem Bereich zuordnen (Dropdown in Tisch-Properties)</div></li>
+        <li><div class="step-num">3</div><div>Tab-Filter oben → nur Tische des gewählten Bereichs anzeigen</div></li>
+        <li><div class="step-num">4</div><div>Bereich löschen → Tische bleiben erhalten (Bereich-Zuordnung entfernt)</div></li>
+      </ol>
+
+      <div class="expected">Alle Positionen, Formen, Größen und Bereiche werden in DB gespeichert und nach Reload korrekt geladen. react-konva zeichnet Canvas-basiert.</div>
+    </div>
+  </div>
+
+  <!-- 10. Tischplan Live + QR -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🔴</span>
+      <span class="feature-num">10.</span>
+      <span class="feature-title">Tischplan — Live-Modus + QR-Codes</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/tischplan → Toggle "Live-Modus"</div>
+
+      <span class="sub">Live-Modus (Statusfarben)</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>In Live-Modus wechseln → Tische zeigen Statusfarben: grün (frei), rot (besetzt), gelb (Zahlung)</div></li>
+        <li><div class="step-num">2</div><div>Grünen Tisch anklicken → Status auf "besetzt" setzen</div></li>
+        <li><div class="step-num">3</div><div>"Besetzten" Tisch → auf "Zahlung" → dann "frei"</div></li>
+        <li><div class="step-num">4</div><div>Tisch im Live-Modus anklicken → "Reservierung zuweisen"-Dialog: offene Reservierung auswählen</div></li>
+      </ol>
+
+      <span class="sub">QR-Codes</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Tab "Liste" → QR-Icon bei einem Tisch → Einzel-Druck-Seite öffnet sich</div></li>
+        <li><div class="step-num">2</div><div>QR-Code scannen → Gäste-Bestellseite öffnet sich für diesen Tisch</div></li>
+        <li><div class="step-num">3</div><div>"Alle QR-Codes drucken" → alle Tische auf einer Druckseite</div></li>
+      </ol>
+      <div class="expected">Tischfarben aktualisieren sich per Socket.io ohne Reload. QR-Code enthält korrekten Link mit Tisch-Token.</div>
+    </div>
+  </div>
+
+  <!-- 11. Reservierungen Admin -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📅</span>
+      <span class="feature-num">11.</span>
+      <span class="feature-title">Reservierungen — Admin-Verwaltung</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/reservierungen</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Wochenleiste oben: verschiedene Tage anklicken → Liste filtert nach Datum</div></li>
+        <li><div class="step-num">2</div><div>"Neue Reservierung" → Name, Datum, Uhrzeit, Personen, Telefon eingeben</div></li>
+        <li><div class="step-num">3</div><div>Anlass wählen (Chips: Geburtstag / Jubiläum / Date Night / Geschäft / Feier / Sonstiges)</div></li>
+        <li><div class="step-num">4</div><div>Status wechseln: ausstehend → bestätigt → erschienen → abgeschlossen</div></li>
+        <li><div class="step-num">5</div><div>Reservierung stornieren → Storno-E-Mail-Log erscheint in Konsole</div></li>
+        <li><div class="step-num">6</div><div>Buchungslink-Button → Link in Zwischenablage kopieren</div></li>
+        <li><div class="step-num">7</div><div>Neue Online-Buchung aufgeben → Toast-Benachrichtigung erscheint oben rechts (Socket.io)</div></li>
+      </ol>
+      <div class="expected">Online-Reservierungen erscheinen sofort per Socket.io + Toast. Badges zeigen Quelle (Online/Manuell), Anlass, Sitzplatz.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 12. Auto-Tischzuweisung -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🤖</span>
+      <span class="feature-num">12.</span>
+      <span class="feature-title">Reservierungen — Automatische Tischzuweisung</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/reservierungen → Reservierung → "Auto zuweisen"</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Mindestens 2 Tische mit verschiedenen Kapazitäten anlegen (z.B. 2er, 4er, 6er)</div></li>
+        <li><div class="step-num">2</div><div>Reservierung für 3 Personen erstellen (ohne Tischzuweisung)</div></li>
+        <li><div class="step-num">3</div><div>"Auto zuweisen"-Button klicken</div></li>
+        <li><div class="step-num">4</div><div>System wählt kleinsten passenden freien Tisch (4er statt 6er)</div></li>
+        <li><div class="step-num">5</div><div>Alle passenden Tische belegen → Auto-Zuweisung schlägt fehl: "Kein Tisch verfügbar"-Meldung</div></li>
+        <li><div class="step-num">6</div><div>Tischzuweisung im Floor Plan Live-Modus manuell prüfen (Tisch sollte als besetzt erscheinen)</div></li>
+      </ol>
+      <div class="expected">Kleinster passender Tisch wird automatisch gewählt. Bei Überbuchung: klare Fehlermeldung statt stille Fehler.</div>
+    </div>
+  </div>
+
+  <!-- 13. Walk-In Management -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🚶</span>
+      <span class="feature-num">13.</span>
+      <span class="feature-title">Walk-In Management (Laufkundschaft)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/reservierungen → Tab "Walk-Ins"</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Tab "Walk-Ins" wählen (neben "Reservierungen")</div></li>
+        <li><div class="step-num">2</div><div>Neuer Walk-In: Name eingeben, Personenanzahl, optionale Anmerkung → "Erfassen"</div></li>
+        <li><div class="step-num">3</div><div>Walk-In erscheint in Liste mit Status "Wartend" + Zeitstempel</div></li>
+        <li><div class="step-num">4</div><div>"Platzieren"-Button → Tisch aus Dropdown wählen → Status wechselt auf "Platziert"</div></li>
+        <li><div class="step-num">5</div><div>"Abgegangen"-Button → Status wechselt auf "Abgegangen" (Tisch wieder frei)</div></li>
+        <li><div class="step-num">6</div><div>Walk-In löschen (nur Admin)</div></li>
+        <li><div class="step-num">7</div><div>Als Kellner einloggen → Walk-Ins ebenfalls verwaltbar (kellner-Rolle)</div></li>
+      </ol>
+      <div class="expected">Walk-Ins werden getrennt von Reservierungen gelistet. Tischstatus im Floor Plan aktualisiert sich bei Platzieren/Abgehen.</div>
+    </div>
+  </div>
+
+  <!-- 14. Buchungsseite -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🌐</span>
+      <span class="feature-num">14.</span>
+      <span class="feature-title">Öffentliche Buchungsseite (3-Schritt-Flow)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/buchen/[RESTAURANT-ID] &nbsp;(ID aus Einstellungen)</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div><strong>Schritt 1:</strong> Datum wählen (nur Öffnungstage erlaubt), Personen, Sitzplatzwunsch-Chips (Egal / Innen / Terrasse / Bar / Fenster / Ruhig)</div></li>
+        <li><div class="step-num">2</div><div>Gesperrten Tag wählen (laut Öffnungszeiten) → nicht wählbar</div></li>
+        <li><div class="step-num">3</div><div><strong>Schritt 2:</strong> Zeitslot wählen (15-Min-Slots). Ausgebuchte Slots sind ausgegraut</div></li>
+        <li><div class="step-num">4</div><div><strong>Schritt 3:</strong> Name, E-Mail, Telefon, Anlass-Chips (Geburtstag / Jubiläum / Date Night / Geschäft / Feier / Sonstiges), optionale Notiz</div></li>
+        <li><div class="step-num">5</div><div>Buchung abschließen → Bestätigungsseite mit Buchungs-Details</div></li>
+        <li><div class="step-num">6</div><div>"Zum Kalender hinzufügen" → Google Calendar Link öffnet sich / iCal-Datei wird heruntergeladen</div></li>
+        <li><div class="step-num">7</div><div>Stornieren: Link in E-Mail-Konsole → Token-URL öffnen → Storno ohne Login</div></li>
+        <li><div class="step-num">8</div><div>Umbuchen: Link in E-Mail-Konsole → neuen Slot wählen → Buchung aktualisiert</div></li>
+        <li><div class="step-num">9</div><div>Buchungswidget: Einstellungen → iframe-Code kopieren → in HTML einfügen → Buchungsseite erscheint</div></li>
+      </ol>
+      <div class="expected">Keine Anmeldung nötig. Reservierung erscheint sofort im Admin-Panel + Toast. E-Mail-Log in Server-Konsole.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 15. Gäste-Bestellseite -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📱</span>
+      <span class="feature-num">15.</span>
+      <span class="feature-title">Gäste-Bestellseite (QR-Code-basiert)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/bestellen/[restaurant-id]/[tisch-id] &nbsp;(aus QR-Code)</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Tischplan → QR-Code eines Tischs scannen oder Link kopieren</div></li>
+        <li><div class="step-num">2</div><div>Kategorie-Kacheln erscheinen (mit Bildern falls hinterlegt, Framer Motion Einblend-Animation)</div></li>
+        <li><div class="step-num">3</div><div>Kategorie anklicken → Gerichte-Grid mit Editorial-Design lädt</div></li>
+        <li><div class="step-num">4</div><div>Gericht antippen → Detail-Modal (Bottom-Sheet): Bild, Beschreibung, Extras, Menge, Live-Preis</div></li>
+        <li><div class="step-num">5</div><div>Extras wählen, Menge einstellen → "In den Warenkorb"</div></li>
+        <li><div class="step-num">6</div><div>Warenkorb: Menge erhöhen/senken, Position löschen, Gesamt-Preis prüfen</div></li>
+        <li><div class="step-num">7</div><div>Bestellung abschicken → Status-Tracker erscheint: Eingegangen → In Zubereitung → Fertig → Serviert</div></li>
+        <li><div class="step-num">8</div><div>Im Admin (Bestellungen-Seite) Status auf "In Zubereitung" setzen → Gäste-Seite aktualisiert sofort</div></li>
+        <li><div class="step-num">9</div><div>Teste verschiedene Layouts (URL-Parameter <code>layout=editorial|showcase|osteria|grid|liste</code>)</div></li>
+        <li><div class="step-num">10</div><div>Dietary-Icons prüfen: V (vegetarisch), VG (vegan), Flamme (scharf)</div></li>
+      </ol>
+      <div class="expected">Komplett ohne Login. Status-Updates per Socket.io in Echtzeit. Extras erhöhen Preis korrekt. Restaurant-Theme-Farbe sichtbar.</div>
+    </div>
+  </div>
+
+  <!-- 16. Bestellungen Admin -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🧾</span>
+      <span class="feature-num">16.</span>
+      <span class="feature-title">Bestellungen-Verwaltung (Küche / Kellner)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/bestellungen</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Neue Bestellung über Gäste-Seite aufgeben → erscheint sofort in Liste ohne Reload</div></li>
+        <li><div class="step-num">2</div><div>Status-Kette durchklicken: Eingegangen → In Zubereitung → Fertig → Serviert</div></li>
+        <li><div class="step-num">3</div><div>Extras unter jeder Bestellposition prüfen (falls vorhanden)</div></li>
+        <li><div class="step-num">4</div><div>Filter nach Tisch / Status testen (Dropdown oben)</div></li>
+        <li><div class="step-num">5</div><div>Als Kueche einloggen → gleiche Ansicht, Statusänderungen möglich</div></li>
+        <li><div class="step-num">6</div><div>Stornierte Bestellung: Tischplan-Tischfarbe reagiert entsprechend</div></li>
+      </ol>
+      <div class="expected">Live-Updates per Socket.io. Statuswechsel wird sofort auf Gäste-Seite + Tischplan-Farbe gespiegelt.</div>
+    </div>
+  </div>
+
+  <!-- 17. Mitarbeiter -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">👥</span>
+      <span class="feature-num">17.</span>
+      <span class="feature-title">Mitarbeiterverwaltung + Einladung</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/mitarbeiter</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>"Einladen" → E-Mail + Rolle wählen (Kellner/Küche) → Link erscheint in Konsole</div></li>
+        <li><div class="step-num">2</div><div>Link in neuem Browser-Tab öffnen (<code>/einladung/:token</code>) → Mitarbeiter setzt eigenes Passwort</div></li>
+        <li><div class="step-num">3</div><div>Als neuer Mitarbeiter einloggen → Navigation zeigt nur Bestellungen/Dienstplan (kein Admin)</div></li>
+        <li><div class="step-num">4</div><div>Zurück zu Admin → Mitarbeiter-Rolle ändern (Kellner ↔ Küche)</div></li>
+        <li><div class="step-num">5</div><div>Mitarbeiter deaktivieren → Login-Versuch → "Account deaktiviert"-Meldung</div></li>
+        <li><div class="step-num">6</div><div>Passwort ändern (Admin für eigenen Account in Einstellungen)</div></li>
+      </ol>
+      <div class="expected">Admin kennt niemals das MA-Passwort. Deaktivierte MA können sich nicht einloggen. Rollen steuern sichtbare Seiten.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 18. Dienstplan -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📋</span>
+      <span class="feature-num">18.</span>
+      <span class="feature-title">Dienstplan — Basis + Phase 7 Pro-Features</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/dienstplan</div>
+
+      <span class="sub">18a — Schichten anlegen &amp; Drag &amp; Drop</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Wochenansicht: alle Mitarbeiter als Zeilen, Wochentage als Spalten</div></li>
+        <li><div class="step-num">2</div><div>Auf freie Zelle klicken → Schicht-Formular: MA, Datum, Start-/Endzeit, Rolle</div></li>
+        <li><div class="step-num">3</div><div>Schicht per Drag & Drop auf anderen Tag/MA verschieben</div></li>
+        <li><div class="step-num">4</div><div>Wochenstunden-Summe pro Mitarbeiter prüfen (unten in jeder Zeile)</div></li>
+        <li><div class="step-num">5</div><div>Schicht per Klick bearbeiten → Modal öffnet sich mit Daten</div></li>
+        <li><div class="step-num">6</div><div>Schicht löschen → Bestätigung abfragen</div></li>
+      </ol>
+
+      <span class="sub">18b — ArbZG-Compliance &amp; Konflikterkennung</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Zwei Schichten gleicher MA, gleicher Tag → <strong style="color:#dc2626;">rote Warnung</strong> (Doppelbuchung)</div></li>
+        <li><div class="step-num">2</div><div>Schicht mit weniger als 11h Abstand zur Vorgänger-Schicht → <strong style="color:#d97706;">gelbe Warnung</strong> (Ruhezeitverletzung ArbZG)</div></li>
+        <li><div class="step-num">3</div><div>Schicht über 10 Stunden → <strong style="color:#dc2626;">rote Warnung</strong> (Tageshöchstarbeitszeit)</div></li>
+        <li><div class="step-num">4</div><div>Schicht 6–9h ohne 30 Min Pause → <strong style="color:#d97706;">gelbe Warnung</strong></div></li>
+        <li><div class="step-num">5</div><div>Schicht über 9h ohne 45 Min Pause → <strong style="color:#dc2626;">rote Warnung</strong></div></li>
+      </ol>
+
+      <span class="sub">18c — Mitarbeiter-Verfügbarkeit</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Als Kellner einloggen → "Meine Verfügbarkeit" Bereich im Dienstplan</div></li>
+        <li><div class="step-num">2</div><div>Montag auf "nicht verfügbar" setzen → speichern</div></li>
+        <li><div class="step-num">3</div><div>Als Admin: Verfügbarkeits-Indikator in Montag-Spalte dieser MA sichtbar?</div></li>
+      </ol>
+
+      <span class="sub">18d — Abwesenheiten</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Als Kellner: Abwesenheit eintragen (Urlaub / Krank / Sonstiges + Datumsbereich)</div></li>
+        <li><div class="step-num">2</div><div>Abwesenheit in laufendem Monat bei vorhandener Schicht → Admin-Toast-Benachrichtigung (Socket.io)</div></li>
+        <li><div class="step-num">3</div><div>Als Admin: Abwesenheit im Dienstplan als farbiger Bereich sichtbar?</div></li>
+      </ol>
+
+      <span class="sub">18e — Mitarbeiter-Ansicht (Read-Only)</span>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Als Kellner/Küche einloggen → Dienstplan zeigt NUR eigene Schichten als Tageskarten</div></li>
+        <li><div class="step-num">2</div><div>Keine Bearbeitungs- oder Lösch-Buttons sichtbar</div></li>
+        <li><div class="step-num">3</div><div>Andere MA-Schichten sind nicht sichtbar</div></li>
+      </ol>
+
+      <div class="expected">ArbZG-Warnungen erscheinen direkt beim Anlegen/Verschieben. Gelb = Warnung, Rot = Verstoß. MA sehen nur eigene Schichten.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+<div class="page">
+
+  <!-- 19. Statistiken -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📈</span>
+      <span class="feature-num">19.</span>
+      <span class="feature-title">Statistiken &amp; Berichte</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/statistiken</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Zeitraum wählen: Heute / Diese Woche / Dieser Monat (Toggle oben)</div></li>
+        <li><div class="step-num">2</div><div>Umsatz-Diagramm: Tagesverlauf, Linie oder Balken</div></li>
+        <li><div class="step-num">3</div><div>Top-Gerichte: meistbestellte Gerichte im Zeitraum</div></li>
+        <li><div class="step-num">4</div><div>Stoßzeiten-Diagramm: welche Stunden haben die meisten Bestellungen?</div></li>
+        <li><div class="step-num">5</div><div>Kategorie-Verteilung: Donut-Diagramm welche Kategorie am besten läuft</div></li>
+        <li><div class="step-num">6</div><div>Zeitraum wechseln → alle Diagramme aktualisieren</div></li>
+      </ol>
+      <div class="expected">Alle Charts laden korrekt. Bei leerer DB: Platzhalter statt Fehler. Zeitraum-Wechsel filtert korrekt.</div>
+    </div>
+  </div>
+
+  <!-- 20. Einstellungen -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">⚙️</span>
+      <span class="feature-num">20.</span>
+      <span class="feature-title">Einstellungen (Logo, Farbe, Dark Mode, Öffnungszeiten)</span>
+      <span class="badge badge-green">Fertig</span>
+    </div>
+    <div class="feature-body">
+      <div class="url-box"><strong>URL</strong>http://localhost:5173/einstellungen</div>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div><strong>Logo:</strong> Bild-Datei hochladen → Vorschau erscheint → Speichern → Logo in Topbar + Bestellseite</div></li>
+        <li><div class="step-num">2</div><div>"Logo entfernen" → Logo verschwindet aus allen Bereichen</div></li>
+        <li><div class="step-num">3</div><div><strong>Primärfarbe:</strong> Hex-Wert eingeben (z.B. #e63946) → Gäste-Seite nutzt diese Farbe</div></li>
+        <li><div class="step-num">4</div><div><strong>Dark Mode:</strong> Toggle → alle Admin-Seiten wechseln sofort, Einstellung bleibt nach Reload</div></li>
+        <li><div class="step-num">5</div><div><strong>Öffnungszeiten:</strong> Wochentag deaktivieren → Buchungsseite zeigt diesen Tag nicht mehr</div></li>
+        <li><div class="step-num">6</div><div><strong>Buchungswidget:</strong> iframe-Code-Snippet kopieren → in externe HTML-Seite einfügen → Buchungsseite erscheint als Widget</div></li>
+        <li><div class="step-num">7</div><div>Restaurant-Code prüfen (z.B. REST-A7K39M2P) — für MA-Einladungen</div></li>
+        <li><div class="step-num">8</div><div>Abo-Status-Badge prüfen: "Testphase" (blau) / "Aktiv" (grün) / "Abgelaufen" (rot)</div></li>
+      </ol>
+      <div class="expected">Alle Einstellungen werden sofort wirksam. Primärfarbe sichtbar auf Gäste-Bestellseite. Öffnungszeiten-Änderung filtert Buchungs-Slots sofort.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════ ABSCHNITT 2: VOR RELEASE ═══════════════════ -->
+<div class="page">
+  <div class="section-header red">🔴 ABSCHNITT 2 — Vor Release: 4 Pflicht-Features (noch nicht implementiert)</div>
+  <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#991b1b;">
+    <strong>⚠ Achtung:</strong> Diese 4 Punkte MÜSSEN fertig sein bevor das erste Restaurant live geht. Ohne sie ist das Produkt nicht produktionsreif.
+  </div>
+
+  <!-- 21. E-Mail-Vorlagen -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">✉️</span>
+      <span class="feature-num">21.</span>
+      <span class="feature-title">E-Mail-Vorlagen — Professionelles ServeFlow-Design</span>
+      <span class="badge badge-red">Fehlt noch</span>
+    </div>
+    <div class="feature-body">
+      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Aktueller Stand:</strong> Alle E-Mails gehen als Plain-Text raus. Kein Branding, kein Logo, kein professionelles Layout.</p>
+      <span class="sub red">Betroffene E-Mail-Typen (alle 7 müssen überarbeitet werden):</span>
+      <ul class="checklist">
+        <li><div class="check-box missing"></div>Reservierungs-Bestätigung (QR-Code + Kalender-Links + Storno/Umbuchungs-Link)</li>
+        <li><div class="check-box missing"></div>Reservierungs-Erinnerung 24h vorher (automatisch per node-cron)</li>
+        <li><div class="check-box missing"></div>Reservierungs-Erinnerung 3h vorher</li>
+        <li><div class="check-box missing"></div>Stornierungsbestätigung</li>
+        <li><div class="check-box missing"></div>Umbuchungsbestätigung</li>
+        <li><div class="check-box missing"></div>Mitarbeiter-Einladung (Link zum Passwort-Setzen)</li>
+        <li><div class="check-box missing"></div>Passwort-Reset E-Mail</li>
+      </ul>
+      <div class="todo-box">Datei: <code>restaurant-app/backend/src/services/emailService.ts</code> — alle sendX()-Funktionen müssen HTML-Templates bekommen.</div>
+    </div>
+  </div>
+
+  <!-- 22. SMS Twilio -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📲</span>
+      <span class="feature-num">22.</span>
+      <span class="feature-title">SMS-Versand auf Twilio umstellen</span>
+      <span class="badge badge-red">Fehlt noch</span>
+    </div>
+    <div class="feature-body">
+      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Aktuell:</strong> SMS werden nur in der Server-Konsole geloggt. Im Produktionsbetrieb kommt keine SMS an.</p>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Twilio-Account anlegen (twilio.com) → Account SID + Auth Token + Absender-Nummer</div></li>
+        <li><div class="step-num">2</div><div><code>npm install twilio</code> im Backend</div></li>
+        <li><div class="step-num">3</div><div><code>smsService.ts</code> implementieren mit Twilio SDK</div></li>
+        <li><div class="step-num">4</div><div>Env-Variablen setzen: <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, <code>TWILIO_PHONE_NUMBER</code></div></li>
+        <li><div class="step-num">5</div><div>Test: SMS an echte Testnummer senden (Telefon-Verifizierung bei Registrierung)</div></li>
+      </ol>
+      <div class="todo-box">Betroffene Stellen: Registrierung (SMS-Code), optionale MA-Einladung per SMS. Datei: <code>src/services/smsService.ts</code></div>
+    </div>
+  </div>
+
+  <!-- 23. SMTP Produktion -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📧</span>
+      <span class="feature-num">23.</span>
+      <span class="feature-title">SMTP auf Produktions-E-Mail-Server umstellen</span>
+      <span class="badge badge-red">Fehlt noch</span>
+    </div>
+    <div class="feature-body">
+      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Aktuell:</strong> Gmail App-Passwort — Limit ~500/Tag, kein professioneller Absender (kein @serveflow.de), Spam-Risiko.</p>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>E-Mail-Provider wählen: Resend (einfachste Integration, 3.000/Monat kostenlos), Postmark oder SendGrid</div></li>
+        <li><div class="step-num">2</div><div>Domain <code>serveflow.de</code> verifizieren (SPF-Record + DKIM in DNS eintragen)</div></li>
+        <li><div class="step-num">3</div><div>SMTP-Credentials in <code>.env</code> aktualisieren: <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code></div></li>
+        <li><div class="step-num">4</div><div>Absender auf <code>noreply@serveflow.de</code> setzen</div></li>
+        <li><div class="step-num">5</div><div>Test: Buchungsbestätigung auslösen → landet in echtem Postfach (nicht Spam)</div></li>
+      </ol>
+      <div class="todo-box">Datei: <code>restaurant-app/backend/src/services/emailService.ts</code> — SMTP-Config anpassen</div>
+    </div>
+  </div>
+
+  <!-- 24. Abwesenheits-Email -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🚨</span>
+      <span class="feature-num">24.</span>
+      <span class="feature-title">E-Mail bei Abwesenheits-Konflikt (Admin-Benachrichtigung)</span>
+      <span class="badge badge-red">Fehlt noch</span>
+    </div>
+    <div class="feature-body">
+      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Problem:</strong> MA trägt Abwesenheit ein während Schichten geplant sind → Admin bekommt Socket.io-Toast (nur wenn gerade online), aber <strong>keine persistente E-Mail</strong>. Wenn Admin offline ist: verpasst er den Konflikt komplett.</p>
+      <ol class="steps">
+        <li><div class="step-num">1</div><div>Öffne <code>restaurant-app/backend/src/routes/abwesenheiten.ts</code> → Zeile ~76 (TODO-Kommentar)</div></li>
+        <li><div class="step-num">2</div><div>Nach Socket.io-Emit: <code>emailService.sendeAbwesenheitsKonfliktEmail()</code> aufrufen</div></li>
+        <li><div class="step-num">3</div><div>Test: Als MA Abwesenheit eintragen bei vorhandener Schicht → Admin bekommt E-Mail</div></li>
+      </ol>
+      <div class="todo-box">TODO in: <code>restaurant-app/backend/src/routes/abwesenheiten.ts</code> ~Zeile 76 — E-Mail-Service-Aufruf fehlt.</div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════ ABSCHNITT 3: TEILWEISE FERTIG ═══════════════════ -->
+<div class="page">
+  <div class="section-header orange">🟡 ABSCHNITT 3 — Teilweise fertig (Rest noch geplant)</div>
+
+  <!-- 25. Design-System Phase 6 -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🎨</span>
+      <span class="feature-num">25.</span>
+      <span class="feature-title">Design-System Bestellseite — Custom-Builder (Phase 6)</span>
+      <span class="badge badge-orange">Teilweise fertig</span>
+    </div>
+    <div class="feature-body">
+      <span class="sub green">✅ Fertig und testbar:</span>
+      <ul class="checklist">
+        <li><div class="check-box done"></div>6 Theme-Presets: Modern, Eleganz, Trattoria, Fresh, Street, Rustikal (<code>src/lib/themes.ts</code>)</li>
+        <li><div class="check-box done"></div>Theme wechseln über Preset-Konstante in <code>BestellenPro.tsx</code> → Farben/Fonts wechseln komplett</li>
+        <li><div class="check-box done"></div>Kategorie-Kacheln mit Hintergrundbild + Kategorie-First Flow</li>
+        <li><div class="check-box done"></div>gastro-* Tailwind-Utilities (CSS Custom Properties)</li>
+      </ul>
+      <span class="sub red">✗ Noch nicht implementiert:</span>
+      <ul class="checklist">
+        <li><div class="check-box missing"></div>DB-Feld <code>theme_config JSONB</code> + <code>theme_premium_unlocked BOOLEAN</code> auf <code>restaurants</code></li>
+        <li><div class="check-box missing"></div>API: <code>GET /api/restaurant/:id/design</code> gibt theme_config zurück</li>
+        <li><div class="check-box missing"></div>Preset-Galerie in Einstellungen (mit Vorschau-Thumbnails, kostenlos wählbar)</li>
+        <li><div class="check-box missing"></div>Premium Custom-Builder UI: Farb-Picker + Font-Dropdown + Layout-Toggle + Live-Preview</li>
+        <li><div class="check-box missing"></div>Zahlungsintegration 20 EUR einmalig (Mollie/Stripe) → setzt <code>theme_premium_unlocked = true</code></li>
+        <li><div class="check-box missing"></div>Paywall-UI: "Design-Builder freischalten für 20 EUR" mit Vorschau</li>
+        <li><div class="check-box missing"></div>Mobile-Vorschau im Builder + "Zurück zum Preset" Reset-Button</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 26. Schichtplan Pro -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">🗓️</span>
+      <span class="feature-num">26.</span>
+      <span class="feature-title">Schichtplan Pro — offene Punkte (Phase 7)</span>
+      <span class="badge badge-orange">Teilweise fertig</span>
+    </div>
+    <div class="feature-body">
+      <span class="sub red">✗ Noch nicht implementiert:</span>
+      <ul class="checklist">
+        <li><div class="check-box missing"></div><strong>Schicht-Templates:</strong> Woche als Vorlage speichern → in neuer Woche anwenden (1-Klick-Übernahme)</li>
+        <li><div class="check-box missing"></div><strong>Reservierungs-basierter Personalbedarf:</strong> Reservierungen → automatische Empfehlung Mitarbeiterzahl (Alleinstellungsmerkmal!)</li>
+        <li><div class="check-box missing"></div><strong>Budget-Overlay:</strong> Personalkosten-Summe live während der Schichtplanung anzeigen (€/h × Stunden)</li>
+        <li><div class="check-box missing"></div><strong>Schichttausch 3-Tap-Flow:</strong> MA stellt Anfrage → anderer MA übernimmt → Admin genehmigt</li>
+        <li><div class="check-box missing"></div><strong>Push-Benachrichtigungen:</strong> Neue Schicht, Änderungen, Erinnerung vor Schichtbeginn</li>
+        <li><div class="check-box missing"></div><strong>Lesebestätigung:</strong> MA bestätigt explizit Dienstplan gelesen zu haben</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 27. Reservierungssystem Pro -->
+  <div class="feature-card">
+    <div class="feature-header">
+      <span class="feature-icon">📅</span>
+      <span class="feature-num">27.</span>
+      <span class="feature-title">Reservierungssystem Pro — Phase 8B &amp; 8C</span>
+      <span class="badge badge-orange">Teilweise fertig</span>
+    </div>
+    <div class="feature-body">
+      <span class="sub red">✗ Phase 8B — noch nicht implementiert:</span>
+      <ul class="checklist">
+        <li><div class="check-box missing"></div><strong>Gäste-CRM:</strong> Gast-Profile, Tags (VIP/Stammgast/Allergiker), Besuchshistorie, Allergien (mit DSGVO-Einwilligung)</li>
+        <li><div class="check-box missing"></div><strong>No-Show-Management:</strong> Kreditkartengarantie optional, No-Show-Tracking, Gäste-Score</li>
+        <li><div class="check-box missing"></div><strong>SMS/WhatsApp-Erinnerungen:</strong> 95% Öffnungsrate (vs. 20–30% bei E-Mail)</li>
+        <li><div class="check-box missing"></div><strong>Google Reserve Integration:</strong> >50% aller Reservierungen in DE über Google Maps</li>
+      </ul>
+      <span class="sub red">✗ Phase 8C — Differenzierung:</span>
+      <ul class="checklist">
+        <li><div class="check-box missing"></div><strong>Warteliste:</strong> Walk-in + Online, automatisches Nachrücken bei Stornierung + SMS-Benachrichtigung</li>
+        <li><div class="check-box missing"></div><strong>Bewertungsmanagement:</strong> Feedback intern sammeln → bei positiv → Google-Bewertung vorschlagen</li>
+        <li><div class="check-box missing"></div><strong>Erlebnis-Buchung:</strong> Menü + Tisch als Prepaid-Paket (eliminiert No-Shows komplett)</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-break">
+
+<!-- ═══════════════════ ABSCHNITT 4: GEPLANT ═══════════════════ -->
+<div class="page">
+  <div class="section-header slate">⚪ ABSCHNITT 4 — Geplant (noch nicht gestartet)</div>
+
+  <div class="two-col">
+    <div class="feature-card">
+      <div class="feature-header">
+        <span class="feature-icon">💳</span>
+        <span class="feature-num">28.</span>
+        <span class="feature-title">Abonnement-Verwaltung (Mollie)</span>
+        <span class="badge badge-gray">Geplant</span>
+      </div>
+      <div class="feature-body">
+        <p style="color:#475569; font-size:12px; margin-bottom:8px;">ServeFlow als monatliches Abo. Restaurants bezahlen per Kreditkarte/SEPA.</p>
+        <ul class="checklist">
+          <li><div class="check-box missing"></div>Mollie-Integration (Subscriptions + Webhooks)</li>
+          <li><div class="check-box missing"></div>Abo-Verwaltungs-Seite für Restaurant-Admin</li>
+          <li><div class="check-box missing"></div>Zugangs-Blockierung bei abgelaufenem Abo</li>
+          <li><div class="check-box missing"></div>Rechnungs-PDF automatisch generieren</li>
+          <li><div class="check-box missing"></div>Trial-Periode: 14 Tage kostenlos, dann zahlungspflichtig</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-header">
+        <span class="feature-icon">🌍</span>
+        <span class="feature-num">29.</span>
+        <span class="feature-title">Mehrsprachigkeit (DE / EN)</span>
+        <span class="badge badge-gray">Geplant</span>
+      </div>
+      <div class="feature-body">
+        <p style="color:#475569; font-size:12px; margin-bottom:8px;">Admin-UI + Gäste-Seite in Deutsch und Englisch.</p>
+        <ul class="checklist">
+          <li><div class="check-box missing"></div>i18n-Setup (react-i18next)</li>
+          <li><div class="check-box missing"></div>Alle UI-Texte in Sprachdateien (de.json, en.json)</li>
+          <li><div class="check-box missing"></div>Sprach-Toggle in Einstellungen</li>
+          <li><div class="check-box missing"></div>Gäste-Seite: automatisch nach Browser-Sprache</li>
+          <li><div class="check-box missing"></div>E-Mail-Vorlagen mehrsprachig</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ TEST-PROTOKOLL ═══════════════════ -->
+  <div class="section-header purple" style="margin-top:20px;">📋 ABSCHNITT 5 — Test-Protokoll (Ausfüllvorlage)</div>
+  <p style="color:#475569; font-size:12px; margin-bottom:10px;">Nach jedem Test-Durchlauf ausfüllen. <strong>Legende:</strong> ✅ OK &nbsp;|&nbsp; ⚠ Warnung/Einschränkung &nbsp;|&nbsp; ❌ Bug/Fehler &nbsp;|&nbsp; ⏭ Nicht getestet</p>
+
+  <table class="test-table">
+    <thead>
+      <tr><th>#</th><th>Feature</th><th>Datum</th><th>Status</th><th>Bug / Notiz</th></tr>
+    </thead>
+    <tbody>
+      <tr class="sect-row"><td colspan="5">🟢 FERTIGE FEATURES</td></tr>
+      <tr><td>1</td><td>Login + Rate Limiting (5 Fehlversuche)</td><td></td><td></td><td></td></tr>
+      <tr><td>2</td><td>Registrierung 3-Schritt-Wizard</td><td></td><td></td><td></td></tr>
+      <tr><td>3</td><td>E-Mail-Verifizierung (Code + Link)</td><td></td><td></td><td></td></tr>
+      <tr><td>4</td><td>Passwort vergessen / Reset-Link</td><td></td><td></td><td></td></tr>
+      <tr><td>5</td><td>Dashboard Live-Stats (Socket.io)</td><td></td><td></td><td></td></tr>
+      <tr><td>6</td><td>Speisekarte CRUD (Kat. + Gerichte)</td><td></td><td></td><td></td></tr>
+      <tr><td>7</td><td>Extras/Modifier anlegen + testen</td><td></td><td></td><td></td></tr>
+      <tr><td>8</td><td>Bild-Upload (Logo + Gerichte)</td><td></td><td></td><td></td></tr>
+      <tr><td>9</td><td>Floor Plan Editor (Drag &amp; Drop)</td><td></td><td></td><td></td></tr>
+      <tr><td>10</td><td>Tischplan Bereiche/Zonen</td><td></td><td></td><td></td></tr>
+      <tr><td>11</td><td>Live-Modus Statusfarben + Tischzuweisung</td><td></td><td></td><td></td></tr>
+      <tr><td>12</td><td>QR-Codes drucken (Einzel + Alle)</td><td></td><td></td><td></td></tr>
+      <tr><td>13</td><td>Reservierung manuell anlegen</td><td></td><td></td><td></td></tr>
+      <tr><td>14</td><td>Auto-Tischzuweisung</td><td></td><td></td><td></td></tr>
+      <tr><td>15</td><td>Walk-In erfassen + platzieren</td><td></td><td></td><td></td></tr>
+      <tr><td>16</td><td>Buchungsseite 3-Schritt-Flow</td><td></td><td></td><td></td></tr>
+      <tr><td>17</td><td>Stornieren per Token-Link</td><td></td><td></td><td></td></tr>
+      <tr><td>18</td><td>Umbuchen per Token-Link</td><td></td><td></td><td></td></tr>
+      <tr><td>19</td><td>Kalender-Links (Google + iCal)</td><td></td><td></td><td></td></tr>
+      <tr><td>20</td><td>Buchungswidget (iframe)</td><td></td><td></td><td></td></tr>
+      <tr><td>21</td><td>Gäste-Bestellseite komplett</td><td></td><td></td><td></td></tr>
+      <tr><td>22</td><td>Extras auf Gäste-Seite + Warenkorb</td><td></td><td></td><td></td></tr>
+      <tr><td>23</td><td>Bestellstatus Live-Update</td><td></td><td></td><td></td></tr>
+      <tr><td>24</td><td>Mitarbeiter einladen + Passwort setzen</td><td></td><td></td><td></td></tr>
+      <tr><td>25</td><td>Rollen-basierter Zugang (Kellner/Küche)</td><td></td><td></td><td></td></tr>
+      <tr><td>26</td><td>Dienstplan Schicht anlegen + Drag &amp; Drop</td><td></td><td></td><td></td></tr>
+      <tr><td>27</td><td>ArbZG-Warnungen (Ruhezeit, Max-Stunden)</td><td></td><td></td><td></td></tr>
+      <tr><td>28</td><td>Mitarbeiter-Verfügbarkeit</td><td></td><td></td><td></td></tr>
+      <tr><td>29</td><td>Abwesenheiten + Konflikt-Toast</td><td></td><td></td><td></td></tr>
+      <tr><td>30</td><td>MA-Ansicht (Read-Only Schichten)</td><td></td><td></td><td></td></tr>
+      <tr><td>31</td><td>Statistiken &amp; Diagramme</td><td></td><td></td><td></td></tr>
+      <tr><td>32</td><td>Dark Mode (alle Seiten)</td><td></td><td></td><td></td></tr>
+      <tr><td>33</td><td>Öffnungszeiten → Buchungs-Slots</td><td></td><td></td><td></td></tr>
+      <tr class="sect-row"><td colspan="5">🔴 VOR RELEASE — muss noch gebaut werden</td></tr>
+      <tr><td>34</td><td>E-Mail-Vorlagen HTML-Design</td><td></td><td>⏭ Fehlt</td><td></td></tr>
+      <tr><td>35</td><td>SMS via Twilio senden</td><td></td><td>⏭ Fehlt</td><td></td></tr>
+      <tr><td>36</td><td>SMTP Produktionsserver</td><td></td><td>⏭ Fehlt</td><td></td></tr>
+      <tr><td>37</td><td>Abwesenheits-Konflikt E-Mail</td><td></td><td>⏭ Fehlt</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:24px; text-align:center; color:#94a3b8; font-size:11px; border-top:1px solid var(--border); padding-top:14px;">
+    ServeFlow Test-Anleitung v2.0 &nbsp;·&nbsp; Stand April 2026 &nbsp;·&nbsp; 29 Features &nbsp;·&nbsp; Intern — nicht zur Weitergabe
+  </div>
+</div>
+
+</body>
+</html>

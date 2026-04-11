@@ -42,6 +42,7 @@ export interface RestaurantDesign {
 // ─── Tisch ────────────────────────────────────────────────────────────────────
 
 export type TischStatus = 'frei' | 'besetzt' | 'wartet_auf_zahlung';
+export type TischForm = 'rechteck' | 'rund' | 'quadrat' | 'bar';
 
 export interface Tisch {
   id: string;
@@ -50,6 +51,20 @@ export interface Tisch {
   kapazitaet: number | null;
   status: TischStatus;
   qr_url: string | null;
+  form: TischForm;
+  pos_x: number;
+  pos_y: number;
+  breite: number;
+  hoehe: number;
+  rotation: number;
+  bereich_id: string | null;
+}
+
+export interface Bereich {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  reihenfolge: number;
 }
 
 // ─── Speisekarte ──────────────────────────────────────────────────────────────
@@ -67,22 +82,66 @@ export interface KategorieMitAnzahl extends Kategorie {
   anzahl_gerichte: number;
 }
 
+export interface Unterkategorie {
+  id: string;
+  restaurant_id: string;
+  kategorie_id: string;
+  name: string;
+  reihenfolge: number;
+}
+
 export interface Gericht {
   id: string;
   restaurant_id: string;
   kategorie_id: string;
   kategorie_name?: string;
+  unterkategorie_id: string | null;
+  unterkategorie_name?: string | null;
   name: string;
   beschreibung: string | null;
   preis: number;
   bild_url: string | null;
   allergene: string | null;
   verfuegbar: boolean;
+  modell_3d_url: string | null;
+  /** true wenn das Gericht Extras/Modifier hat (vom Backend berechnet) */
+  hat_extras?: boolean;
+}
+
+// ─── Extras / Modifier ───────────────────────────────────────────────────────
+
+/** Eine einzelne Option innerhalb einer Extras-Gruppe (z.B. "Ketchup", "Extra Käse") */
+export interface Extra {
+  id: string;
+  gruppe_id: string;
+  name: string;
+  aufpreis: number;
+  verfuegbar: boolean;
+  reihenfolge: number;
+}
+
+/** Eine Gruppe von Optionen pro Gericht (z.B. "Sauce", "Größe", "Toppings") */
+export interface ExtrasGruppe {
+  id: string;
+  gericht_id: string;
+  name: string;
+  /** true = Gast muss eine Option wählen */
+  pflicht: boolean;
+  /** 1 = nur eine Option (Radio), >1 = mehrere gleichzeitig (Checkbox) */
+  max_auswahl: number;
+  reihenfolge: number;
+  extras: Extra[];
 }
 
 // ─── Bestellung ───────────────────────────────────────────────────────────────
 
 export type BestellungStatus = 'offen' | 'in_zubereitung' | 'serviert' | 'bezahlt';
+
+export interface BestellPositionExtra {
+  id: string;
+  extra_name: string;
+  aufpreis: number;
+}
 
 export interface BestellPosition {
   id: string;
@@ -90,6 +149,7 @@ export interface BestellPosition {
   gericht_name: string;
   menge: number;
   einzelpreis: number;
+  extras?: BestellPositionExtra[];
 }
 
 export interface Bestellung {
@@ -106,13 +166,15 @@ export interface Bestellung {
 
 // ─── Reservierung ─────────────────────────────────────────────────────────────
 
-export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert';
-export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online';
+export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert' | 'abgeschlossen' | 'no_show';
+export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online' | 'google';
 
 export interface Reservierung {
   id: string;
   restaurant_id: string;
   tisch_id: string | null;
+  tisch_kombiniert_id: string | null;
+  gast_id: string | null;
   gast_name: string;
   telefon: string | null;
   email: string | null;
@@ -120,6 +182,8 @@ export interface Reservierung {
   personen: number;
   status: ReservierungStatus;
   anmerkung: string | null;
+  anlass: string | null;
+  sitzplatz_wunsch: string | null;
   quelle: ReservierungQuelle;
   buchungs_token: string | null;
   dsgvo_einwilligung: boolean;
@@ -127,6 +191,66 @@ export interface Reservierung {
   verweilzeit_min: number;
   erstellt_am: string;
 }
+
+// ─── Walk-in ──────────────────────────────────────────────────────────────────
+
+export type WalkInStatus = 'wartend' | 'platziert' | 'abgegangen';
+
+export interface WalkIn {
+  id: string;
+  restaurant_id: string;
+  tisch_id: string | null;
+  gast_name: string;
+  personen: number;
+  status: WalkInStatus;
+  anmerkung: string | null;
+  erstellt_am: string;
+  platziert_am: string | null;
+  wartezeit_min: number;
+}
+
+// ─── Gäste-CRM ───────────────────────────────────────────────────────────────
+
+export interface Gast {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  email: string | null;
+  telefon: string | null;
+  notizen: string | null;
+  tags: string[];
+  erstellt_am: string;
+  aktualisiert_am: string;
+  besuche: number;
+  letzter_besuch: string | null;
+}
+
+export interface GastReservierung {
+  id: string;
+  datum: string;
+  personen: number;
+  status: string;
+  anlass: string | null;
+  tisch_nummer: number | null;
+}
+
+export interface GastMitReservierungen extends Gast {
+  reservierungen: GastReservierung[];
+}
+
+// Vordefinierte Tag-Optionen für das CRM
+export const GAST_TAGS = [
+  'VIP',
+  'Stammgast',
+  'Vegetarisch',
+  'Vegan',
+  'Laktoseintoleranz',
+  'Glutenfrei',
+  'Allergie',
+  'No-Show',
+  'Geburtstagsgast',
+  'Geschäftsgast',
+] as const;
 
 // ─── Buchung (öffentliche Reservierung) ──────────────────────────────────────
 
@@ -160,6 +284,8 @@ export interface BuchungSelfService {
   personen: number;
   status: ReservierungStatus;
   anmerkung: string | null;
+  anlass: string | null;
+  sitzplatz_wunsch: string | null;
   restaurant_name: string;
   restaurant_adresse: string | null;
   restaurant_id: string;
@@ -177,6 +303,10 @@ export interface MitarbeiterDetail {
   erstellt_am: string;
   /** true = Einladung noch nicht angenommen (kein Passwort gesetzt) */
   einladung_ausstehend?: boolean;
+  /** Stundenlohn in EUR — nur für Admin sichtbar, für Budget-Overlay im Dienstplan */
+  stundenlohn?: number | null;
+  /** Jährlicher Urlaubsanspruch in Arbeitstagen (Standard: 20 Tage laut BUrlG) */
+  urlaubsanspruch_tage?: number;
 }
 
 // ─── Schicht (Dienstplan) ─────────────────────────────────────────────────────
@@ -192,6 +322,46 @@ export interface Schicht {
   ende: string;
   notiz: string | null;
   erstellt_am: string;
+}
+
+// ─── Schichttausch ───────────────────────────────────────────────────────────
+
+export type SchichttauschStatus = 'offen' | 'angeboten' | 'genehmigt' | 'abgelehnt';
+
+export interface Schichttausch {
+  id: string;
+  restaurant_id: string;
+  anbieter_id: string;
+  anbieter_name?: string;
+  anbieter_schicht_id: string;
+  anbieter_datum?: string;
+  anbieter_beginn?: string;
+  anbieter_ende?: string;
+  annehmer_id: string | null;
+  annehmer_name?: string;
+  annehmer_schicht_id: string | null;
+  annehmer_datum?: string;
+  annehmer_beginn?: string;
+  annehmer_ende?: string;
+  status: SchichttauschStatus;
+  erstellt_am: string;
+}
+
+// ─── Mitarbeiter-Verfügbarkeit ────────────────────────────────────────────────
+
+export type VerfuegbarkeitTyp = 'nicht_verfuegbar' | 'eingeschraenkt';
+
+export interface MitarbeiterVerfuegbarkeit {
+  id: string;
+  restaurant_id: string;
+  mitarbeiter_id: string;
+  wochentag: number;             // 0=Mo … 6=So
+  typ: VerfuegbarkeitTyp;
+  von: string | null;            // "HH:MM"
+  bis: string | null;
+  notiz: string | null;
+  erstellt_am: string;
+  mitarbeiter_name?: string;     // nur bei Admin-Abfrage
 }
 
 // ─── Theme (Design-System Bestellseite) ──────────────────────────────────────
@@ -238,11 +408,48 @@ export interface Theme {
 }
 
 /** Theme-ID eines der eingebauten Presets */
-export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal' | 'osteria' | 'editorial';
+export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal' | 'osteria' | 'editorial' | 'showcase';
+
+// ─── Abwesenheit (datumsbezogene Auszeit) ────────────────────────────────────
+
+export type AbwesenheitTyp = 'urlaub' | 'krank' | 'sonstiges';
+
+export interface Abwesenheit {
+  id: string;
+  restaurant_id: string;
+  mitarbeiter_id: string;
+  von_datum: string;   // "YYYY-MM-DD"
+  bis_datum: string;   // "YYYY-MM-DD"
+  typ: AbwesenheitTyp;
+  notiz: string | null;
+  erstellt_am: string;
+  mitarbeiter_name?: string;  // nur bei Admin-Abfrage
+}
+
+// ─── Personalbedarf (Dienstplan-Feature) ─────────────────────────────────────
+
+export interface PersonalbedarfTag {
+  datum: string;              // "YYYY-MM-DD"
+  reservierungen_count: number;
+  gaeste_gesamt: number;
+  empfohlen_kellner: number;  // 0 nur wenn geschlossen
+  empfohlen_kueche: number;   // 0 nur wenn geschlossen
+  geoeffnet: boolean;         // false = Ruhetag laut Öffnungszeiten
+}
 
 // ─── Warenkorb (nur Frontend) ─────────────────────────────────────────────────
 
+/** Ein gewähltes Extra im Warenkorb (Referenz auf Extra + eingefrorener Preis) */
+export interface GewaehlteExtra {
+  extra_id: string;
+  name: string;
+  aufpreis: number;
+}
+
 export interface WarenkorbPosition {
+  /** Eindeutiger Key: gericht.id + sortierte Extra-IDs → damit gleiches Gericht mit unterschiedlichen Extras getrennt bleibt */
+  key: string;
   gericht: Gericht;
   menge: number;
+  extras: GewaehlteExtra[];
 }

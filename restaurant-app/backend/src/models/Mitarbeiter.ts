@@ -16,9 +16,11 @@ export interface Mitarbeiter {
 /** Öffentliche Felder (ohne passwort_hash) */
 export type MitarbeiterOhnePasswort = Omit<Mitarbeiter, 'passwort_hash'> & {
   einladung_ausstehend?: boolean;
+  stundenlohn?: number | null;
+  urlaubsanspruch_tage?: number;
 };
 
-const OEFFENTLICHE_FELDER = 'id, restaurant_id, name, email, rolle, aktiv, erstellt_am';
+const OEFFENTLICHE_FELDER = 'id, restaurant_id, name, email, rolle, aktiv, erstellt_am, stundenlohn, urlaubsanspruch_tage';
 const OEFFENTLICHE_FELDER_MIT_STATUS = `${OEFFENTLICHE_FELDER}, (passwort_hash IS NULL) AS einladung_ausstehend`;
 
 export const MitarbeiterModel = {
@@ -52,13 +54,15 @@ export const MitarbeiterModel = {
     );
   },
 
-  aktualisieren(id: string, restaurantId: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean }) {
+  aktualisieren(id: string, restaurantId: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null; urlaubsanspruch_tage?: number }) {
     const sets: string[] = [];
     const vals: unknown[] = [];
     let idx = 1;
     if (felder.name !== undefined) { sets.push(`name = $${idx++}`); vals.push(felder.name); }
     if (felder.rolle !== undefined) { sets.push(`rolle = $${idx++}`); vals.push(felder.rolle); }
     if (felder.aktiv !== undefined) { sets.push(`aktiv = $${idx++}`); vals.push(felder.aktiv); }
+    if (felder.stundenlohn !== undefined) { sets.push(`stundenlohn = $${idx++}`); vals.push(felder.stundenlohn); }
+    if (felder.urlaubsanspruch_tage !== undefined) { sets.push(`urlaubsanspruch_tage = $${idx++}`); vals.push(felder.urlaubsanspruch_tage); }
     if (sets.length === 0) return null;
     vals.push(id, restaurantId);
     return q1<MitarbeiterOhnePasswort>(

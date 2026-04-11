@@ -13,11 +13,14 @@ router.get('/', requireAuth, asyncHandler(async (req: AuthRequest, res: Response
 
 // POST /api/tische  (Admin)
 router.post('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { nummer, kapazitaet } = req.body;
+  const { nummer, kapazitaet, form, pos_x, pos_y, breite, hoehe, bereich_id } = req.body;
   if (!nummer) { res.status(400).json({ fehler: 'Tischnummer erforderlich' }); return; }
   const id = uuid();
   const qrUrl = `${process.env.FRONTEND_URL}/bestellen-pro/${req.auth!.restaurantId}/${id}`;
-  const tisch = await TischModel.erstellen({ id, restaurant_id: req.auth!.restaurantId, nummer, kapazitaet: kapazitaet || null, status: 'frei', qr_url: qrUrl });
+  const tisch = await TischModel.erstellen({
+    id, restaurant_id: req.auth!.restaurantId, nummer, kapazitaet: kapazitaet || null,
+    qr_url: qrUrl, form, pos_x, pos_y, breite, hoehe, bereich_id,
+  });
   res.status(201).json(tisch);
 }));
 
@@ -34,13 +37,22 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
   })
 );
 
-// PATCH /api/tische/:id  (Admin) – Nummer/Kapazitaet bearbeiten
-router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { nummer, kapazitaet } = req.body;
-  if (nummer === undefined && kapazitaet === undefined) {
-    res.status(400).json({ fehler: 'Nichts zu aktualisieren' }); return;
+// PUT /api/tische/positionen  (Admin) – Batch-Update aller Tisch-Positionen (nach Drag & Drop)
+router.put('/positionen', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { positionen } = req.body;
+  if (!Array.isArray(positionen) || positionen.length === 0) {
+    res.status(400).json({ fehler: 'Positionen-Array erforderlich' }); return;
   }
-  const tisch = await TischModel.aktualisieren(req.params.id, req.auth!.restaurantId, { nummer, kapazitaet });
+  const ergebnis = await TischModel.positionenSpeichern(req.auth!.restaurantId, positionen);
+  res.json(ergebnis);
+}));
+
+// PATCH /api/tische/:id  (Admin) – Tisch bearbeiten (alle Felder)
+router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { nummer, kapazitaet, form, pos_x, pos_y, breite, hoehe, rotation, bereich_id } = req.body;
+  const tisch = await TischModel.aktualisieren(req.params.id, req.auth!.restaurantId, {
+    nummer, kapazitaet, form, pos_x, pos_y, breite, hoehe, rotation, bereich_id,
+  });
   if (!tisch) { res.status(404).json({ fehler: 'Tisch nicht gefunden' }); return; }
   res.json(tisch);
 }));

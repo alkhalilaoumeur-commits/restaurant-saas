@@ -10,12 +10,13 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
   const tage = Math.min(Math.max(parseInt(req.query.tage as string) || 7, 1), 365);
   const restaurantId = req.auth!.restaurantId;
 
-  const [zusammenfassung, umsatzProTag, beliebteGerichte, stosszeiten, kategorieUmsatz] = await Promise.all([
+  const [zusammenfassung, umsatzProTag, beliebteGerichte, stosszeiten, kategorieUmsatz, crmMetriken] = await Promise.all([
     StatistikModel.zusammenfassung(restaurantId, tage),
     StatistikModel.umsatzProTag(restaurantId, tage),
     StatistikModel.beliebteGerichte(restaurantId, tage),
     StatistikModel.stosszeiten(restaurantId, tage),
     StatistikModel.kategorieUmsatz(restaurantId, tage),
+    StatistikModel.crmMetriken(restaurantId, tage),
   ]);
 
   res.json({
@@ -25,6 +26,7 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
     beliebteGerichte,
     stosszeiten,
     kategorieUmsatz,
+    crmMetriken,
   });
 }));
 

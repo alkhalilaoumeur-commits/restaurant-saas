@@ -49,6 +49,15 @@
 | reihenfolge | INTEGER | Sortierung |
 | bild_url | TEXT | Hintergrundbild für die Kategorie-Kachel auf der Gäste-Bestellseite |
 
+### bereiche (NEU: 2026-04-09)
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID (PK) | |
+| restaurant_id | UUID (FK → restaurants) | Multi-Tenant |
+| name | TEXT | z.B. "Innen", "Terrasse", "Bar" |
+| reihenfolge | INTEGER | Sortierung der Tabs im Editor |
+| UNIQUE | (restaurant_id, name) | Pro Restaurant keine doppelten Namen |
+
 ### tische
 | Feld | Typ | Beschreibung |
 |---|---|---|
@@ -58,6 +67,13 @@
 | kapazitaet | INTEGER | Max. Personen |
 | status | TEXT | frei / besetzt / wartet_auf_zahlung |
 | qr_url | TEXT | Generierter QR-Code-Link |
+| form | TEXT | rechteck / rund / quadrat / bar (NEU: 2026-04-09) |
+| pos_x | REAL | X-Position auf Canvas (NEU: 2026-04-09) |
+| pos_y | REAL | Y-Position auf Canvas (NEU: 2026-04-09) |
+| breite | REAL | Breite auf Canvas in Pixeln (NEU: 2026-04-09) |
+| hoehe | REAL | Höhe auf Canvas in Pixeln (NEU: 2026-04-09) |
+| rotation | REAL | Rotation in Grad 0-360 (NEU: 2026-04-09) |
+| bereich_id | UUID (FK → bereiche) | Zugehöriger Bereich, NULL = keiner (NEU: 2026-04-09) |
 
 ### gerichte
 | Feld | Typ | Beschreibung |
@@ -92,6 +108,37 @@
 | menge | INTEGER | |
 | einzelpreis | DECIMAL(10,2) | Preis zum Bestellzeitpunkt |
 
+### extras_gruppen (NEU: 2026-04-08)
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID (PK) | |
+| gericht_id | UUID (FK → gerichte) | Zu welchem Gericht |
+| restaurant_id | UUID (FK → restaurants) | Multi-Tenant |
+| name | TEXT | z.B. "Sauce", "Größe", "Toppings" |
+| pflicht | BOOLEAN | true = Gast muss wählen |
+| max_auswahl | INTEGER | 1 = Radio, >1 = Checkbox |
+| reihenfolge | INTEGER | Sortierung |
+
+### extras (NEU: 2026-04-08)
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID (PK) | |
+| gruppe_id | UUID (FK → extras_gruppen) | |
+| restaurant_id | UUID (FK → restaurants) | Multi-Tenant |
+| name | TEXT | z.B. "Ketchup", "Extra Käse" |
+| aufpreis | DECIMAL(10,2) | 0 = kostenlos |
+| verfuegbar | BOOLEAN | false = ausverkauft |
+| reihenfolge | INTEGER | Sortierung |
+
+### bestellposition_extras (NEU: 2026-04-08)
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID (PK) | |
+| position_id | UUID (FK → bestellpositionen) | |
+| extra_id | UUID (FK → extras) | |
+| extra_name | TEXT | Eingefroren zum Bestellzeitpunkt |
+| aufpreis | DECIMAL(10,2) | Eingefroren zum Bestellzeitpunkt |
+
 ### reservierungen
 | Feld | Typ | Beschreibung |
 |---|---|---|
@@ -105,6 +152,8 @@
 | personen | INTEGER | |
 | status | TEXT | ausstehend / bestaetigt / storniert |
 | anmerkung | TEXT | |
+| anlass | TEXT | Optional: geburtstag / jubilaeum / date_night / geschaeft / feier / sonstiges |
+| sitzplatz_wunsch | TEXT | Optional: innen / terrasse / bar / fenster / ruhig |
 | quelle | TEXT | app / whatsapp / telefon / online |
 | buchungs_token | TEXT UNIQUE | Sicherer Token für Self-Service-Links (64 Hex-Zeichen) |
 | dsgvo_einwilligung | BOOLEAN | Einwilligungsflag (Pflicht bei Online-Buchung) |

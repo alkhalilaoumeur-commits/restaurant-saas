@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { q } from '../models/db';
+import { q, q1 } from '../models/db';
 import { ReservierungModel } from '../models/Reservierung';
 import { VerfuegbarkeitModel, verweilzeitBerechnen } from '../models/Verfuegbarkeit';
+import { GastModel } from '../models/Gast';
 import { asyncHandler } from '../middleware/errorHandler';
 import {
   reservierungBestaetigungSenden,
@@ -97,7 +98,12 @@ router.get('/:restaurantId/slots', asyncHandler(async (req: Request, res: Respon
 // ────────────────────────────────────────────────
 router.post('/:restaurantId', asyncHandler(async (req: Request, res: Response) => {
   const { restaurantId } = req.params;
-  const { gast_name, email, telefon, datum, personen, anmerkung, dsgvo_einwilligung } = req.body;
+  const { gast_name, email, telefon, datum, personen, anmerkung, anlass, sitzplatz_wunsch, dsgvo_einwilligung } = req.body;
+
+  // Buchungsquelle aus Query-Parameter — z.B. ?quelle=google wenn via Google Maps
+  // Erlaubte Werte: 'online' (Standard) oder 'google'
+  const quelleRoh = req.query.quelle as string | undefined;
+  const quelle = quelleRoh === 'google' ? 'google' : 'online';
 
   // Pflichtfelder prüfen
   if (!gast_name || !email || !datum || !personen) {
@@ -144,24 +150,41 @@ router.post('/:restaurantId', asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
-  // Tisch automatisch zuweisen
-  const tischId = await VerfuegbarkeitModel.tischZuweisen(
-    restaurantId, datumStr, zeitStr, personenZahl, verweilzeit
+  // Tisch automatisch zuweisen (bevorzugt Bereich passend zu sitzplatz_wunsch)
+  const zuweisung = await VerfuegbarkeitModel.tischZuweisen(
+    restaurantId, datumStr, zeitStr, personenZahl, verweilzeit, sitzplatz_wunsch || null
   );
 
   // Reservierung anlegen
   const reservierung = await ReservierungModel.erstellenMitToken({
     restaurant_id: restaurantId,
-    tisch_id: tischId,
+    tisch_id: zuweisung?.hauptId || null,
     gast_name,
     email: email.toLowerCase(),
     telefon: telefon || null,
     datum,
     personen: personenZahl,
     anmerkung: anmerkung || null,
+    anlass: anlass || null,
+    sitzplatz_wunsch: sitzplatz_wunsch || null,
     verweilzeit_min: verweilzeit,
     dsgvo_einwilligung: true,
+    quelle,
   });
+
+  // Auto-Linking: Gast-CRM Profil anlegen oder via Email → Telefon → Name erkennen.
+  // Dann gast_id auf die Reservierung setzen und Stammgast-Tag prüfen (fire-and-forget).
+  if (reservierung) {
+    GastModel.smartUpsert({ restaurant_id: restaurantId, name: gast_name, email, telefon: telefon || null })
+      .then(async (gastId) => {
+        await q1('UPDATE reservierungen SET gast_id = $1 WHERE id = $2', [gastId, reservierung.id]);
+        // Stammgast-Tag nach Verknüpfung prüfen (async, kein await nötig)
+        GastModel.stammgastAktualisieren(gastId).catch((e) =>
+          console.error('[Gäste-CRM] Stammgast-Check Fehler:', e)
+        );
+      })
+      .catch((err) => console.error('[Gäste-CRM] Auto-Link Fehler:', err));
+  }
 
   // Bestätigungs-Email mit QR-Code senden (fire-and-forget)
   if (reservierung) {
@@ -178,7 +201,7 @@ router.post('/:restaurantId', asyncHandler(async (req: Request, res: Response) =
       gast_name,
       datum,
       personen: personenZahl,
-      quelle: 'online',
+      quelle,
     });
   }
 
@@ -212,6 +235,8 @@ router.get('/token/:token', asyncHandler(async (req: Request, res: Response) => 
     personen: reservierung.personen,
     status: reservierung.status,
     anmerkung: reservierung.anmerkung,
+    anlass: reservierung.anlass,
+    sitzplatz_wunsch: reservierung.sitzplatz_wunsch,
     restaurant_name: reservierung.restaurant_name,
     restaurant_adresse: reservierung.restaurant_adresse,
     restaurant_id: reservierung.restaurant_id,
@@ -294,13 +319,13 @@ router.post('/token/:token/umbuchen', asyncHandler(async (req: Request, res: Res
     return;
   }
 
-  // Neuen Tisch zuweisen
-  const neuerTisch = await VerfuegbarkeitModel.tischZuweisen(
-    vorher.restaurant_id, datumStr, zeitStr, vorher.personen, verweilzeit
+  // Neuen Tisch zuweisen (bevorzugt ursprünglichen Sitzplatzwunsch)
+  const neueZuweisung = await VerfuegbarkeitModel.tischZuweisen(
+    vorher.restaurant_id, datumStr, zeitStr, vorher.personen, verweilzeit, vorher.sitzplatz_wunsch
   );
 
   const reservierung = await ReservierungModel.umbuchen(
-    req.params.token, datum, neuerTisch, verweilzeit
+    req.params.token, datum, neueZuweisung?.hauptId || null, verweilzeit
   );
 
   // Umbuchungsbestätigung per Email

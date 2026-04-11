@@ -44,19 +44,32 @@
 | PATCH | /api/speisekarte/kategorien/:id | Kategorie bearbeiten (name, reihenfolge, bild_url) | Ja (Admin) |
 | DELETE | /api/speisekarte/kategorien/:id | Kategorie löschen (nur leere) | Ja (Admin) |
 
+## Extras / Modifier
+| Methode | Route | Beschreibung | Auth nötig |
+|---|---|---|---|
+| GET | /api/speisekarte/:id/extras | Extras-Gruppen + verfügbare Extras eines Gerichts | Nein |
+| GET | /api/speisekarte/:id/extras/admin | Alle Extras (inkl. nicht-verfügbare) | Ja (Admin) |
+| POST | /api/speisekarte/:id/extras/gruppen | Extras-Gruppe erstellen | Ja (Admin) |
+| PATCH | /api/speisekarte/extras/gruppen/:gruppeId | Extras-Gruppe bearbeiten | Ja (Admin) |
+| DELETE | /api/speisekarte/extras/gruppen/:gruppeId | Extras-Gruppe löschen | Ja (Admin) |
+| POST | /api/speisekarte/extras/gruppen/:gruppeId/extras | Extra erstellen | Ja (Admin) |
+| PATCH | /api/speisekarte/extras/:extraId | Extra bearbeiten | Ja (Admin) |
+| DELETE | /api/speisekarte/extras/:extraId | Extra löschen | Ja (Admin) |
+
 ## Bestellungen
 | Methode | Route | Beschreibung | Auth nötig |
 |---|---|---|---|
-| GET | /api/bestellungen | Alle offenen Bestellungen | Ja |
-| POST | /api/bestellungen | Neue Bestellung (Gast) | Nein (QR-Code) |
+| GET | /api/bestellungen | Alle offenen Bestellungen (inkl. Extras pro Position) | Ja |
+| POST | /api/bestellungen | Neue Bestellung mit Extras (Gast) — Aufpreise serverseitig | Nein (QR-Code) |
 | PUT | /api/bestellungen/:id/status | Status ändern | Ja |
 
 ## Reservierungen
 | Methode | Route | Beschreibung | Auth nötig |
 |---|---|---|---|
-| GET | /api/reservierungen | Alle Reservierungen | Ja |
+| GET | /api/reservierungen | Alle Reservierungen (optional ?datum=YYYY-MM-DD) | Ja |
 | POST | /api/reservierungen | Neue Reservierung | Nein (öffentlich) |
-| PUT | /api/reservierungen/:id | Status ändern | Ja |
+| PATCH | /api/reservierungen/:id/status | Status ändern (ausstehend/bestaetigt/storniert) | Ja (Admin/Kellner) |
+| PATCH | /api/reservierungen/:id/tisch | Tisch manuell zuweisen/entfernen (body: { tisch_id }) | Ja (Admin/Kellner) |
 | DELETE | /api/reservierungen/:id | Löschen | Ja (Admin) |
 
 ## Dienstplan

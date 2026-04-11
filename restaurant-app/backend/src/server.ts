@@ -18,6 +18,12 @@ import statistikenRoutes from './routes/statistiken';
 import dienstplanRoutes from './routes/dienstplan';
 import buchungRoutes from './routes/buchung';
 import uploadsRoutes from './routes/uploads';
+import bereicheRoutes from './routes/bereiche';
+import verfuegbarkeitRoutes from './routes/verfuegbarkeit';
+import abwesenheitenRoutes from './routes/abwesenheiten';
+import walkInsRoutes from './routes/walk-ins';
+import gaesteRoutes from './routes/gaeste';
+import googleReserveRoutes from './routes/google-reserve';
 import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
 
@@ -59,6 +65,12 @@ app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/statistiken', statistikenRoutes);
 app.use('/api/dienstplan', dienstplanRoutes);
 app.use('/api/buchung', buchungRoutes);
+app.use('/api/bereiche', bereicheRoutes);
+app.use('/api/verfuegbarkeit', verfuegbarkeitRoutes);
+app.use('/api/abwesenheiten', abwesenheitenRoutes);
+app.use('/api/walk-ins', walkInsRoutes);
+app.use('/api/gaeste', gaesteRoutes);
+app.use('/api/google-reserve', googleReserveRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });

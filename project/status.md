@@ -1,7 +1,7 @@
 # Projektstatus
 
-**Letzte Aktualisierung:** 2026-04-07
-**Aktuelle Phase:** Phase 8A Reservierungssystem abgeschlossen — Phase 8B (Floor Plan) als nächstes
+**Letzte Aktualisierung:** 2026-04-11
+**Aktuelle Phase:** Phase 7 Schichtplan Pro — Schichttausch 3-Tap-Flow ✅
 **Dashboard:** Auto-Sync Hook aktiv — Dashboard aktualisiert sich bei jeder Dateiänderung automatisch
 
 ---
@@ -93,9 +93,20 @@ Basierend auf Marktanalyse (2026-04-05, siehe `project/schichtplan-analyse.md`):
 - [x] Buchungswidget (iframe-Snippet in Einstellungen)
 - Health Check: 50/50 bestanden ✅
 
-### Phase 8B – Reservierungssystem Pro (nächste Phase)
-Basierend auf Marktanalyse (2026-04-06, siehe `project/reservierungssystem-analyse.md`):
-- [ ] Floor Plan Editor (visueller Tischplan, react-konva, Drag & Drop)
+### Phase 8B – Floor Plan Editor ✅ (erledigt 2026-04-09)
+Visueller Tischplan-Editor basierend auf Marktrecherche (project/tischplan-recherche.md):
+- [x] DB-Migration: `bereiche`-Tabelle + 7 Positionsfelder auf `tische` (form, pos_x/y, breite/hoehe, rotation, bereich_id) ✅
+- [x] Backend: Bereich-Model + CRUD-Routes + Tisch-Batch-Position-Update ✅
+- [x] react-konva + konva installiert (Canvas-basierter Editor) ✅
+- [x] GrundrissEditor: Tische als Formen auf Canvas (Rund, Quadrat, Rechteck, Bar) ✅
+- [x] Drag & Drop mit Grid-Snapping (20px) + Position speichern ✅
+- [x] Transformer: Resize + Rotation (Eck-Handles, Min-Größe 40px) ✅
+- [x] Seitenleiste: 6 Tisch-Vorlagen (Rund 2er/4er, Quadrat 4er, Rechteck 6er/8er, Bar 2er) ✅
+- [x] Bereiche/Zonen: Tab-Filter, Erstellen/Löschen, Tisch-Zuordnung per Dropdown ✅
+- [x] Live-Modus: Status-Farben (grün/rot/gelb) + Klick zum Status wechseln ✅
+- [x] Zwei Ansichten: Grundriss (Canvas) + Liste (Karten-Grid) ✅
+- [x] QR-Code-System beibehalten (Einzel-/Sammel-Druck) ✅
+- [x] Tisch-Zuweisung per Klick im Tischplan (Live-Modus: freien Tisch → Reservierung zuweisen) ✅ erledigt 2026-04-09
 - [ ] Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen)
 - [ ] Gäste-CRM (Profile, Tags, Besuchshistorie, Allergien)
 - [ ] No-Show-Management (Tracking, Score, optional Kreditkartengarantie)
@@ -132,9 +143,50 @@ Basierend auf Marktanalyse (2026-04-06, siehe `project/reservierungssystem-analy
 - [x] DB-Migration erstellt (migration-auth.sql)
 
 ## Nächster Schritt
-Phase 8B (Floor Plan Editor) oder Phase 6 (Design-System fertigstellen) oder Hosting (Hetzner + Coolify).
+Automatische Tischzuweisung, Phase 6 (Design-System Custom-Builder), oder Hosting (Hetzner + Coolify).
 
 ---
+
+### Phase 6 – Editorial Design Redesign (2026-04-08)
+Basierend auf tiefgruendiger Marktrecherche (Uber Eats, Wolt, Michelin-Restaurants, Dribbble):
+- [x] GerichtKarteEditorial komplett ueberarbeitet: kursive Beschreibungen, Fine-Dining-Preis (ohne EUR), Dietary Icons, Drop-Cap fuer Gerichte ohne Bild, 4:3 Aspect-Ratio ✅
+- [x] KategorieZeileEditorial verbessert: groessere Nummern (Signature-Element), Hover-Animation, besseres Spacing ✅
+- [x] Sticky Kategorie-Header (bleibt beim Scrollen sichtbar + Backdrop-Blur) ✅
+- [x] Staggered Entry-Animationen mit Framer Motion (Kategorien + Gerichte faden nacheinander ein) ✅
+- [x] Editorial Header redesigned (groesserer Restaurantname, dekorative Trennelemente, Uppercase-Label) ✅
+- [x] formatPreisEditorial Hilfsfunktion (Fine-Dining: "12,50" statt "12,50 EUR") ✅
+- [x] Framer Motion installiert (v12.38.0) ✅
+
+### Restaurant-Logo Feature (2026-04-08)
+- [x] Backend: PUT /api/restaurant akzeptiert jetzt logo_url (Model + Route erweitert) ✅
+- [x] Frontend Hook: useRestaurant aktualisieren() unterstützt logo_url ✅
+- [x] Einstellungen: Logo-Upload-Bereich mit Vorschau, Hochladen & Entfernen ✅
+- [x] Registrierung: Hinweis auf Logo-Upload in Erfolgs-Schritt ✅
+- [x] Dashboard: Restaurant-Logo + Name im Topbar-Header ✅
+- [x] Bestellseite: Logo in allen 4 Layout-Headern (Editorial, Pills, Grid, Liste) ✅
+
+### Extras/Modifier-System (2026-04-08)
+Ermöglicht Zusatzoptionen pro Gericht (z.B. "Extra Käse +2€", "Größe: Klein/Mittel/Groß"):
+- [x] DB-Schema: 3 neue Tabellen (extras_gruppen, extras, bestellposition_extras) ✅
+- [x] Backend: ExtrasModel + 8 neue API-Endpunkte (Admin CRUD + öffentlich) ✅
+- [x] Bestell-API: Extras-Aufpreise serverseitig aus DB + eingefroren in bestellposition_extras ✅
+- [x] Frontend: GerichtDetailModal (Bottom-Sheet, Radio/Checkbox Extras, Live-Preis) ✅
+- [x] Frontend: Key-basierter Warenkorb (gleiches Gericht + versch. Extras = getrennte Zeilen) ✅
+- [x] Frontend: useGerichtExtras Hook (Lazy-Loading, erst beim Antippen) ✅
+- [x] Alle 5 Layouts (Editorial, Showcase, Osteria, Grid, Liste) umgebaut ✅
+- [x] Admin-UI: ExtrasVerwaltung Komponente (Gruppen + Extras CRUD, Inline-Bearbeitung, Pflicht/Max-Auswahl) ✅
+- [x] Admin-UI: "Extras"-Button (violet) in GerichtKarte + Modal in Speisekarte-Seite ✅
+- [x] DB-Migration ausführen (`psql $DATABASE_URL -f database/migration-extras.sql`) ✅ erledigt 2026-04-08
+
+### Buchungs-Quick-Wins (2026-04-08)
+Drei Verbesserungen auf der oeffentlichen Buchungsseite (Buchen.tsx):
+- [x] Anlass-Auswahl: 6 Optionen als Chips (Geburtstag, Jubilaeum, Date Night, Geschaeft, Feier, Sonstiges) ✅
+- [x] Sitzplatzwunsch: 6 Optionen als Chips (Egal, Innen, Terrasse, Bar, Fenster, Ruhig) ✅
+- [x] "Zum Kalender hinzufuegen": Google Calendar Link + iCal-Download (.ics) auf Bestaetigungsseite ✅
+- [x] DB-Migration: `anlass` + `sitzplatz_wunsch` Spalten auf `reservierungen` ✅
+- [x] Backend: Buchungs-Route + Model erweitert ✅
+- [x] Admin: ReservierungZeile zeigt Anlass/Sitzplatz-Badges ✅
+- [x] Oeffentliche Detailseite (ReservierungDetail) zeigt Anlass/Sitzplatz ✅
 
 ### Bugfixes (2026-04-07)
 - [x] Speisekarte GET-Routes fehlte Auth → `optionalAuth` Middleware erstellt + eingebaut ✅

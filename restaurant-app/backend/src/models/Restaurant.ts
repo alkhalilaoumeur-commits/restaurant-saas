@@ -60,7 +60,7 @@ export const RestaurantModel = {
 
   async aktualisieren(
     restaurantId: string,
-    felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string },
+    felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string; logo_url?: string | null },
   ): Promise<Restaurant | null> {
     const sets: string[] = [];
     const vals: unknown[] = [];
@@ -69,6 +69,7 @@ export const RestaurantModel = {
     if (felder.oeffnungszeiten !== undefined) { sets.push(`oeffnungszeiten = $${idx++}`); vals.push(felder.oeffnungszeiten); }
     if (felder.primaerfarbe !== undefined) { sets.push(`primaerfarbe = $${idx++}`); vals.push(felder.primaerfarbe); }
     if (felder.layout_id !== undefined) { sets.push(`layout_id = $${idx++}`); vals.push(felder.layout_id); }
+    if (felder.logo_url !== undefined) { sets.push(`logo_url = $${idx++}`); vals.push(felder.logo_url); }
     if (sets.length === 0) return null;
     vals.push(restaurantId);
     return q1<Restaurant>(

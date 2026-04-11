@@ -80,7 +80,7 @@ export function useDienstplan(start: string, ende: string) {
     beginn: string;
     ende: string;
     notiz?: string;
-  }) => {
+  }): Promise<{ warnungen: string[] }> => {
     if (demo) {
       const neu: Schicht = {
         id: `demo-${Date.now()}`,
@@ -93,10 +93,11 @@ export function useDienstplan(start: string, ende: string) {
         erstellt_am: new Date().toISOString(),
       };
       setSchichten((prev) => [...prev, neu]);
-      return;
+      return { warnungen: [] };
     }
-    await api.post('/dienstplan', daten);
+    const result = await api.post<{ warnungen?: string[] }>('/dienstplan', daten);
     await laden_();
+    return { warnungen: result?.warnungen || [] };
   }, [demo, laden_]);
 
   const aktualisieren = useCallback(async (id: string, felder: {
@@ -105,13 +106,14 @@ export function useDienstplan(start: string, ende: string) {
     beginn?: string;
     ende?: string;
     notiz?: string | null;
-  }) => {
+  }): Promise<{ warnungen: string[] }> => {
     if (demo) {
       setSchichten((prev) => prev.map((s) => s.id === id ? { ...s, ...felder } : s));
-      return;
+      return { warnungen: [] };
     }
-    await api.patch(`/dienstplan/${id}`, felder);
+    const result = await api.patch<{ warnungen?: string[] }>(`/dienstplan/${id}`, felder);
     await laden_();
+    return { warnungen: result?.warnungen || [] };
   }, [demo, laden_]);
 
   const loeschen = useCallback(async (id: string) => {

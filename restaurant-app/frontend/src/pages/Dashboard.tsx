@@ -6,6 +6,7 @@ import BestellVerteilung from '../components/dashboard/BestellVerteilung';
 import { useBestellungen } from '../hooks/useBestellungen';
 import { useTische } from '../hooks/useTische';
 import { useReservierungen } from '../hooks/useReservierungen';
+import { useRestaurant } from '../hooks/useRestaurant';
 import { formatPreis, formatZeit, BESTELLUNG_STATUS_FARBE, BESTELLUNG_STATUS_LABEL, RESERVIERUNG_STATUS_FARBE, RESERVIERUNG_STATUS_LABEL } from '../lib/utils';
 
 // ─── Kleine Icon-Komponenten fuer Stat-Karten ──────────────────────────────
@@ -68,6 +69,7 @@ function IconTische() {
 export default function Dashboard() {
   const { bestellungen } = useBestellungen();
   const { tische } = useTische();
+  const { restaurant } = useRestaurant();
 
   const heute = new Date().toISOString().slice(0, 10);
   const { reservierungen: heutigeReservierungen } = useReservierungen(heute);
@@ -100,7 +102,17 @@ export default function Dashboard() {
 
   return (
     <div className="animate-fade-in-up">
-      <Topbar titel="Dashboard" untertitel="Willkommen zurück" />
+      <Topbar
+        titel="Dashboard"
+        untertitel={restaurant?.name || 'Willkommen zurück'}
+        aktion={
+          restaurant?.logo_url ? (
+            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-gray-200 dark:ring-white/10 shadow-sm">
+              <img src={restaurant.logo_url} alt={restaurant.name} className="w-full h-full object-cover" />
+            </div>
+          ) : undefined
+        }
+      />
 
       {/* Stat-Karten – 5 Karten */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">

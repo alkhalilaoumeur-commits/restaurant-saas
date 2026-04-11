@@ -43,7 +43,7 @@ export default function Bestellen() {
 
   const positionen: WarenkorbPosition[] = gerichte
     .filter((g) => mengen[g.id])
-    .map((g) => ({ gericht: g, menge: mengen[g.id] }));
+    .map((g) => ({ key: g.id, gericht: g, menge: mengen[g.id], extras: [] }));
 
   const gesamtpreis = positionen.reduce((s, p) => s + p.gericht.preis * p.menge, 0);
 

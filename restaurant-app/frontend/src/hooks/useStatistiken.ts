@@ -36,6 +36,14 @@ export interface KategorieUmsatz {
   anzahl: number;
 }
 
+export interface CrmMetriken {
+  stammgaeste: number;
+  alleGaesteCrm: number;
+  wiederkehrquote: number;
+  noShowRate: number;
+  neueGaeste: number;
+}
+
 export interface StatistikDaten {
   zeitraum: number;
   zusammenfassung: Zusammenfassung;
@@ -43,6 +51,7 @@ export interface StatistikDaten {
   beliebteGerichte: BeliebtesGericht[];
   stosszeiten: Stosszeit[];
   kategorieUmsatz: KategorieUmsatz[];
+  crmMetriken: CrmMetriken;
 }
 
 // ─── Demo-Daten ──────────────────────────────────────────────────────────────
@@ -104,6 +113,13 @@ function demoDaten(tage: number): StatistikDaten {
       { name: 'Salate', umsatz: 480, anzahl: 52 },
       { name: 'Vorspeisen', umsatz: 350, anzahl: 41 },
     ],
+    crmMetriken: {
+      stammgaeste: 38,
+      alleGaesteCrm: 124,
+      wiederkehrquote: 31,
+      noShowRate: 8,
+      neueGaeste: Math.round(4 + Math.random() * 12),
+    },
   };
 }
 

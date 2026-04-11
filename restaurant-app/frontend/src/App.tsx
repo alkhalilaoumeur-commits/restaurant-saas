@@ -24,6 +24,7 @@ import ReservierungStornieren from './pages/ReservierungStornieren';
 import ReservierungUmbuchen from './pages/ReservierungUmbuchen';
 import Dienstplan from './pages/Dienstplan';
 import Einstellungen from './pages/Einstellungen';
+import Gaeste from './pages/Gaeste';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/tischplan"      element={<Tischplan />} />
         <Route path="/dienstplan"      element={<Dienstplan />} />
         <Route path="/mitarbeiter"     element={<Mitarbeiter />} />
+        <Route path="/gaeste"          element={<Gaeste />} />
         <Route path="/statistiken"    element={<Statistiken />} />
         <Route path="/einstellungen"  element={<Einstellungen />} />
       </Route>

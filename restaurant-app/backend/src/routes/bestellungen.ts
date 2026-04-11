@@ -6,6 +6,10 @@ import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { io } from '../server';
 
+interface PositionExtras {
+  extra_id: string;
+}
+
 const router = Router();
 
 const ERLAUBTE_STATUS: BestellungStatus[] = ['offen', 'in_zubereitung', 'serviert', 'bezahlt'];
@@ -43,6 +47,25 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  // Extras-IDs aus allen Positionen sammeln und Preise aus DB holen
+  const alleExtraIds: string[] = [];
+  for (const pos of positionen as { gericht_id: string; menge: number; extras?: PositionExtras[] }[]) {
+    if (pos.extras?.length) {
+      alleExtraIds.push(...pos.extras.map((e) => e.extra_id));
+    }
+  }
+
+  const extrasPreisMap = new Map<string, { name: string; aufpreis: number }>();
+  if (alleExtraIds.length > 0) {
+    const extrasAusDb = await q<{ id: string; name: string; aufpreis: number; verfuegbar: boolean }>(
+      'SELECT id, name, aufpreis, verfuegbar FROM extras WHERE id = ANY($1) AND restaurant_id = $2 AND verfuegbar = true',
+      [alleExtraIds, restaurant_id]
+    );
+    for (const e of extrasAusDb) {
+      extrasPreisMap.set(e.id, { name: e.name, aufpreis: Number(e.aufpreis) });
+    }
+  }
+
   const preisMap = new Map(gerichte.map((g) => [g.id, g.preis]));
   let gesamtpreis = 0;
 
@@ -57,13 +80,40 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
       [bestellungId, restaurant_id, tisch_id, 0, anmerkung || null]
     );
 
-    for (const pos of positionen as { gericht_id: string; menge: number }[]) {
+    for (const pos of positionen as { gericht_id: string; menge: number; extras?: PositionExtras[] }[]) {
       const preis = preisMap.get(pos.gericht_id)!;
-      gesamtpreis += preis * pos.menge;
+
+      // Extras-Aufpreise pro Position berechnen
+      let extrasAufpreis = 0;
+      if (pos.extras?.length) {
+        for (const e of pos.extras) {
+          const extraInfo = extrasPreisMap.get(e.extra_id);
+          if (extraInfo) extrasAufpreis += extraInfo.aufpreis;
+        }
+      }
+
+      // Einzelpreis = Gerichtpreis + Summe aller Extras-Aufpreise
+      const einzelpreis = preis + extrasAufpreis;
+      gesamtpreis += einzelpreis * pos.menge;
+
+      const positionId = uuid();
       await client.query(
         'INSERT INTO bestellpositionen (id,bestellung_id,gericht_id,menge,einzelpreis) VALUES ($1,$2,$3,$4,$5)',
-        [uuid(), bestellungId, pos.gericht_id, pos.menge, preis]
+        [positionId, bestellungId, pos.gericht_id, pos.menge, einzelpreis]
       );
+
+      // Gewählte Extras speichern (mit eingefrorenem Aufpreis)
+      if (pos.extras?.length) {
+        for (const e of pos.extras) {
+          const extraInfo = extrasPreisMap.get(e.extra_id);
+          if (extraInfo) {
+            await client.query(
+              'INSERT INTO bestellposition_extras (id,position_id,extra_id,extra_name,aufpreis) VALUES ($1,$2,$3,$4,$5)',
+              [uuid(), positionId, e.extra_id, extraInfo.name, extraInfo.aufpreis]
+            );
+          }
+        }
+      }
     }
 
     await client.query('UPDATE bestellungen SET gesamtpreis = $1 WHERE id = $2', [gesamtpreis, bestellungId]);

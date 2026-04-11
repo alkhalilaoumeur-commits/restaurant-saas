@@ -4,6 +4,7 @@ import Modal from '../components/layout/Modal';
 import GerichtKarte from '../components/speisekarte/GerichtKarte';
 import GerichtFormular from '../components/speisekarte/GerichtFormular';
 import KategorieVerwaltung from '../components/speisekarte/KategorieVerwaltung';
+import ExtrasVerwaltung from '../components/speisekarte/ExtrasVerwaltung';
 import { useSpeisekarte } from '../hooks/useSpeisekarte';
 import { Gericht } from '../types';
 
@@ -17,6 +18,7 @@ export default function Speisekarte() {
   const [formularOffen, setFormularOffen] = useState(false);
   const [bearbeiteGericht, setBearbeiteGericht] = useState<Gericht | null>(null);
   const [kategorienOffen, setKategorienOffen] = useState(false);
+  const [extrasGericht, setExtrasGericht] = useState<Gericht | null>(null);
 
   const gruppiertNachKategorie = kategorien.map((k) => ({
     kategorie: k,
@@ -95,6 +97,21 @@ export default function Speisekarte() {
         />
       </Modal>
 
+      {/* Extras Modal */}
+      <Modal
+        offen={!!extrasGericht}
+        onSchliessen={() => setExtrasGericht(null)}
+        titel={`Extras: ${extrasGericht?.name ?? ''}`}
+        breit
+      >
+        {extrasGericht && (
+          <ExtrasVerwaltung
+            gerichtId={extrasGericht.id}
+            gerichtName={extrasGericht.name}
+          />
+        )}
+      </Modal>
+
       {laden && <p className="text-sm text-gray-400 dark:text-slate-500">Wird geladen...</p>}
 
       {!laden && kategorien.length === 0 && (
@@ -121,6 +138,7 @@ export default function Speisekarte() {
                   onToggle={verfuegbarkeitToggle}
                   onBearbeiten={gerichtBearbeiten}
                   onLoeschen={gerichtLoeschen}
+                  onExtras={setExtrasGericht}
                 />
               ))}
             </div>

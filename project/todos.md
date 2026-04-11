@@ -61,15 +61,16 @@
 - [ ] Mobile-Vorschau im Builder + "Zurueck zum Preset" Reset
 
 ## Phase 7 – Schichtplan Pro (Marktanalyse 2026-04-05)
-- [ ] Dienstplan fuer Mitarbeiter sichtbar machen (aktuell nur Admin — Kellner/Kueche muessen eigene Schichten sehen)
-- [ ] Drag & Drop Schichtplanung (Schichten per Ziehen verschieben/kopieren)
-- [ ] ArbZG-Compliance (11h Ruhezeit, Pausen 30min/6h + 45min/9h, Max 10h/Tag)
-- [ ] Konflikterkennung mit Gelb/Rot-Warnungen (Doppelbuchung, Ruhezeitverstoss, Ueberstunden)
-- [ ] Mitarbeiter-Verfuegbarkeit (MA tragen ein wann sie koennen/nicht koennen)
+- [x] Dienstplan fuer Mitarbeiter sichtbar machen (Kellner/Kueche sehen eigene Schichten als read-only Tageskarten) ✅ erledigt 2026-04-09
+- [x] Drag & Drop Schichtplanung (Schichten per Ziehen verschieben/kopieren) ✅ erledigt 2026-04-09
+- [x] ArbZG-Compliance (11h Ruhezeit, Pausen 30min/6h + 45min/9h, Max 10h/Tag) ✅ erledigt 2026-04-09
+- [x] Konflikterkennung mit Gelb/Rot-Warnungen (Doppelbuchung, Ruhezeitverstoss, Ueberstunden) ✅ erledigt 2026-04-09
+- [x] Mitarbeiter-Verfuegbarkeit (MA tragen ein wann sie koennen/nicht koennen — Wochentag-Editor + Admin-Indikatoren) ✅ erledigt 2026-04-09
+- [x] Abwesenheiten (konkrete Daten/Zeiträume — Urlaub, Krank, Sonstiges + Admin-Konflikt-Notification via Socket.io) ✅ erledigt 2026-04-09
 - [ ] Schicht-Templates (wiederkehrende Wochen als Vorlage speichern + anwenden)
-- [ ] Reservierungs-basierter Personalbedarf (Reservierungen → automatische Empfehlung Mitarbeiterzahl)
-- [ ] Budget-Overlay (Personalkosten live waehrend der Planung anzeigen)
-- [ ] Schichttausch 3-Tap-Flow (Anfrage → Claim → Genehmigung)
+- [x] Reservierungs-basierter Personalbedarf (Reservierungen → automatische Empfehlung Mitarbeiterzahl) ✅ erledigt 2026-04-09
+- [x] Budget-Overlay (Personalkosten live waehrend der Planung anzeigen) ✅ erledigt 2026-04-09
+- [x] Schichttausch 3-Tap-Flow (Anfrage → Claim → Genehmigung) ✅ erledigt 2026-04-11
 - [ ] Push-Benachrichtigungen (neue Schicht, Aenderungen, Erinnerung vor Schichtbeginn)
 - [ ] Lesebestaetigung fuer veroeffentlichte Dienstplaene
 
@@ -82,30 +83,47 @@
 - [x] Gast-Self-Service (Stornierung + Umbuchung per Buchungs-Token in der E-Mail) ✅ erledigt 2026-04-07
 - [x] Einbettbares Buchungswidget (iframe-Snippet, kopierbar aus Einstellungen) ✅ erledigt 2026-04-07
 - [x] Kapazitätsmanagement (Max Covers pro Slot, Pufferzeiten, Auto-Tischzuweisung) ✅ erledigt 2026-04-07
+- [x] QR-Code in Bestätigungs-Email (Gast zeigt im Restaurant vor, qrcode-Package) ✅ erledigt 2026-04-07
+- [x] Socket.io Live-Updates bei neuer/geänderter Reservierung ✅ erledigt 2026-04-07
+- [x] Toast-Benachrichtigung für Mitarbeiter bei neuer Online-Reservierung (app-weit) ✅ erledigt 2026-04-07
+- [x] Reservierungs-Detailseite /reservierung/:token (QR-Code-Zielseite) ✅ erledigt 2026-04-07
 
 ### Phase B: Professionelles Reservierungssystem
-- [ ] **Räumlicher Tischplan / Floor Plan Editor** (Priorität!)
-  - [ ] DB-Migration: `bereiche`-Tabelle + Positionsfelder (`pos_x`, `pos_y`, `breite`, `hoehe`, `rotation`, `form`) in `tische`
-  - [ ] Backend: CRUD-Routes für Bereiche + Tisch-Positionierung API
-  - [ ] Frontend: react-konva Canvas mit Drag & Drop Tischplatzierung
-  - [ ] Tischformen: Rund, Quadrat, Rechteck, Bar/Theke
-  - [ ] Bereiche/Zonen: Innen, Terrasse, Bar, Privat (frei benennbar)
-  - [ ] Grid-Snapping + Rotation für saubere Platzierung
-  - [ ] Live-Status-Farben (frei=grün, besetzt=rot, reserviert=gelb)
-  - [ ] Toolbar: Zoom, Undo, Speichern, Tisch-Typen Seitenleiste
-  - [ ] Verbindung zu Reservierungen (Tisch per Klick zuweisen)
-- [ ] Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen, Puffer, Zonen)
+- [x] **Räumlicher Tischplan / Floor Plan Editor** ✅ erledigt 2026-04-09
+  - [x] DB-Migration: `bereiche`-Tabelle + Positionsfelder (`pos_x`, `pos_y`, `breite`, `hoehe`, `rotation`, `form`) in `tische` ✅
+  - [x] Backend: CRUD-Routes für Bereiche + Tisch-Positionierung API ✅
+  - [x] Frontend: react-konva Canvas mit Drag & Drop Tischplatzierung ✅
+  - [x] Tischformen: Rund, Quadrat, Rechteck, Bar/Theke ✅
+  - [x] Bereiche/Zonen: Innen, Terrasse, Bar, Privat (frei benennbar) ✅
+  - [x] Grid-Snapping + Rotation für saubere Platzierung ✅
+  - [x] Live-Status-Farben (frei=grün, besetzt=rot, zahlung=gelb) ✅
+  - [x] Toolbar: Zoom, Tisch-Typen Seitenleiste, Bearbeiten/Live-Modus ✅
+  - [x] Verbindung zu Reservierungen (Tisch per Klick zuweisen) ✅ erledigt 2026-04-09
+- [x] Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen, Puffer, Zonen) ✅ erledigt 2026-04-09
 - [ ] Gaeste-CRM (Profile, Tags, Besuchshistorie, Allergien mit DSGVO-Einwilligung)
 - [ ] No-Show-Management (Kreditkartengarantie optional, No-Show-Tracking, Gaeste-Score)
 - [ ] SMS/WhatsApp-Erinnerungen (95% Oeffnungsrate vs. 20-30% bei E-Mail)
-- [ ] Google Reserve Integration (>50% aller Reservierungen in DE kommen ueber Google Maps)
+- [x] Google Reserve Integration (Option A aktiv + Option B Infrastruktur bereit) ✅ erledigt 2026-04-11
 
 ### Phase C: Differenzierung
 - [ ] Warteliste (Walk-in + Online, automatisches Nachruecken bei Stornierung, SMS-Benachrichtigung)
-- [ ] Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung)
+- [x] Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung) ✅ erledigt 2026-04-09
 - [ ] Reservierungs-basierte Personalplanung (Alleinstellungsmerkmal! Reservierungen → Personalbedarf)
 - [ ] Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen)
 - [ ] Erlebnis-Buchung (Menue + Tisch als Prepaid-Paket, eliminiert No-Shows)
+
+## Extras/Modifier-System ✅ (erledigt 2026-04-08)
+- [x] DB-Schema: extras_gruppen + extras + bestellposition_extras Tabellen ✅
+- [x] Backend-Model: ExtrasModel (CRUD + öffentliche Abfrage + Batch-Loading) ✅
+- [x] Backend-Routes: 8 neue Endpunkte (öffentlich + Admin CRUD für Gruppen + Extras) ✅
+- [x] Bestell-API: Extras-Aufpreise serverseitig berechnen + in bestellposition_extras speichern ✅
+- [x] Frontend-Types: Extra, ExtrasGruppe, GewaehlteExtra, BestellPositionExtra ✅
+- [x] useGerichtExtras Hook: Lazy-Loading (erst beim Antippen eines Gerichts) ✅
+- [x] GerichtDetailModal: Bottom-Sheet mit Bild, Extras-Auswahl (Radio/Checkbox), Menge, Live-Preis ✅
+- [x] Warenkorb: Key-basiert (gleiches Gericht + verschiedene Extras = getrennte Zeilen), Extras-Anzeige ✅
+- [x] BestellenPro: Alle 5 Layouts auf Detail-Modal umgestellt ✅
+- [x] Admin-Seite: Extras pro Gericht verwalten (ExtrasVerwaltung Komponente + Modal in Speisekarte) ✅ erledigt 2026-04-08
+- [x] DB-Migration ausführen (`psql $DATABASE_URL -f database/migration-extras.sql`) ✅ erledigt 2026-04-08
 
 ## Auth-System Umbau ✅ (erledigt 2026-04-06)
 - [x] Rate Limiting auf Login (5 Versuche / 15 Min)
@@ -132,8 +150,16 @@
 - [x] SMS-Verifizierung inline bei Registrierung (6-stelliger Code, Dev: Konsole) ✅ erledigt 2026-04-06
 - [x] Mitarbeiter-Seite im Frontend an Einladungssystem anpassen ✅ erledigt 2026-04-06
 
+## Buchungs-Quick-Wins ✅ (erledigt 2026-04-08)
+- [x] Anlass-Auswahl auf Buchungsseite (6 Optionen als Chips in Schritt 3) ✅
+- [x] Sitzplatzwunsch auf Buchungsseite (6 Optionen als Chips in Schritt 1) ✅
+- [x] "Zum Kalender hinzufuegen" auf Bestaetigungsseite (Google Calendar + iCal-Download) ✅
+- [x] DB-Migration: `anlass` + `sitzplatz_wunsch` auf `reservierungen` ✅
+- [x] Backend + Admin-UI + Detailseite erweitert ✅
+
 ## Vor Release (Pflicht!)
 - [ ] E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)
+- [ ] Email-Benachrichtigung bei Abwesenheits-Konflikt (TODO in `routes/abwesenheiten.ts` Zeile ~76) — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
 - [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)
 

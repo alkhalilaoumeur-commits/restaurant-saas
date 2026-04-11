@@ -208,9 +208,18 @@
 ### Gaeste (`src/components/gaeste/`)
 | Komponente | Datei | Beschreibung |
 |---|---|---|
-| GerichtAuswahl | `GerichtAuswahl.tsx` | Gaeste-Ansicht: Gericht waehlen |
-| Warenkorb | `Warenkorb.tsx` | Warenkorb-Sidebar fuer Gaeste |
+| GerichtAuswahl | `GerichtAuswahl.tsx` | Gaeste-Ansicht: Gericht waehlen (Legacy) |
+| Warenkorb | `Warenkorb.tsx` | Warenkorb-Sidebar fuer Gaeste (Legacy) |
 | BestellStatusTracker | `BestellStatusTracker.tsx` | Live-Status-Tracker nach Bestellung (4 Schritte: Offen → Zubereitung → Serviert → Bezahlt) |
+| GerichtKartePro | `GerichtKartePro.tsx` | Gericht-Card im Grid-Layout (Modern) |
+| GerichtZeile | `GerichtZeile.tsx` | Gericht-Zeile im Listen-Layout (Elegant) |
+| GerichtKarteOsteria | `GerichtKarteOsteria.tsx` | Gericht-Karte im Osteria-Layout (Gold auf Schwarz, Emoji-Icons) |
+| GerichtKarteEditorial | `GerichtKarteEditorial.tsx` | Gericht-Karte im Editorial/Magazin-Stil (kursive Beschreibung, Fine-Dining-Preis, Dietary-Icons, Drop-Cap, 4:3 Bilder) |
+| KategorieKarte | `KategorieKarte.tsx` | Kategorie-Kachel im Grid-Layout (Modern) |
+| KategorieZeile | `KategorieZeile.tsx` | Kategorie-Balken im Listen-Layout (Elegant) |
+| KategoriePills | `KategoriePills.tsx` | Horizontale Pill-Navigation (Osteria) |
+| KategorieZeileEditorial | `KategorieZeileEditorial.tsx` | Nummerierte Kategorie-Zeile im Magazin-Stil (grosse Nummern, Hover-Verschiebung, Staggered Animation) |
+| WarenkorbPro | `WarenkorbPro.tsx` | Floating-Button + Bottom-Sheet-Warenkorb (alle Layouts) |
 
 ---
 
@@ -219,15 +228,15 @@
 | Seite | Datei | Rolle | Status |
 |---|---|---|---|
 | Login | `pages/Login.tsx` | Oeffentlich | Fertig (Split-Screen-Design) |
-| Dashboard | `pages/Dashboard.tsx` | Alle | Fertig (4 Stat-Karten + Auslastung + aktive Bestellungen + heutige Reservierungen) |
+| Dashboard | `pages/Dashboard.tsx` | Alle | Fertig (Restaurant-Logo im Header, 5 Stat-Karten + Auslastung + aktive Bestellungen + heutige Reservierungen) |
 | Bestellungen | `pages/Bestellungen.tsx` | Alle | Fertig (Karten-Grid mit Live-Updates) |
 | Tischplan | `pages/Tischplan.tsx` | Admin, Kellner | Fertig (Tisch-CRUD, Status-Wechsel, QR-Code-Anzeige + Einzel-/Sammel-Druck, Loeschbestaetigung) |
 | Reservierungen | `pages/Reservierungen.tsx` | Admin, Kellner | Fertig (Wochenleiste, Tagesnavigation, Tagesstatistiken, Liste + Formular) |
 | Speisekarte | `pages/Speisekarte.tsx` | Admin | Fertig (Kategorien + CRUD) |
 | Mitarbeiter | `pages/Mitarbeiter.tsx` | Admin | Fertig (Liste, Anlegen, Bearbeiten, Deaktivieren, Passwort-Reset, Filter-Tabs) |
-| Dienstplan | `pages/Dienstplan.tsx` | Admin | Fertig (Wochenansicht, Mitarbeiter-Zeilen, Schicht-CRUD, Rollen-Farben, Stundenzaehler) |
+| Dienstplan | `pages/Dienstplan.tsx` | Admin + Mitarbeiter | Fertig (Admin: Wochenansicht, Schicht-CRUD, Drag&Drop, ArbZG; Kellner/Kueche: eigene Schichten als Tageskarten, read-only) |
 | Statistiken | `pages/Statistiken.tsx` | Admin | Fertig (Zeitraum-Auswahl 7/30/90 Tage, Umsatz-Verlauf, Top-Gerichte, Stosszeiten, Kategorie-Donut) |
-| Einstellungen | `pages/Einstellungen.tsx` | Admin | Fertig (Lizenz-Info, Mitarbeiter-Nutzung, Design-Farbauswahl mit Vorschau, Restaurant-Daten, Dark-Mode-Toggle) |
+| Einstellungen | `pages/Einstellungen.tsx` | Admin | Fertig (Lizenz-Info, Mitarbeiter-Nutzung, Logo-Upload, Design-Farbauswahl mit Vorschau, Restaurant-Daten, Dark-Mode-Toggle) |
 | Bestellen | `pages/Bestellen.tsx` | Gaeste (oeffentlich) | Fertig (QR-Code-Bestellung + Live-Status-Tracker via Socket.io) |
 
 ---
@@ -271,4 +280,4 @@
 - [ ] Toast-Benachrichtigungen statt inline-Fehler
 - [ ] Breadcrumbs in Topbar
 - [ ] Responsive Tischplan (Grid-Anpassung fuer kleine Screens)
-- [ ] Animierte Seitenwechsel (Framer Motion)
+- [x] Animierte Seitenwechsel (Framer Motion) — Editorial-Layout: Staggered Entry fuer Kategorien + Gerichte ✅ erledigt 2026-04-08

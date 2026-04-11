@@ -83,10 +83,12 @@ function cleanupCodes() {
 }
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
-// Max 5 Login-Versuche pro IP in 15 Minuten
+// Max 5 fehlgeschlagene Login-Versuche pro IP in 15 Minuten
+// skipSuccessfulRequests: true → erfolgreiche Logins (200er) zählen NICHT gegen das Limit
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
+  skipSuccessfulRequests: true,
   message: { fehler: 'Zu viele Anmeldeversuche. Bitte in 15 Minuten erneut versuchen.' },
   standardHeaders: true,
   legacyHeaders: false,

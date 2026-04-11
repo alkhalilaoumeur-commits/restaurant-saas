@@ -309,6 +309,11 @@ export default function Registrieren() {
                   E-Mail und Telefon wurden erfolgreich verifiziert. Du kannst sofort loslegen!
                 </p>
               </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Tipp: Lade dein Restaurant-Logo in den Einstellungen hoch — es wird auf der Bestellseite und im Dashboard angezeigt.
+                </p>
+              </div>
               <button
                 onClick={() => navigate('/dashboard')}
                 className="w-full h-11 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity inline-flex items-center justify-center"

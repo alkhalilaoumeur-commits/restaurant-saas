@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { ReservierungModel } from '../models/Reservierung';
 import { reservierungErinnerungSenden } from './email';
+import { q } from '../models/db';
 
 /**
  * Startet den Erinnerungs-Cron-Job.
@@ -46,7 +47,15 @@ export function starteErinnerungen(): void {
   cron.schedule('0 3 * * *', async () => {
     try {
       await ReservierungModel.dsgvoAufraeumen();
-      console.log('[DSGVO] Personenbezogene Daten bereinigt (> 30 Tage)');
+      console.log('[DSGVO] Reservierungen: personenbezogene Daten bereinigt (> 30 Tage)');
+
+      // Gäste-CRM: Profile löschen deren Speicherfrist abgelaufen ist (2 Jahre ohne Aktivität)
+      const result = await q<{ id: string }>(
+        `DELETE FROM gaeste WHERE loeschen_nach < CURRENT_DATE RETURNING id`
+      );
+      if (result.length > 0) {
+        console.log(`[DSGVO] Gäste-CRM: ${result.length} Profile gelöscht (Speicherfrist abgelaufen)`);
+      }
     } catch (err) {
       console.error('[DSGVO] Cleanup-Fehler:', err);
     }

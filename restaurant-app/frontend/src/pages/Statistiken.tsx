@@ -41,6 +41,29 @@ function IconKalender() {
     </svg>
   );
 }
+function IconPerson() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+function IconRepeat() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 2l4 4-4 4" /><path d="M3 11V9a4 4 0 014-4h14" />
+      <path d="M7 22l-4-4 4-4" /><path d="M21 13v2a4 4 0 01-4 4H3" />
+    </svg>
+  );
+}
+function IconAlert() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
 
 // ─── Tooltip-Stil (einheitlich) ──────────────────────────────────────────────
 
@@ -103,7 +126,7 @@ export default function Statistiken() {
     );
   }
 
-  const { zusammenfassung: zf, umsatzProTag, beliebteGerichte, stosszeiten, kategorieUmsatz } = daten;
+  const { zusammenfassung: zf, umsatzProTag, beliebteGerichte, stosszeiten, kategorieUmsatz, crmMetriken: crm } = daten;
 
   // Umsatz-Daten: Datum formatieren
   const umsatzDaten = umsatzProTag.map((d) => ({
@@ -270,6 +293,94 @@ export default function Statistiken() {
               </div>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Zeile 1b: CRM-Metriken */}
+      <div className="mb-6">
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-violet-500 to-pink-400 opacity-80" />
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 rounded-full bg-violet-500" />
+                <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Gäste CRM</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-white/5 px-2.5 py-1 rounded-full">
+                  {crm.alleGaesteCrm} Profile gesamt
+                </span>
+                {crm.neueGaeste > 0 && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                    +{crm.neueGaeste} neu
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Stammgäste */}
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06]">
+                <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
+                  <IconPerson />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-50 leading-tight">{crm.stammgaeste}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Stammgäste</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">≥ 2 Besuche insgesamt</p>
+                </div>
+              </div>
+
+              {/* Wiederkehrquote */}
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06]">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                  <IconRepeat />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-slate-50 leading-tight">{crm.wiederkehrquote}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400">%</p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Wiederkehrquote</p>
+                  <div className="mt-1.5 w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-blue-500 transition-all"
+                      style={{ width: `${Math.min(crm.wiederkehrquote, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* No-Show-Rate */}
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06]">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  crm.noShowRate >= 15
+                    ? 'bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400'
+                    : crm.noShowRate >= 8
+                    ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                    : 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                }`}>
+                  <IconAlert />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-slate-50 leading-tight">{crm.noShowRate}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-slate-400">%</p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">No-Show-Rate</p>
+                  <p className={`text-[10px] mt-0.5 ${
+                    crm.noShowRate >= 15
+                      ? 'text-red-500 dark:text-red-400'
+                      : crm.noShowRate >= 8
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-emerald-500 dark:text-emerald-400'
+                  }`}>
+                    {crm.noShowRate >= 15 ? 'Hoch — Erinnerungen prüfen' : crm.noShowRate >= 8 ? 'Mittel — im Blick behalten' : 'Gut — unter Kontrolle'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

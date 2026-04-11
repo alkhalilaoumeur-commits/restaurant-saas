@@ -202,11 +202,35 @@ export const THEME_PRESETS: Record<ThemePresetId, Theme> = {
     ecken: 'mittel',
     cardStil: 'border',
   },
+
+  // ── 9. Showcase ──────────────────────────────────────────────────────────────
+  // Premium Dark-Theme mit 3D-Effekten und Glasmorphismus.
+  // Inspiration: ngrok.com — Indigo-Glow auf Ultra-Dark, Spotlight-Effekte,
+  // geometrische Sans-Serif-Fonts, glasige Oberflächen mit Tiefenwirkung.
+  showcase: {
+    id: 'showcase',
+    name: 'Showcase 3D',
+    beschreibung: 'Premium 3D-Karten mit Glasmorphismus & Lichteffekten',
+    emoji: '💎',
+    farben: {
+      hintergrund: '#07070E',      // Ultra-Dark mit Blau-Unterton
+      oberflaeche: '#111122',      // Dunkle Glasoberfläche
+      primaer: '#818CF8',          // Weiches Indigo (premium, unverwechselbar)
+      sekundaer: '#06B6D4',        // Cyan-Akzent
+      text: '#EAEAF4',            // Kühles Weiß
+      textGedaempft: '#6B7280',    // Gedämpftes Grau
+      border: '#1E1E35',           // Lila-getönter Border
+    },
+    fontHeading: 'Space Grotesk',
+    fontBody: 'Inter',
+    ecken: 'rund',
+    cardStil: 'border',
+  },
 };
 
 /** Alle Preset-IDs als Array (für Iteration in der UI) */
 export const THEME_PRESET_IDS: ThemePresetId[] = [
-  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal', 'osteria', 'editorial',
+  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal', 'osteria', 'editorial', 'showcase',
 ];
 
 /** Standard-Theme wenn nichts konfiguriert ist */

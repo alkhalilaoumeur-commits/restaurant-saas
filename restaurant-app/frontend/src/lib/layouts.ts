@@ -9,7 +9,7 @@ import { ThemePresetId } from '../types';
 //
 // Das Layout wird pro Restaurant in der DB gespeichert (Spalte `layout_id`).
 
-export type LayoutId = 'modern' | 'elegant-dunkel' | 'osteria' | 'editorial';
+export type LayoutId = 'modern' | 'elegant-dunkel' | 'osteria' | 'editorial' | 'showcase';
 
 export interface LayoutConfig {
   id: LayoutId;
@@ -18,9 +18,9 @@ export interface LayoutConfig {
   /** Welches Farb-Theme aus themes.ts benutzt wird */
   themeId: ThemePresetId;
   /** Kategorien: nebeneinander als Kacheln, untereinander als Balken, Pill-Tabs, oder nummerierte Liste */
-  kategorienAnzeige: 'grid' | 'liste' | 'pills' | 'editorial';
+  kategorienAnzeige: 'grid' | 'liste' | 'pills' | 'editorial' | 'showcase';
   /** Gerichte: nebeneinander als Cards oder untereinander als Zeilen */
-  gerichteAnzeige: 'grid' | 'liste';
+  gerichteAnzeige: 'grid' | 'liste' | 'showcase';
 }
 
 export const LAYOUTS: Record<LayoutId, LayoutConfig> = {
@@ -73,11 +73,24 @@ export const LAYOUTS: Record<LayoutId, LayoutConfig> = {
     kategorienAnzeige: 'editorial',
     gerichteAnzeige: 'liste',
   },
+  // ── 5. Showcase 3D ─────────────────────────────────────────────────────────
+  // Premium-Layout mit interaktiven 3D-Karten, Glasmorphismus und Lichteffekten.
+  // Zwei-Schritt-Flow: Glasige Kategorie-Kacheln → Premium-Gerichtkarten.
+  // Auf Desktop: 3D-Tilt, Maus-Spotlight und leuchtende Ränder.
+  // Auf Mobile: Elegantes Dark-Theme mit Glaseffekt (graceful degradation).
+  showcase: {
+    id: 'showcase',
+    name: 'Showcase 3D',
+    beschreibung: 'Premium 3D-Karten mit Glasmorphismus & Lichteffekten',
+    themeId: 'showcase',
+    kategorienAnzeige: 'showcase',
+    gerichteAnzeige: 'showcase',
+  },
 };
 
 export const DEFAULT_LAYOUT_ID: LayoutId = 'modern';
 
-export const LAYOUT_IDS: LayoutId[] = ['modern', 'elegant-dunkel', 'osteria', 'editorial'];
+export const LAYOUT_IDS: LayoutId[] = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase'];
 
 /** Gibt die Layout-Config für eine ID zurück, oder das Default-Layout */
 export function getLayout(id: string | null | undefined): LayoutConfig {

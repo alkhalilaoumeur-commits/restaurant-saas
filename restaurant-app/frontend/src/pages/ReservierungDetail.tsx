@@ -109,6 +109,31 @@ export default function ReservierungDetail() {
             <p className="text-sm font-semibold text-gray-800">{reservierung.gast_name}</p>
           </div>
 
+          {/* Anlass + Sitzplatz Badges */}
+          {(reservierung.anlass || reservierung.sitzplatz_wunsch) && (
+            <div className="flex gap-2 flex-wrap">
+              {reservierung.anlass && (
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-purple-50 text-purple-700 font-medium">
+                  {reservierung.anlass === 'geburtstag' && '🎂 Geburtstag'}
+                  {reservierung.anlass === 'jubilaeum' && '💍 Jubiläum'}
+                  {reservierung.anlass === 'date_night' && '❤️ Date Night'}
+                  {reservierung.anlass === 'geschaeft' && '💼 Geschäftsessen'}
+                  {reservierung.anlass === 'feier' && '🥂 Feier'}
+                  {reservierung.anlass === 'sonstiges' && '✨ Sonstiges'}
+                </span>
+              )}
+              {reservierung.sitzplatz_wunsch && (
+                <span className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-medium">
+                  {reservierung.sitzplatz_wunsch === 'innen' && 'Innen'}
+                  {reservierung.sitzplatz_wunsch === 'terrasse' && 'Terrasse'}
+                  {reservierung.sitzplatz_wunsch === 'bar' && 'Bar'}
+                  {reservierung.sitzplatz_wunsch === 'fenster' && 'Fensterplatz'}
+                  {reservierung.sitzplatz_wunsch === 'ruhig' && 'Ruhige Ecke'}
+                </span>
+              )}
+            </div>
+          )}
+
           {reservierung.anmerkung && (
             <div className="bg-gray-50 rounded-xl p-3">
               <p className="text-xs text-gray-400 mb-1">Anmerkung</p>

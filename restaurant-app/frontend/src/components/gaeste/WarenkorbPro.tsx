@@ -9,7 +9,8 @@ interface Props {
   anmerkung: string;
   onAnmerkungAendern: (wert: string) => void;
   onBestellen: () => void;
-  onMengeAendern: (gerichtId: string, delta: number) => void;
+  /** Key-basiert: gleiche Gericht mit unterschiedlichen Extras = unterschiedliche Zeilen */
+  onMengeAendern: (key: string, delta: number) => void;
   laden: boolean;
 }
 
@@ -145,60 +146,69 @@ export default function WarenkorbPro({
 
         {/* ── Artikelliste (scrollbar) ──────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-          {positionen.map(({ gericht, menge }) => (
-            <div key={gericht.id} className="flex items-center gap-3">
-              {/* Kleines Bild */}
-              {gericht.bild_url ? (
-                <img
-                  src={gericht.bild_url}
-                  alt={gericht.name}
-                  className="w-12 h-12 rounded-theme object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-theme bg-gastro-border/30 shrink-0 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-gastro-muted/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3M18 22v-7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              )}
+          {positionen.map(({ key, gericht, menge, extras }) => {
+            const extrasAufpreis = extras.reduce((s, e) => s + e.aufpreis, 0);
+            const einzelpreis = gericht.preis + extrasAufpreis;
 
-              {/* Name + Preis */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gastro-text line-clamp-1">{gericht.name}</p>
-                <p className="text-xs text-gastro-muted">{formatPreis(gericht.preis)} pro Stück</p>
-              </div>
-
-              {/* Mengen-Steuerung */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={() => onMengeAendern(gericht.id, -1)}
-                  className="w-7 h-7 rounded-full bg-gastro-border/50 text-gastro-muted text-sm font-medium
-                             flex items-center justify-center transition-all hover:bg-gastro-border active:scale-90"
-                >
-                  {menge === 1 ? (
-                    // Mülleimer-Icon wenn nur 1 übrig (= komplett entfernen)
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+            return (
+              <div key={key} className="flex items-center gap-3">
+                {/* Kleines Bild */}
+                {gericht.bild_url ? (
+                  <img
+                    src={gericht.bild_url}
+                    alt={gericht.name}
+                    className="w-9 h-9 rounded-lg object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-gastro-border/30 shrink-0 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gastro-muted/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3M18 22v-7" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                  ) : '−'}
-                </button>
-                <span className="w-5 text-center text-sm font-bold text-gastro-text tabular-nums">{menge}</span>
-                <button
-                  onClick={() => onMengeAendern(gericht.id, 1)}
-                  className="w-7 h-7 rounded-full bg-gastro-primary text-gastro-on-primary text-sm font-medium
-                             flex items-center justify-center transition-all hover:opacity-90 active:scale-90"
-                >
-                  +
-                </button>
-              </div>
+                  </div>
+                )}
 
-              {/* Zeilenpreis */}
-              <span className="text-sm font-semibold text-gastro-text w-16 text-right tabular-nums">
-                {formatPreis(gericht.preis * menge)}
-              </span>
-            </div>
-          ))}
+                {/* Name + Extras + Preis */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gastro-text line-clamp-1">{gericht.name}</p>
+                  {extras.length > 0 && (
+                    <p className="text-[11px] text-gastro-muted/70 line-clamp-1">
+                      {extras.map((e) => e.name).join(', ')}
+                    </p>
+                  )}
+                  <p className="text-xs text-gastro-muted">{formatPreis(einzelpreis)} pro Stück</p>
+                </div>
+
+                {/* Mengen-Steuerung */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => onMengeAendern(key, -1)}
+                    className="w-7 h-7 rounded-full bg-gastro-border/50 text-gastro-muted text-sm font-medium
+                               flex items-center justify-center transition-all hover:bg-gastro-border active:scale-90"
+                  >
+                    {menge === 1 ? (
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                      </svg>
+                    ) : '−'}
+                  </button>
+                  <span className="w-5 text-center text-sm font-bold text-gastro-text tabular-nums">{menge}</span>
+                  <button
+                    onClick={() => onMengeAendern(key, 1)}
+                    className="w-7 h-7 rounded-full bg-gastro-primary text-gastro-on-primary text-sm font-medium
+                               flex items-center justify-center transition-all hover:opacity-90 active:scale-90"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Zeilenpreis */}
+                <span className="text-sm font-semibold text-gastro-text w-16 text-right tabular-nums">
+                  {formatPreis(einzelpreis * menge)}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* ── Footer: Anmerkung + Summe + Button ───────────────────────── */}

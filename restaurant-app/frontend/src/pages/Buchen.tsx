@@ -254,6 +254,81 @@ function SlotGrid({
   );
 }
 
+// ─── Anlass-Optionen ─────────────────────────────────────────────
+
+const ANLASS_OPTIONEN = [
+  { id: 'geburtstag', label: 'Geburtstag', icon: '🎂' },
+  { id: 'jubilaeum', label: 'Jubiläum', icon: '💍' },
+  { id: 'date_night', label: 'Date Night', icon: '❤️' },
+  { id: 'geschaeft', label: 'Geschäftsessen', icon: '💼' },
+  { id: 'feier', label: 'Feier / Party', icon: '🥂' },
+  { id: 'sonstiges', label: 'Sonstiges', icon: '✨' },
+] as const;
+
+// ─── Sitzplatz-Optionen ─────────────────────────────────────────
+
+const SITZPLATZ_OPTIONEN = [
+  { id: 'egal', label: 'Egal' },
+  { id: 'innen', label: 'Innen' },
+  { id: 'terrasse', label: 'Terrasse' },
+  { id: 'bar', label: 'Bar' },
+  { id: 'fenster', label: 'Fensterplatz' },
+  { id: 'ruhig', label: 'Ruhige Ecke' },
+] as const;
+
+// ─── Kalender-Hilfsfunktionen ───────────────────────────────────
+
+function kalenderDatumFormat(datum: string, zeit: string): { start: string; ende: string } {
+  // datum = "2026-04-10", zeit = "18:00" → Google Calendar Format: 20260410T180000
+  const d = datum.replace(/-/g, '');
+  const t = zeit.replace(':', '') + '00';
+  const start = `${d}T${t}`;
+  // Ende = +2 Stunden
+  const startDate = new Date(`${datum}T${zeit}:00`);
+  startDate.setHours(startDate.getHours() + 2);
+  const endeD = startDate.toISOString().split('T')[0].replace(/-/g, '');
+  const endeT = startDate.getHours().toString().padStart(2, '0') +
+                startDate.getMinutes().toString().padStart(2, '0') + '00';
+  return { start, ende: `${endeD}T${endeT}` };
+}
+
+function googleCalendarUrl(restaurantName: string, adresse: string, datum: string, zeit: string, personen: number): string {
+  const { start, ende } = kalenderDatumFormat(datum, zeit);
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `Reservierung bei ${restaurantName}`,
+    dates: `${start}/${ende}`,
+    details: `Tisch für ${personen} ${personen === 1 ? 'Person' : 'Personen'} bei ${restaurantName}`,
+    location: adresse || restaurantName,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function icsDateiErstellen(restaurantName: string, adresse: string, datum: string, zeit: string, personen: number): void {
+  const { start, ende } = kalenderDatumFormat(datum, zeit);
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ServeFlow//Reservierung//DE',
+    'BEGIN:VEVENT',
+    `DTSTART:${start}`,
+    `DTEND:${ende}`,
+    `SUMMARY:Reservierung bei ${restaurantName}`,
+    `LOCATION:${(adresse || restaurantName).replace(/,/g, '\\,')}`,
+    `DESCRIPTION:Tisch für ${personen} ${personen === 1 ? 'Person' : 'Personen'}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reservierung-${restaurantName.toLowerCase().replace(/\s+/g, '-')}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ─── Hauptseite ───────────────────────────────────────────────────
 
 export default function Buchen() {
@@ -267,6 +342,7 @@ export default function Buchen() {
   // Schritt 1
   const [datum, setDatum] = useState<string | null>(null);
   const [personen, setPersonen] = useState(2);
+  const [sitzplatzWunsch, setSitzplatzWunsch] = useState('egal');
 
   // Schritt 2
   const [slots, setSlots] = useState<ZeitSlot[]>([]);
@@ -278,6 +354,7 @@ export default function Buchen() {
   const [email, setEmail] = useState('');
   const [telefon, setTelefon] = useState('');
   const [anmerkung, setAnmerkung] = useState('');
+  const [anlass, setAnlass] = useState<string | null>(null);
   const [dsgvo, setDsgvo] = useState(false);
   const [sendet, setSendet] = useState(false);
 
@@ -328,6 +405,8 @@ export default function Buchen() {
           datum: buchungsDatum,
           personen,
           anmerkung: anmerkung || undefined,
+          anlass: anlass || undefined,
+          sitzplatz_wunsch: sitzplatzWunsch !== 'egal' ? sitzplatzWunsch : undefined,
           dsgvo_einwilligung: dsgvo,
         }),
       });
@@ -431,6 +510,26 @@ export default function Buchen() {
               <PersonenAuswahl wert={personen} onChange={setPersonen} />
             </div>
 
+            {/* Sitzplatzwunsch */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <label className="block text-sm font-medium text-gray-600 mb-3">Sitzplatzwunsch</label>
+              <div className="flex flex-wrap gap-2">
+                {SITZPLATZ_OPTIONEN.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSitzplatzWunsch(opt.id)}
+                    className={`
+                      px-4 py-2.5 rounded-xl text-sm font-medium transition-all
+                      ${sitzplatzWunsch === opt.id ? 'text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                    `}
+                    style={sitzplatzWunsch === opt.id ? { backgroundColor: 'var(--buchung-farbe, #3B82F6)' } : undefined}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={weiterZuSlots}
               disabled={!datum}
@@ -451,7 +550,10 @@ export default function Buchen() {
                 <p className="font-semibold">
                   {datum && new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </p>
-                <p className="text-sm text-gray-500">{personen} {personen === 1 ? 'Person' : 'Personen'}</p>
+                <p className="text-sm text-gray-500">
+                  {personen} {personen === 1 ? 'Person' : 'Personen'}
+                  {sitzplatzWunsch !== 'egal' && ` · ${SITZPLATZ_OPTIONEN.find(o => o.id === sitzplatzWunsch)?.label}`}
+                </p>
               </div>
               <button
                 onClick={() => setSchritt(1)}
@@ -486,7 +588,10 @@ export default function Buchen() {
                   {datum && new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
                   {' '}um {gewaehlteZeit} Uhr
                 </p>
-                <p className="text-sm text-gray-500">{personen} {personen === 1 ? 'Person' : 'Personen'}</p>
+                <p className="text-sm text-gray-500">
+                  {personen} {personen === 1 ? 'Person' : 'Personen'}
+                  {sitzplatzWunsch !== 'egal' && ` · ${SITZPLATZ_OPTIONEN.find(o => o.id === sitzplatzWunsch)?.label}`}
+                </p>
               </div>
               <button
                 onClick={() => setSchritt(2)}
@@ -495,6 +600,27 @@ export default function Buchen() {
               >
                 Ändern
               </button>
+            </div>
+
+            {/* Anlass (optional) */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <label className="block text-sm font-medium text-gray-600 mb-3">Gibt es einen Anlass? <span className="text-gray-400 font-normal">(optional)</span></label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {ANLASS_OPTIONEN.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setAnlass(anlass === opt.id ? null : opt.id)}
+                    className={`
+                      flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all
+                      ${anlass === opt.id ? 'text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                    `}
+                    style={anlass === opt.id ? { backgroundColor: 'var(--buchung-farbe, #3B82F6)' } : undefined}
+                  >
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="bg-white rounded-2xl p-5 shadow-sm space-y-4">
@@ -552,8 +678,11 @@ export default function Buchen() {
                   className="mt-1 w-4 h-4 rounded"
                 />
                 <span className="text-xs text-gray-500 leading-relaxed">
-                  Ich stimme der Verarbeitung meiner Daten zur Reservierung zu.
-                  Meine Daten werden spätestens 30 Tage nach dem Reservierungsdatum gelöscht.
+                  Ich stimme der Verarbeitung meiner Daten zur Durchführung der Reservierung zu.
+                  Das Restaurant speichert meinen Namen, meine E-Mail-Adresse und ggf. meine Telefonnummer,
+                  um meine Besuchshistorie zu verwalten und mir einen besseren Service zu bieten.
+                  Die Daten werden nach 2 Jahren ohne Aktivität automatisch gelöscht.
+                  Ich kann jederzeit Auskunft, Berichtigung oder Löschung meiner Daten verlangen.
                 </span>
               </label>
             </div>
@@ -588,11 +717,43 @@ export default function Buchen() {
               {info.adresse && <p className="text-sm text-gray-500 mt-1">{info.adresse}</p>}
               <div className="mt-3 space-y-1">
                 <p className="text-sm">
-                  📅 {datum && gewaehlteZeit && datumFormatiert(`${datum}T${gewaehlteZeit}:00`)}
+                  {datum && gewaehlteZeit && datumFormatiert(`${datum}T${gewaehlteZeit}:00`)}
                 </p>
-                <p className="text-sm">👥 {personen} {personen === 1 ? 'Person' : 'Personen'}</p>
+                <p className="text-sm">{personen} {personen === 1 ? 'Person' : 'Personen'}</p>
+                {sitzplatzWunsch !== 'egal' && (
+                  <p className="text-sm">{SITZPLATZ_OPTIONEN.find(o => o.id === sitzplatzWunsch)?.label}</p>
+                )}
+                {anlass && (
+                  <p className="text-sm">{ANLASS_OPTIONEN.find(o => o.id === anlass)?.icon} {ANLASS_OPTIONEN.find(o => o.id === anlass)?.label}</p>
+                )}
               </div>
             </div>
+
+            {/* Zum Kalender hinzufügen */}
+            {datum && gewaehlteZeit && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Zum Kalender hinzufügen</p>
+                <div className="flex gap-2 justify-center">
+                  <a
+                    href={googleCalendarUrl(info.name, info.adresse || '', datum, gewaehlteZeit, personen)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8.25h15v11.25z"/></svg>
+                    Google
+                  </a>
+                  <button
+                    onClick={() => icsDateiErstellen(info.name, info.adresse || '', datum!, gewaehlteZeit!, personen)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8.25h15v11.25z"/></svg>
+                    Apple / Outlook
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-gray-500">
               Eine Bestätigung wurde an <strong>{email}</strong> gesendet.
               Dort finden Sie auch Links zum Stornieren oder Umbuchen.

@@ -18,14 +18,21 @@ export function useMitarbeiter() {
     }
     try {
       if (!auth?.restaurantId) { setLaden(false); return; }
-      const data = await api.get<MitarbeiterDetail[]>('/mitarbeiter');
-      setMitarbeiter(data);
+      if (auth.rolle === 'admin') {
+        // Admin: alle Mitarbeiter laden
+        const data = await api.get<MitarbeiterDetail[]>('/mitarbeiter');
+        setMitarbeiter(data);
+      } else {
+        // Kellner/Küche: nur eigene Daten laden (inkl. Stundenlohn)
+        const ich = await api.get<MitarbeiterDetail>('/mitarbeiter/ich');
+        setMitarbeiter([ich]);
+      }
     } catch (e: any) {
       setFehler(e.message || 'Fehler beim Laden');
     } finally {
       setLaden(false);
     }
-  }, [demo, auth?.restaurantId]);
+  }, [demo, auth?.restaurantId, auth?.rolle]);
 
   useEffect(() => { laden_(); }, [laden_]);
 
@@ -55,7 +62,7 @@ export function useMitarbeiter() {
     await api.post(`/mitarbeiter/${id}/erneut-einladen`, {});
   }, [demo]);
 
-  const aktualisieren = useCallback(async (id: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean }) => {
+  const aktualisieren = useCallback(async (id: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null }) => {
     if (demo) {
       setMitarbeiter((prev) => prev.map((m) => m.id === id ? { ...m, ...felder } : m));
       return;
@@ -74,9 +81,9 @@ export function useMitarbeiter() {
 
 // Demo-Daten
 const DEMO_MITARBEITER_LISTE: MitarbeiterDetail[] = [
-  { id: 'dm1', restaurant_id: 'demo', name: 'Ilias (Demo)', email: 'admin@demo.de', rolle: 'admin', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false },
-  { id: 'dm2', restaurant_id: 'demo', name: 'Anna Schmidt', email: 'kellner@demo.de', rolle: 'kellner', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false },
-  { id: 'dm3', restaurant_id: 'demo', name: 'Marco Rossi', email: 'kueche@demo.de', rolle: 'kueche', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false },
-  { id: 'dm4', restaurant_id: 'demo', name: 'Lisa Weber', email: 'lisa@demo.de', rolle: 'kellner', aktiv: false, erstellt_am: new Date().toISOString(), einladung_ausstehend: false },
-  { id: 'dm5', restaurant_id: 'demo', name: 'Tom Bauer', email: 'tom@demo.de', rolle: 'kellner', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: true },
+  { id: 'dm1', restaurant_id: 'demo', name: 'Ilias (Demo)', email: 'admin@demo.de', rolle: 'admin', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false, stundenlohn: 25.00 },
+  { id: 'dm2', restaurant_id: 'demo', name: 'Anna Schmidt', email: 'kellner@demo.de', rolle: 'kellner', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false, stundenlohn: 14.50 },
+  { id: 'dm3', restaurant_id: 'demo', name: 'Marco Rossi', email: 'kueche@demo.de', rolle: 'kueche', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: false, stundenlohn: 16.00 },
+  { id: 'dm4', restaurant_id: 'demo', name: 'Lisa Weber', email: 'lisa@demo.de', rolle: 'kellner', aktiv: false, erstellt_am: new Date().toISOString(), einladung_ausstehend: false, stundenlohn: null },
+  { id: 'dm5', restaurant_id: 'demo', name: 'Tom Bauer', email: 'tom@demo.de', rolle: 'kellner', aktiv: true, erstellt_am: new Date().toISOString(), einladung_ausstehend: true, stundenlohn: 14.50 },
 ];

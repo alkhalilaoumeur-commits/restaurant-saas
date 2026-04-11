@@ -29,7 +29,7 @@ export function useRestaurant() {
 
   useEffect(() => { laden_(); }, [laden_]);
 
-  const aktualisieren = useCallback(async (felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string }) => {
+  const aktualisieren = useCallback(async (felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string; logo_url?: string | null }) => {
     if (demo) return;
     const data = await api.put<Restaurant>('/restaurant', felder);
     setRestaurant((prev) => prev ? { ...prev, ...data } : prev);

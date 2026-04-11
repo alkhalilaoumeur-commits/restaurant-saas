@@ -167,25 +167,20 @@ export const VerfuegbarkeitModel = {
 
   /**
    * Weist den kleinsten freien Tisch zu, der die Gruppengröße fasst.
-   * Gibt null zurück wenn kein Tisch passt (Reservierung wird trotzdem akzeptiert).
+   * Berücksichtigt sitzplatz_wunsch (innen/terrasse/bar) → bevorzugt passenden Bereich.
+   * Wenn kein Einzeltisch reicht → zwei Tische kombinieren (kleinste mögliche Kombi).
+   * Gibt null zurück wenn gar kein Tisch passt.
+   *
+   * Return: { hauptId, kombinierterTischId } — kombinierterTischId ist null wenn Einzeltisch
    */
   async tischZuweisen(
     restaurantId: string,
-    datum: string,         // "2026-04-10"
-    zeit: string,          // "18:00"
+    datum: string,              // "2026-04-10"
+    zeit: string,               // "18:00"
     personen: number,
-    verweilzeitMin: number
-  ): Promise<string | null> {
-
-    // Alle Tische mit ausreichender Kapazität, sortiert nach Kapazität (kleinster zuerst)
-    const tische = await q<Tisch>(
-      `SELECT id, kapazitaet FROM tische
-       WHERE restaurant_id = $1 AND kapazitaet IS NOT NULL AND kapazitaet >= $2
-       ORDER BY kapazitaet ASC`,
-      [restaurantId, personen]
-    );
-
-    if (tische.length === 0) return null;
+    verweilzeitMin: number,
+    sitzplatzWunsch?: string | null
+  ): Promise<{ hauptId: string; kombinierterTischId: string | null } | null> {
 
     // Restaurant-Pufferzeit laden
     const einstellungen = await q1<{ reservierung_puffer_min: number }>(
@@ -194,35 +189,85 @@ export const VerfuegbarkeitModel = {
     );
     const puffer = einstellungen?.reservierung_puffer_min || 15;
 
-    // Zeitfenster dieses Slots berechnen
     const slotMin = zeitZuMinuten(zeit);
     const slotEnde = slotMin + verweilzeitMin;
 
-    // Für jeden Tisch prüfen ob er frei ist
-    for (const tisch of tische) {
-      // Bestehende Reservierungen für diesen Tisch am selben Tag
+    // Prüft ob ein einzelner Tisch im Zeitfenster frei ist
+    const istTischFrei = async (tischId: string): Promise<boolean> => {
       const belegt = await q<ReservierungSlot>(
         `SELECT datum, verweilzeit_min FROM reservierungen
          WHERE tisch_id = $1 AND DATE(datum) = $2 AND status != 'storniert'`,
-        [tisch.id, datum]
+        [tischId, datum]
       );
-
-      let istFrei = true;
       for (const res of belegt) {
         const resDatum = new Date(res.datum);
         const resStartMin = resDatum.getHours() * 60 + resDatum.getMinutes();
         const resEndeMin = resStartMin + res.verweilzeit_min + puffer;
-
-        // Überlappung mit Puffer prüfen
-        if (slotMin < resEndeMin && slotEnde + puffer > resStartMin) {
-          istFrei = false;
-          break;
-        }
+        if (slotMin < resEndeMin && slotEnde + puffer > resStartMin) return false;
       }
+      return true;
+    };
 
-      if (istFrei) return tisch.id;
+    // Ersten freien Einzeltisch aus einer Liste finden
+    const findeFreienTisch = async (tische: Tisch[]): Promise<string | null> => {
+      for (const tisch of tische) {
+        if (await istTischFrei(tisch.id)) return tisch.id;
+      }
+      return null;
+    };
+
+    // Zonen-Keyword aus sitzplatz_wunsch ableiten
+    const zoneKeywords: Record<string, string> = { innen: 'innen', terrasse: 'terrasse', bar: 'bar' };
+    const zoneKeyword = sitzplatzWunsch ? zoneKeywords[sitzplatzWunsch] : null;
+
+    // ── 1. Einzeltisch im bevorzugten Bereich ──────────────────────────────────
+    if (zoneKeyword) {
+      const zoneTische = await q<Tisch>(
+        `SELECT t.id, t.kapazitaet FROM tische t
+         LEFT JOIN bereiche b ON b.id = t.bereich_id
+         WHERE t.restaurant_id = $1 AND t.kapazitaet IS NOT NULL AND t.kapazitaet >= $2
+           AND b.name ILIKE $3
+         ORDER BY t.kapazitaet ASC`,
+        [restaurantId, personen, `${zoneKeyword}%`]
+      );
+      const hauptId = await findeFreienTisch(zoneTische);
+      if (hauptId) return { hauptId, kombinierterTischId: null };
     }
 
-    return null; // Kein Tisch frei, Reservierung ohne Tischzuweisung
+    // ── 2. Einzeltisch aus allen Tischen (kleinster zuerst) ───────────────────
+    const alleTische = await q<Tisch>(
+      `SELECT id, kapazitaet FROM tische
+       WHERE restaurant_id = $1 AND kapazitaet IS NOT NULL AND kapazitaet > 0
+       ORDER BY kapazitaet ASC`,
+      [restaurantId]
+    );
+
+    const einzelTischId = await findeFreienTisch(
+      alleTische.filter(t => t.kapazitaet >= personen)
+    );
+    if (einzelTischId) return { hauptId: einzelTischId, kombinierterTischId: null };
+
+    // ── 3. Kombination: zwei Tische zusammenlegen ──────────────────────────────
+    // Alle Tisch-Paare prüfen; kleinstes Gesamtgewicht (kapazitaet1+kapazitaet2) first
+    const kombinationKandidaten: Array<{ t1: Tisch; t2: Tisch; gesamt: number }> = [];
+    for (let i = 0; i < alleTische.length; i++) {
+      for (let j = i + 1; j < alleTische.length; j++) {
+        const gesamt = alleTische[i].kapazitaet + alleTische[j].kapazitaet;
+        if (gesamt >= personen) {
+          kombinationKandidaten.push({ t1: alleTische[i], t2: alleTische[j], gesamt });
+        }
+      }
+    }
+    // Kleinste Kombination zuerst (minimaler Platzverschwendung)
+    kombinationKandidaten.sort((a, b) => a.gesamt - b.gesamt);
+
+    for (const { t1, t2 } of kombinationKandidaten) {
+      const beideKandidaten = await Promise.all([istTischFrei(t1.id), istTischFrei(t2.id)]);
+      if (beideKandidaten[0] && beideKandidaten[1]) {
+        return { hauptId: t1.id, kombinierterTischId: t2.id };
+      }
+    }
+
+    return null;
   },
 };

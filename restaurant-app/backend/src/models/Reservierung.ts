@@ -2,12 +2,13 @@ import crypto from 'crypto';
 import { q, q1 } from './db';
 
 export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert';
-export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online';
+export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online' | 'google';
 
 export interface Reservierung {
   id: string;
   restaurant_id: string;
   tisch_id: string | null;
+  tisch_kombiniert_id: string | null;
   gast_name: string;
   telefon: string | null; // DSGVO: personenbezogen, 30 Tage Löschfrist
   email: string | null;   // DSGVO: personenbezogen, 30 Tage Löschfrist
@@ -15,6 +16,8 @@ export interface Reservierung {
   personen: number;
   status: ReservierungStatus;
   anmerkung: string | null;
+  anlass: string | null;
+  sitzplatz_wunsch: string | null;
   quelle: ReservierungQuelle;
   buchungs_token: string | null;
   dsgvo_einwilligung: boolean;
@@ -88,20 +91,27 @@ export const ReservierungModel = {
     datum: string;
     personen: number;
     anmerkung: string | null;
+    anlass: string | null;
+    sitzplatz_wunsch: string | null;
     verweilzeit_min: number;
     dsgvo_einwilligung: boolean;
+    /** Buchungsquelle — Standard 'online', 'google' wenn via Google Maps */
+    quelle?: ReservierungQuelle;
   }) {
     const buchungsToken = crypto.randomBytes(32).toString('hex');
+    const quelle = data.quelle ?? 'online';
     return q1<Reservierung>(`
       INSERT INTO reservierungen
         (restaurant_id, tisch_id, gast_name, email, telefon, datum, personen,
-         status, anmerkung, quelle, buchungs_token, dsgvo_einwilligung, verweilzeit_min)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,'bestaetigt',$8,'online',$9,$10,$11)
+         status, anmerkung, anlass, sitzplatz_wunsch, quelle, buchungs_token,
+         dsgvo_einwilligung, verweilzeit_min)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,'bestaetigt',$8,$9,$10,$11,$12,$13,$14)
       RETURNING *
     `, [
       data.restaurant_id, data.tisch_id, data.gast_name, data.email,
       data.telefon, data.datum, data.personen, data.anmerkung,
-      buchungsToken, data.dsgvo_einwilligung, data.verweilzeit_min,
+      data.anlass, data.sitzplatz_wunsch,
+      quelle, buchungsToken, data.dsgvo_einwilligung, data.verweilzeit_min,
     ]);
   },
 
@@ -150,6 +160,32 @@ export const ReservierungModel = {
                         AND NOW() + INTERVAL '${stunden + fenster} hours'
         AND NOT (r.erinnerung_gesendet ? $1)
     `, [typ]);
+  },
+
+  /** Einzelne Reservierung per ID laden */
+  nachId(id: string, restaurantId: string) {
+    return q1<Reservierung>(
+      'SELECT * FROM reservierungen WHERE id = $1 AND restaurant_id = $2',
+      [id, restaurantId]
+    );
+  },
+
+  /** Tisch manuell zuweisen (Admin/Kellner im Tischplan) */
+  tischZuweisen(id: string, restaurantId: string, tischId: string | null) {
+    return q1<Reservierung>(
+      `UPDATE reservierungen SET tisch_id = $1
+       WHERE id = $2 AND restaurant_id = $3 RETURNING *`,
+      [tischId, id, restaurantId]
+    );
+  },
+
+  /** Automatische Zuweisung: Haupt- + optionalen Kombinations-Tisch speichern */
+  kombiniertZuweisen(id: string, restaurantId: string, hauptId: string, kombinierterTischId: string | null) {
+    return q1<Reservierung>(
+      `UPDATE reservierungen SET tisch_id = $1, tisch_kombiniert_id = $2
+       WHERE id = $3 AND restaurant_id = $4 RETURNING *`,
+      [hauptId, kombinierterTischId, id, restaurantId]
+    );
   },
 
   /** DSGVO: Personenbezogene Daten 30 Tage nach Reservierungsdatum löschen */
