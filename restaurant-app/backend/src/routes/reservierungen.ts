@@ -186,11 +186,33 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { status } = req.body;
-    if (!['ausstehend', 'bestaetigt', 'storniert'].includes(status)) {
+    if (!['ausstehend', 'bestaetigt', 'storniert', 'no_show', 'abgeschlossen'].includes(status)) {
       res.status(400).json({ fehler: 'Ungültiger Status' }); return;
     }
     const r = await ReservierungModel.statusAendern(req.params.id, req.auth!.restaurantId, status);
     if (!r) { res.status(404).json({ fehler: 'Reservierung nicht gefunden' }); return; }
+
+    // ── No-Show: "No-Show" Tag automatisch auf Gast-Profil setzen ────────────
+    if (status === 'no_show' && r.gast_id) {
+      q(`UPDATE gaeste
+         SET tags = array_append(tags, 'No-Show'), aktualisiert_am = now()
+         WHERE id = $1 AND restaurant_id = $2 AND NOT ('No-Show' = ANY(tags))`,
+        [r.gast_id, req.auth!.restaurantId]
+      ).catch((e) => console.error('[No-Show Tag]', e));
+    }
+
+    // ── Abgeschlossen: Tisch freigeben ────────────────────────────────────────
+    if (status === 'abgeschlossen' && r.tisch_id) {
+      await q(
+        `UPDATE tische SET status = 'frei' WHERE id = $1 AND restaurant_id = $2`,
+        [r.tisch_id, req.auth!.restaurantId]
+      );
+    }
+
+    // ── Socket.io: Live-Update ────────────────────────────────────────────────
+    const io = req.app.get('io');
+    if (io) io.to(`restaurant:${req.auth!.restaurantId}`).emit('reservierung_aktualisiert', r);
+
     res.json(r);
   })
 );
@@ -227,7 +249,7 @@ router.post('/:id/auto-zuweisung', requireAuth, requireRolle('admin', 'kellner')
 
     // Socket.io: Live-Update an alle Mitarbeiter senden
     const io = req.app.get('io');
-    if (io) io.to(req.auth!.restaurantId).emit('reservierung_aktualisiert', r);
+    if (io) io.to(`restaurant:${req.auth!.restaurantId}`).emit('reservierung_aktualisiert', r);
 
     res.json(r);
   })
@@ -242,7 +264,7 @@ router.patch('/:id/tisch', requireAuth, requireRolle('admin', 'kellner'),
 
     // Socket.io: Live-Update an alle Mitarbeiter senden
     const io = req.app.get('io');
-    if (io) io.to(req.auth!.restaurantId).emit('reservierung_aktualisiert', r);
+    if (io) io.to(`restaurant:${req.auth!.restaurantId}`).emit('reservierung_aktualisiert', r);
 
     res.json(r);
   })

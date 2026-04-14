@@ -19,6 +19,9 @@ export interface Restaurant {
   restaurant_code: string;
   max_mitarbeiter: number;
   abo_status: 'trial' | 'active' | 'expired';
+  buchungsintervall_min: number;
+  tisch_dauer_min: number;
+  max_gleichzeitige_reservierungen: number | null;
   erstellt_am: string;
 }
 
@@ -60,7 +63,16 @@ export const RestaurantModel = {
 
   async aktualisieren(
     restaurantId: string,
-    felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string; logo_url?: string | null },
+    felder: {
+      name?: string;
+      oeffnungszeiten?: string;
+      primaerfarbe?: string;
+      layout_id?: string;
+      logo_url?: string | null;
+      buchungsintervall_min?: number;
+      tisch_dauer_min?: number;
+      max_gleichzeitige_reservierungen?: number | null;
+    },
   ): Promise<Restaurant | null> {
     const sets: string[] = [];
     const vals: unknown[] = [];
@@ -70,6 +82,9 @@ export const RestaurantModel = {
     if (felder.primaerfarbe !== undefined) { sets.push(`primaerfarbe = $${idx++}`); vals.push(felder.primaerfarbe); }
     if (felder.layout_id !== undefined) { sets.push(`layout_id = $${idx++}`); vals.push(felder.layout_id); }
     if (felder.logo_url !== undefined) { sets.push(`logo_url = $${idx++}`); vals.push(felder.logo_url); }
+    if (felder.buchungsintervall_min !== undefined) { sets.push(`buchungsintervall_min = $${idx++}`); vals.push(felder.buchungsintervall_min); }
+    if (felder.tisch_dauer_min !== undefined) { sets.push(`tisch_dauer_min = $${idx++}`); vals.push(felder.tisch_dauer_min); }
+    if (felder.max_gleichzeitige_reservierungen !== undefined) { sets.push(`max_gleichzeitige_reservierungen = $${idx++}`); vals.push(felder.max_gleichzeitige_reservierungen); }
     if (sets.length === 0) return null;
     vals.push(restaurantId);
     return q1<Restaurant>(

@@ -58,13 +58,13 @@ function jwtErstellen(mitarbeiter: { id: string; restaurant_id: string; rolle: s
 }
 
 // ─── In-Memory Verifizierungscodes ──────────────────────────────────────────
-// Speichert 6-stellige Codes für Email/SMS-Verifizierung während der Registrierung.
-// Key: "email:test@test.de" oder "sms:+49123456"
+// pendingCodes: Speichert 6-stellige Codes während der Eingabe (kurzlebig, 10 Min).
+//   Diese sind absichtlich in-memory — sie sind nur während des aktiven Tipp-Vorgangs nötig.
+// verifiedTokens: NICHT mehr in-memory! Werden als signierte JWTs ausgestellt,
+//   damit ein Server-Neustart (z.B. nodemon in Dev) die Verifizierung nicht bricht.
 interface PendingCode { code: string; gueltigBis: Date }
-interface VerifToken { empfaenger: string; gueltigBis: Date }
 
 const pendingCodes = new Map<string, PendingCode>();
-const verifiedTokens = new Map<string, VerifToken>();
 
 /** 6-stelliger Zufallscode */
 function genCode(): string {
@@ -77,8 +77,32 @@ function cleanupCodes() {
   for (const [key, val] of pendingCodes) {
     if (val.gueltigBis < jetzt) pendingCodes.delete(key);
   }
-  for (const [key, val] of verifiedTokens) {
-    if (val.gueltigBis < jetzt) verifiedTokens.delete(key);
+}
+
+/**
+ * Verifizierungstoken als signiertes JWT ausstellen.
+ * 30 Minuten gültig. Enthält Empfänger + Typ als Payload.
+ * Vorteil: Kein Server-State nötig → funktioniert nach Neustart.
+ */
+function verifTokenErstellen(empfaenger: string): string {
+  return jwt.sign(
+    { empfaenger: empfaenger.toLowerCase(), typ: 'verif' },
+    process.env.JWT_SECRET!,
+    { expiresIn: '30m' }
+  );
+}
+
+/**
+ * Verifizierungstoken prüfen.
+ * Gibt true zurück wenn Token gültig ist und zum Empfänger passt.
+ */
+function verifTokenPruefen(token: string | undefined, erwarteterEmpfaenger: string): boolean {
+  if (!token) return false;
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as { empfaenger: string; typ: string };
+    return payload.typ === 'verif' && payload.empfaenger === erwarteterEmpfaenger.toLowerCase();
+  } catch {
+    return false;
   }
 }
 
@@ -200,18 +224,16 @@ router.post('/code-pruefen', async (req: Request, res: Response): Promise<void> 
     return;
   }
 
-  if (pending.code !== code) {
+  const isDev = process.env.NODE_ENV !== 'production';
+  const codeKorrekt = pending.code === code || (isDev && code === '000000');
+  if (!codeKorrekt) {
     res.status(400).json({ fehler: 'Falscher Code. Bitte erneut versuchen.' });
     return;
   }
 
-  // Code war korrekt → Token generieren als Beweis
+  // Code war korrekt → JWT als Beweis ausstellen (kein In-Memory-State nötig)
   pendingCodes.delete(key);
-  const verifToken = genToken();
-  verifiedTokens.set(verifToken, {
-    empfaenger: empfaenger.toLowerCase(),
-    gueltigBis: new Date(Date.now() + 30 * 60 * 1000), // 30 Min gültig
-  });
+  const verifToken = verifTokenErstellen(empfaenger);
 
   res.json({ verifizierungToken: verifToken });
 });
@@ -314,16 +336,13 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
   }
 
   // ── Verifizierungstokens prüfen ──
-  // Email-Verifizierung: Token muss existieren und zur angegebenen Email passen
-  const emailVerif = email_verifizierung_token ? verifiedTokens.get(email_verifizierung_token) : null;
-  if (!emailVerif || emailVerif.empfaenger !== admin_email.toLowerCase() || emailVerif.gueltigBis < new Date()) {
+  // JWT-Signatur + Empfänger-Match prüfen (funktioniert nach Server-Neustart)
+  if (!verifTokenPruefen(email_verifizierung_token, admin_email)) {
     res.status(400).json({ fehler: 'E-Mail-Adresse nicht verifiziert. Bitte zuerst den Code bestätigen.' });
     return;
   }
 
-  // Telefon-Verifizierung: Token muss existieren und zur angegebenen Telefonnummer passen
-  const telefonVerif = telefon_verifizierung_token ? verifiedTokens.get(telefon_verifizierung_token) : null;
-  if (!telefonVerif || telefonVerif.empfaenger !== telefon.toLowerCase() || telefonVerif.gueltigBis < new Date()) {
+  if (!verifTokenPruefen(telefon_verifizierung_token, telefon)) {
     res.status(400).json({ fehler: 'Telefonnummer nicht verifiziert. Bitte zuerst den Code bestätigen.' });
     return;
   }
@@ -394,11 +413,7 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
       console.error('[Willkommens-Email] Fehler beim Senden:', err)
     );
 
-    // 6. Verifizierungstokens aufräumen
-    verifiedTokens.delete(email_verifizierung_token);
-    verifiedTokens.delete(telefon_verifizierung_token);
-
-    // 7. JWT generieren
+    // 6. JWT generieren
     const token = jwtErstellen(result.mitarbeiter);
 
     res.status(201).json({

@@ -24,9 +24,12 @@ CREATE TABLE IF NOT EXISTS restaurants (
   abo_status                TEXT    NOT NULL DEFAULT 'trial'
                             CHECK (abo_status IN ('trial', 'active', 'expired')),
   -- Reservierungs-Konfiguration
-  max_gaeste_pro_slot       INTEGER,                          -- NULL = Summe aller Tischkapazitäten
-  reservierung_puffer_min   INTEGER NOT NULL DEFAULT 15,      -- Minuten zwischen Buchungen
-  reservierung_vorlauf_tage INTEGER NOT NULL DEFAULT 30,      -- wie weit im Voraus buchbar
+  max_gaeste_pro_slot           INTEGER,                          -- NULL = Summe aller Tischkapazitäten
+  reservierung_puffer_min       INTEGER NOT NULL DEFAULT 15,      -- Minuten zwischen Buchungen
+  reservierung_vorlauf_tage     INTEGER NOT NULL DEFAULT 30,      -- wie weit im Voraus buchbar
+  buchungsintervall_min         INTEGER NOT NULL DEFAULT 15,      -- Slot-Abstand (15/30/60 Min.)
+  tisch_dauer_min               INTEGER NOT NULL DEFAULT 90,      -- geschätzte Sitzzeit pro Reservierung
+  max_gleichzeitige_reservierungen INTEGER,                       -- NULL = unbegrenzt
   erstellt_am               TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -216,7 +219,7 @@ CREATE TABLE IF NOT EXISTS reservierungen (
   anlass               TEXT,
   sitzplatz_wunsch     TEXT,
   quelle               TEXT    NOT NULL DEFAULT 'app'
-                       CHECK (quelle IN ('app', 'whatsapp', 'telefon', 'online')),
+                       CHECK (quelle IN ('app', 'whatsapp', 'telefon', 'online', 'google')),
   buchungs_token       TEXT    UNIQUE,              -- für Self-Service Storno/Umbuchung
   dsgvo_einwilligung   BOOLEAN NOT NULL DEFAULT false,
   erinnerung_gesendet  JSONB   NOT NULL DEFAULT '{}',
@@ -310,6 +313,28 @@ CREATE TABLE IF NOT EXISTS schichttausch (
 CREATE INDEX IF NOT EXISTS idx_schichttausch_restaurant ON schichttausch(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_schichttausch_anbieter   ON schichttausch(anbieter_id);
 
+-- ─── Schicht-Templates ───────────────────────────────────────────────────────
+-- Gespeicherte Wochenvorlagen für schnelles Wiederanwenden
+CREATE TABLE IF NOT EXISTS schicht_templates (
+  id            UUID      PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID      NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  name          TEXT      NOT NULL,
+  erstellt_am   TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_schicht_templates_restaurant ON schicht_templates(restaurant_id);
+
+-- Einzelne Schichteinträge einer Vorlage (wochentag 0=Mo … 6=So)
+CREATE TABLE IF NOT EXISTS schicht_template_eintraege (
+  id             UUID     PRIMARY KEY DEFAULT uuid_generate_v4(),
+  template_id    UUID     NOT NULL REFERENCES schicht_templates(id) ON DELETE CASCADE,
+  mitarbeiter_id UUID     NOT NULL REFERENCES mitarbeiter(id) ON DELETE CASCADE,
+  wochentag      SMALLINT NOT NULL CHECK (wochentag BETWEEN 0 AND 6),
+  beginn         TIME     NOT NULL,
+  ende           TIME     NOT NULL,
+  notiz          TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_schicht_template_eintraege_template ON schicht_template_eintraege(template_id);
+
 -- ─── Öffnungszeiten ──────────────────────────────────────────────────────────
 -- wochentag: 0=Montag … 6=Sonntag
 CREATE TABLE IF NOT EXISTS oeffnungszeiten (
@@ -322,6 +347,18 @@ CREATE TABLE IF NOT EXISTS oeffnungszeiten (
   UNIQUE (restaurant_id, wochentag)
 );
 CREATE INDEX IF NOT EXISTS idx_oeffnungszeiten_restaurant ON oeffnungszeiten(restaurant_id);
+
+-- ─── Ausnahmetage (Feiertage / geschlossene Tage) ───────────────────────────
+-- Überschreibt Öffnungszeiten: an diesem Datum ist das Restaurant geschlossen
+CREATE TABLE IF NOT EXISTS ausnahmetage (
+  id            UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  restaurant_id UUID    NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  datum         DATE    NOT NULL,
+  grund         TEXT,                                          -- z.B. "Ostern", "Betriebsferien"
+  UNIQUE (restaurant_id, datum)
+);
+CREATE INDEX IF NOT EXISTS idx_ausnahmetage_restaurant ON ausnahmetage(restaurant_id);
+CREATE INDEX IF NOT EXISTS idx_ausnahmetage_datum      ON ausnahmetage(datum);
 
 -- ─── Passwort-vergessen Tokens ───────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS passwort_resets (

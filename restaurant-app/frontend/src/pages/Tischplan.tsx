@@ -64,9 +64,12 @@ export default function Tischplan() {
   const heute = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const { reservierungen, tischZuweisen, statusAendern: resStatusAendern } = useReservierungen(heute);
 
-  // Aktive Reservierungen (nicht storniert) — für Anzeige auf Tischen
+  // Aktive Reservierungen — storniert/abgeschlossen/no_show werden nicht mehr angezeigt
+  // (Gast weg oder erschienen nicht → Tisch ist wieder frei)
   const aktiveReservierungen = useMemo(
-    () => reservierungen.filter(r => r.status !== 'storniert'),
+    () => reservierungen.filter(
+      r => r.status !== 'storniert' && r.status !== 'abgeschlossen' && r.status !== 'no_show'
+    ),
     [reservierungen]
   );
 
@@ -258,12 +261,28 @@ export default function Tischplan() {
     fenster.document.write(`
       <html><head><title>QR-Codes drucken</title>
       <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; }
-        .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .qr-karte { text-align: center; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; break-inside: avoid; }
-        .qr-karte h3 { margin: 12px 0 4px; font-size: 18px; }
-        .qr-karte p { margin: 0; font-size: 11px; color: #6b7280; word-break: break-all; }
-        @media print { .qr-grid { grid-template-columns: repeat(3, 1fr); } }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #fff; }
+        .qr-seite {
+          width: 210mm;
+          height: 297mm;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          page-break-after: always;
+          padding: 20mm;
+        }
+        .qr-seite:last-child { page-break-after: avoid; }
+        .qr-seite h3 { font-size: 32px; font-weight: bold; margin-top: 24px; margin-bottom: 8px; }
+        .qr-seite p { font-size: 13px; color: #6b7280; word-break: break-all; text-align: center; max-width: 140mm; }
+        .qr-seite svg, .qr-seite img, .qr-seite canvas {
+          width: 140mm !important;
+          height: 140mm !important;
+        }
+        @media print {
+          .qr-seite { width: 100vw; height: 100vh; padding: 15mm; }
+        }
       </style></head><body>
       ${druckRef.current.innerHTML}
       <script>window.onload=function(){window.print();window.close();}<\/script>
@@ -278,9 +297,11 @@ export default function Tischplan() {
     const tischRes = reservierungenProTisch.get(tisch.id);
 
     // ─── Zeitbasierte Reservierungs-Logik ──────────────────────────────────
-    // Nur Reservierungen anzeigen die zeitlich relevant sind (max 2h vorher bis Ende Verweilzeit)
+    // bestaetigt = Gast ist da → bleibt sichtbar bis jemand "Abschließen" klickt
+    // ausstehend = zeigen im 2h-Fenster vor Beginn
     const baldeRes = !editModus && tischRes
       ? tischRes.filter(r => {
+          if (r.status === 'bestaetigt') return true; // bleibt am Tisch bis abgeschlossen
           const diff = minutenBis(r, jetzt);
           const verweildauer = r.verweilzeit_min || 90;
           return diff <= 120 && diff > -(verweildauer);
@@ -1325,17 +1346,15 @@ export default function Tischplan() {
         )}
       </Modal>
 
-      {/* Versteckter Druckbereich */}
+      {/* Versteckter Druckbereich — jeder Tisch bekommt eine eigene A4-Seite */}
       <div ref={druckRef} className="hidden">
-        <div className="qr-grid">
-          {tische.map((t) => (
-            <div key={t.id} className="qr-karte">
-              <QRCodeSVG value={qrUrl(t)} size={180} level="H" />
-              <h3>Tisch {t.nummer}</h3>
-              <p>Zum Bestellen QR-Code scannen</p>
-            </div>
-          ))}
-        </div>
+        {tische.map((t) => (
+          <div key={t.id} className="qr-seite">
+            <QRCodeSVG value={qrUrl(t)} size={530} level="H" />
+            <h3>Tisch {t.nummer}</h3>
+            <p>Zum Bestellen QR-Code scannen</p>
+          </div>
+        ))}
       </div>
     </div>
   );

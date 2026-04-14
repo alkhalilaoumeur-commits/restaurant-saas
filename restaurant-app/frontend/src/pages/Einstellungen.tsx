@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Topbar from '../components/layout/Topbar';
 import { useRestaurant } from '../hooks/useRestaurant';
 import { useThemeStore } from '../store/theme';
 import { api } from '../lib/api';
+import { Oeffnungszeit, Ausnahmetag } from '../types';
 
 const ABO_STATUS_LABEL: Record<string, string> = {
   trial: 'Testphase',
@@ -693,6 +694,12 @@ export default function Einstellungen() {
         {/* Google Reserve Integration */}
         <GoogleIntegration restaurantId={restaurant.id} />
 
+        {/* Öffnungszeiten */}
+        <OeffnungszeitenSektion restaurantId={restaurant.id} />
+
+        {/* Reservierungseinstellungen */}
+        <ReservierungsEinstellungen restaurant={restaurant} onSpeichern={aktualisieren} />
+
         {/* Restaurant-Daten */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
           <div className="flex items-center gap-3 mb-4">
@@ -896,6 +903,360 @@ function BuchungsWidget({ restaurantId }: { restaurantId: string }) {
             Diesen Code auf Ihrer Restaurant-Website einfügen — Gäste können dann direkt dort reservieren.
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Öffnungszeiten + Ausnahmetage ───────────────────────────────────────────
+
+const WOCHENTAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+
+function OeffnungszeitenSektion({ restaurantId: _restaurantId }: { restaurantId: string }) {
+  const [zeiten, setZeiten] = useState<Oeffnungszeit[]>([]);
+  const [ausnahmetage, setAusnahmetage] = useState<Ausnahmetag[]>([]);
+  const [speichern, setSpeichern] = useState<number | null>(null);
+  const [neuesDatum, setNeuesDatum] = useState('');
+  const [neuerGrund, setNeuerGrund] = useState('');
+  const [hinzufuegenLaedt, setHinzufuegenLaedt] = useState(false);
+  const [fehler, setFehler] = useState('');
+
+  const laden = useCallback(async () => {
+    try {
+      const [z, a] = await Promise.all([
+        api.get<Oeffnungszeit[]>('/oeffnungszeiten'),
+        api.get<Ausnahmetag[]>('/oeffnungszeiten/ausnahmetage'),
+      ]);
+      setZeiten(z);
+      setAusnahmetage(a);
+    } catch (e: any) {
+      setFehler(e.message || 'Fehler beim Laden');
+    }
+  }, []);
+
+  useEffect(() => { laden(); }, [laden]);
+
+  const handleSpeichern = async (wochentag: number, von: string, bis: string, geschlossen: boolean) => {
+    setSpeichern(wochentag);
+    setFehler('');
+    try {
+      await api.put(`/oeffnungszeiten/${wochentag}`, { von, bis, geschlossen });
+      await laden();
+    } catch (e: any) {
+      setFehler(e.message || 'Fehler beim Speichern');
+    } finally {
+      setSpeichern(null);
+    }
+  };
+
+  const handleAusnahmeHinzufuegen = async () => {
+    if (!neuesDatum) { setFehler('Bitte ein Datum auswählen'); return; }
+    setHinzufuegenLaedt(true);
+    setFehler('');
+    try {
+      await api.post('/oeffnungszeiten/ausnahmetage', { datum: neuesDatum, grund: neuerGrund || null });
+      setNeuesDatum('');
+      setNeuerGrund('');
+      await laden();
+    } catch (e: any) {
+      setFehler(e.message || 'Fehler beim Hinzufügen');
+    } finally {
+      setHinzufuegenLaedt(false);
+    }
+  };
+
+  const handleAusnahmeLoeschen = async (id: string) => {
+    try {
+      await api.delete(`/oeffnungszeiten/ausnahmetage/${id}`);
+      setAusnahmetage(prev => prev.filter(a => a.id !== id));
+    } catch (e: any) {
+      setFehler(e.message || 'Fehler beim Löschen');
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-500/15 flex items-center justify-center text-orange-600 dark:text-orange-400">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Öffnungszeiten</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Reguläre Zeiten + geschlossene Ausnahmetage</p>
+        </div>
+      </div>
+
+      {fehler && <p className="text-xs text-red-500 mb-3">{fehler}</p>}
+
+      {/* Wochentage */}
+      <div className="space-y-2 mb-6">
+        {WOCHENTAGE.map((tag, i) => {
+          const eintrag = zeiten.find(z => z.wochentag === i);
+          return (
+            <WochentagZeile
+              key={i}
+              tagName={tag}
+              eintrag={eintrag || null}
+              laedt={speichern === i}
+              onSpeichern={(von, bis, geschlossen) => handleSpeichern(i, von, bis, geschlossen)}
+            />
+          );
+        })}
+      </div>
+
+      {/* Ausnahmetage */}
+      <div className="border-t border-gray-100 dark:border-white/10 pt-5">
+        <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">Ausnahmetage</p>
+        <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
+          An diesen Tagen ist das Restaurant geschlossen (überschreibt die regulären Öffnungszeiten).
+        </p>
+
+        {ausnahmetage.length > 0 && (
+          <div className="space-y-1.5 mb-4">
+            {ausnahmetage.map(a => (
+              <div key={a.id} className="flex items-center justify-between bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2">
+                <div>
+                  <span className="text-sm font-medium text-red-700 dark:text-red-400">
+                    {new Date(a.datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </span>
+                  {a.grund && <span className="text-xs text-red-500 dark:text-red-400/70 ml-2">· {a.grund}</span>}
+                </div>
+                <button
+                  onClick={() => handleAusnahmeLoeschen(a.id)}
+                  className="text-xs text-red-400 hover:text-red-600 dark:hover:text-red-300 px-2 py-1 transition-colors"
+                >
+                  Entfernen
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-end gap-2 flex-wrap">
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Datum</label>
+            <input
+              type="date"
+              value={neuesDatum}
+              onChange={e => setNeuesDatum(e.target.value)}
+              className="border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2 text-sm bg-white dark:bg-white/5 text-gray-700 dark:text-slate-200"
+            />
+          </div>
+          <div className="flex-1 min-w-[140px]">
+            <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Grund (optional)</label>
+            <input
+              type="text"
+              placeholder="z.B. Ostern, Betriebsferien"
+              value={neuerGrund}
+              onChange={e => setNeuerGrund(e.target.value)}
+              className="w-full border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2 text-sm bg-white dark:bg-white/5 text-gray-700 dark:text-slate-200"
+            />
+          </div>
+          <button
+            onClick={handleAusnahmeHinzufuegen}
+            disabled={hinzufuegenLaedt || !neuesDatum}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
+          >
+            {hinzufuegenLaedt ? '...' : '+ Hinzufügen'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function defaultZeit(v: string | undefined, fallback: string): string {
+  const t = v?.slice(0, 5);
+  return (!t || t === '00:00') ? fallback : t;
+}
+
+function WochentagZeile({ tagName, eintrag, laedt, onSpeichern }: {
+  tagName: string;
+  eintrag: Oeffnungszeit | null;
+  laedt: boolean;
+  onSpeichern: (von: string, bis: string, geschlossen: boolean) => void;
+}) {
+  const [geschlossen, setGeschlossen] = useState(eintrag?.geschlossen ?? false);
+  const [von, setVon] = useState(defaultZeit(eintrag?.von, '09:00'));
+  const [bis, setBis] = useState(defaultZeit(eintrag?.bis, '22:00'));
+
+  useEffect(() => {
+    setGeschlossen(eintrag?.geschlossen ?? false);
+    setVon(defaultZeit(eintrag?.von, '09:00'));
+    setBis(defaultZeit(eintrag?.bis, '22:00'));
+  }, [eintrag]);
+
+  return (
+    <div className="flex items-center gap-3 py-1.5">
+      <span className="text-sm text-gray-600 dark:text-slate-300 w-24 shrink-0">{tagName}</span>
+
+      {/* Geschlossen-Toggle */}
+      <button
+        onClick={() => setGeschlossen(g => !g)}
+        className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${
+          geschlossen ? 'bg-red-400 dark:bg-red-500/60' : 'bg-green-400 dark:bg-green-500/60'
+        }`}
+      >
+        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+          geschlossen ? 'translate-x-0.5' : 'translate-x-5'
+        }`} />
+      </button>
+
+      {geschlossen ? (
+        <span className="text-xs text-red-500 dark:text-red-400 italic">Geschlossen</span>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="time"
+            value={von}
+            onChange={e => setVon(e.target.value)}
+            className="border border-gray-200 dark:border-white/15 rounded-lg px-2 py-1 text-sm bg-white dark:bg-white/5 text-gray-700 dark:text-slate-200"
+          />
+          <span className="text-xs text-gray-400">–</span>
+          <input
+            type="time"
+            value={bis}
+            onChange={e => setBis(e.target.value)}
+            className="border border-gray-200 dark:border-white/15 rounded-lg px-2 py-1 text-sm bg-white dark:bg-white/5 text-gray-700 dark:text-slate-200"
+          />
+        </div>
+      )}
+
+      <button
+        onClick={() => onSpeichern(von, bis, geschlossen)}
+        disabled={laedt}
+        className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/25 disabled:opacity-50 transition-colors font-medium"
+      >
+        {laedt ? '...' : 'Speichern'}
+      </button>
+    </div>
+  );
+}
+
+// ─── Reservierungseinstellungen ───────────────────────────────────────────────
+
+function ReservierungsEinstellungen({ restaurant, onSpeichern }: {
+  restaurant: { buchungsintervall_min: number; tisch_dauer_min: number; max_gleichzeitige_reservierungen: number | null };
+  onSpeichern: (felder: { buchungsintervall_min?: number; tisch_dauer_min?: number; max_gleichzeitige_reservierungen?: number | null }) => Promise<void>;
+}) {
+  const [intervall, setIntervall] = useState(restaurant.buchungsintervall_min);
+  const [tischDauer, setTischDauer] = useState(restaurant.tisch_dauer_min);
+  const [maxGleichzeitig, setMaxGleichzeitig] = useState<string>(
+    restaurant.max_gleichzeitige_reservierungen?.toString() ?? ''
+  );
+  const [laedt, setLaedt] = useState(false);
+  const [gespeichert, setGespeichert] = useState(false);
+
+  const handleSpeichern = async () => {
+    setLaedt(true);
+    try {
+      await onSpeichern({
+        buchungsintervall_min: intervall,
+        tisch_dauer_min: tischDauer,
+        max_gleichzeitige_reservierungen: maxGleichzeitig === '' ? null : parseInt(maxGleichzeitig),
+      });
+      setGespeichert(true);
+      setTimeout(() => setGespeichert(false), 2000);
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Reservierungseinstellungen</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Buchungsintervall, Tischdauer und Kapazität</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+        {/* Buchungsintervall */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+            Buchungsintervall
+          </label>
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2">
+            Zeitabstand zwischen Buchungsslots
+          </p>
+          <div className="flex gap-2">
+            {[15, 30, 60].map(min => (
+              <button
+                key={min}
+                onClick={() => setIntervall(min)}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  intervall === min
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-white/10'
+                }`}
+              >
+                {min} Min.
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tischdauer */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+            Tischdauer
+          </label>
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2">
+            Wie lange ein Tisch nach Reservierung gilt
+          </p>
+          <div className="flex gap-2">
+            {[60, 90, 120].map(min => (
+              <button
+                key={min}
+                onClick={() => setTischDauer(min)}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  tischDauer === min
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-white/10'
+                }`}
+              >
+                {min === 60 ? '1h' : min === 90 ? '1,5h' : '2h'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Max gleichzeitige Reservierungen */}
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+            Max. gleichzeitige Reservierungen
+          </label>
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2">
+            Leer lassen = unbegrenzt
+          </p>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            placeholder="Unbegrenzt"
+            value={maxGleichzeitig}
+            onChange={e => setMaxGleichzeitig(e.target.value)}
+            className="w-full border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2 text-sm bg-white dark:bg-white/5 text-gray-700 dark:text-slate-200"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSpeichern}
+          disabled={laedt}
+          className="px-5 py-2 bg-indigo-500 text-white rounded-lg text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+        >
+          {gespeichert ? '✓ Gespeichert' : laedt ? 'Speichert...' : 'Einstellungen speichern'}
+        </button>
       </div>
     </div>
   );

@@ -153,7 +153,9 @@ router.post('/webhook', asyncHandler(async (req: Request, res: Response) => {
       restaurant_id: restaurantId,
       tisch_id: zuweisung?.hauptId ?? null,
       gast_name,
-      email: email?.toLowerCase() ?? `google-${booking.booking_id}@placeholder.local`,
+      // DSGVO: Wenn Google keine Email liefert → null speichern, KEINE Fake-Adresse.
+      // Fake-Emails verhindern das Recht auf Löschung (Art. 17 DSGVO) da der Gast nicht per Email gefunden wird.
+      email: email?.toLowerCase() ?? null,
       telefon,
       datum,
       personen: personenZahl,

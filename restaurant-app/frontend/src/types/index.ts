@@ -28,8 +28,25 @@ export interface Restaurant {
   lizenz_code: string | null;
   max_mitarbeiter: number;
   abo_status: 'trial' | 'active' | 'expired';
+  buchungsintervall_min: number;
+  tisch_dauer_min: number;
+  max_gleichzeitige_reservierungen: number | null;
   erstellt_am: string;
   aktive_mitarbeiter: number;
+}
+
+export interface Oeffnungszeit {
+  id: string;
+  wochentag: number;  // 0=Mo … 6=So
+  von: string;        // "09:00:00"
+  bis: string;        // "22:00:00"
+  geschlossen: boolean;
+}
+
+export interface Ausnahmetag {
+  id: string;
+  datum: string;      // "2026-12-25"
+  grund: string | null;
 }
 
 export interface RestaurantDesign {
@@ -345,6 +362,27 @@ export interface Schichttausch {
   annehmer_ende?: string;
   status: SchichttauschStatus;
   erstellt_am: string;
+}
+
+// ─── Schicht-Templates ───────────────────────────────────────────────────────
+
+export interface SchichtTemplateEintrag {
+  id: string;
+  template_id: string;
+  mitarbeiter_id: string;
+  mitarbeiter_name?: string;
+  wochentag: number; // 0=Mo … 6=So
+  beginn: string;    // "09:00"
+  ende: string;      // "17:00"
+  notiz: string | null;
+}
+
+export interface SchichtTemplate {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  erstellt_am: string;
+  eintraege: SchichtTemplateEintrag[];
 }
 
 // ─── Mitarbeiter-Verfügbarkeit ────────────────────────────────────────────────

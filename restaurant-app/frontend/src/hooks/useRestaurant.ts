@@ -29,7 +29,16 @@ export function useRestaurant() {
 
   useEffect(() => { laden_(); }, [laden_]);
 
-  const aktualisieren = useCallback(async (felder: { name?: string; oeffnungszeiten?: string; primaerfarbe?: string; layout_id?: string; logo_url?: string | null }) => {
+  const aktualisieren = useCallback(async (felder: {
+    name?: string;
+    oeffnungszeiten?: string;
+    primaerfarbe?: string;
+    layout_id?: string;
+    logo_url?: string | null;
+    buchungsintervall_min?: number;
+    tisch_dauer_min?: number;
+    max_gleichzeitige_reservierungen?: number | null;
+  }) => {
     if (demo) return;
     const data = await api.put<Restaurant>('/restaurant', felder);
     setRestaurant((prev) => prev ? { ...prev, ...data } : prev);
@@ -54,6 +63,9 @@ const DEMO_RESTAURANT: Restaurant = {
   lizenz_code: 'REST-DEMO',
   max_mitarbeiter: 5,
   abo_status: 'trial',
+  buchungsintervall_min: 15,
+  tisch_dauer_min: 90,
+  max_gleichzeitige_reservierungen: null,
   erstellt_am: new Date().toISOString(),
   aktive_mitarbeiter: 3,
 };

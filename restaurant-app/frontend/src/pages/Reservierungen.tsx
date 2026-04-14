@@ -71,7 +71,7 @@ export default function Reservierungen() {
   const datumStr = datumString(datum);
   const { reservierungen, laden, laden_, statusAendern, autoZuweisen } = useReservierungen(datumStr);
   const { tische } = useTische();
-  const { walkIns, laden: walkInLaden, hinzufuegen, platzieren, abgegangen, loeschen } = useWalkIns();
+  const { walkIns, laden: walkInLaden, hinzufuegen, platzieren, abgegangen, reaktivieren, loeschen } = useWalkIns();
 
   const woche = useMemo(() => wocheTage(datum), [datumStr]);
   const heuteStr = datumString(new Date());
@@ -392,6 +392,7 @@ export default function Reservierungen() {
                     tische={tische}
                     onPlatzieren={platzieren}
                     onAbgegangen={abgegangen}
+                    onReaktivieren={reaktivieren}
                     onLoeschen={loeschen}
                     istAdmin={istAdmin}
                   />

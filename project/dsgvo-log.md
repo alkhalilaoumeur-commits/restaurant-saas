@@ -205,3 +205,34 @@ Vollstaendiges Verarbeitungsverzeichnis: siehe `project/dsgvo-datenkatalog.md`
 - Keine sensiblen Kategorien (Art. 9 DSGVO) betroffen
 - Keine Weitergabe an Dritte
 - Kein Profiling
+
+---
+
+## 2026-04-11 – Google Reserve Integration + DSGVO-Check
+
+### Was wurde gemacht
+- Google als neue `ReservierungQuelle` hinzugefügt (`'google'`)
+- `?quelle=google` URL-Parameter in Buchungs-Route implementiert
+- Google Reserve Webhook-Endpunkt (`/api/google-reserve/webhook`) als Infrastruktur angelegt (noch nicht aktiv)
+- DSGVO-Check durchgeführt
+
+### Befunde & Fixes
+
+#### ❌ Fix: Fake-Email entfernt (Art. 17 DSGVO)
+**Problem:** Google Reserve liefert manchmal keine Email. In `google-reserve.ts` wurde eine Fake-Adresse (`google-XYZ@placeholder.local`) eingesetzt. Das verhindert das Recht auf Löschung, weil der Gast nicht mehr per Email-Suche gefunden werden kann.
+
+**Fix:** `email: email?.toLowerCase() ?? null` — null statt Fake-Adresse. Das DB-Schema erlaubt `email` nullable in Reservierungen.
+
+#### ❌ Fix: Email-Adressen aus Server-Logs entfernt (Art. 5 Abs. 1 lit. e)
+**Problem:** `erinnerungen.ts` schrieb `console.log("24h gesendet an user@email.de")`. Bei externer Log-Weiterleitung würden personenbezogene Emails in Log-Dienste fließen.
+
+**Fix:** Ersetzt durch `console.log("24h gesendet (Reservierung ${id})")`.
+
+### Offene Punkte (vor Aktivierung des Google-Webhooks)
+- **AVV mit Google** (Art. 28 DSGVO): Wenn Google als Datenquelle aktiv wird, muss ein Auftragsverarbeitungsvertrag mit Google vorliegen. Google Reserve Partner erhalten diesen automatisch.
+- **DSGVO-Einwilligung**: Google holt die Einwilligung auf ihrer Seite ein. Im Partnervertrag ist dokumentiert, welche Rechtsbasis gilt.
+
+### Neue personenbezogene Daten (Google-Kanal)
+| Quelle | Daten | Rechtsgrundlage | Aufbewahrung |
+|---|---|---|---|
+| Google Reserve (geplant) | Name, Email (optional), Telefon (optional), Buchungs-ID | Art. 6(1)(b) DSGVO — Vertragserfüllung | 30 Tage (wie alle Reservierungen) |

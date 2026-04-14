@@ -9,6 +9,12 @@ import {
   reservierungStornierungSenden,
   reservierungUmbuchungSenden,
 } from '../services/email';
+import {
+  gastSmsSenden,
+  gastSmsBestaetigung,
+  gastSmsStornierung,
+  gastSmsUmbuchung,
+} from '../services/sms-gast';
 import { io } from '../server';
 
 const router = Router();
@@ -48,7 +54,9 @@ router.get('/:restaurantId/info', asyncHandler(async (req: Request, res: Respons
     bis: string;
     geschlossen: boolean;
   }>(
-    'SELECT wochentag, von, bis, geschlossen FROM oeffnungszeiten WHERE restaurant_id = $1 ORDER BY wochentag',
+    `SELECT wochentag, von, bis,
+       (geschlossen OR (von = '00:00:00' AND bis = '00:00:00')) AS geschlossen
+     FROM oeffnungszeiten WHERE restaurant_id = $1 ORDER BY wochentag`,
     [restaurantId]
   );
 
@@ -186,14 +194,22 @@ router.post('/:restaurantId', asyncHandler(async (req: Request, res: Response) =
       .catch((err) => console.error('[Gäste-CRM] Auto-Link Fehler:', err));
   }
 
-  // Bestätigungs-Email mit QR-Code senden (fire-and-forget)
+  // Bestätigungs-Email + SMS senden (fire-and-forget)
   if (reservierung) {
     const r = restaurant[0];
     const adresse = [r.strasse, [r.plz, r.stadt].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+
+    // E-Mail mit QR-Code
     reservierungBestaetigungSenden(
       email.toLowerCase(), gast_name, r.name, datum, personenZahl,
       reservierung.buchungs_token!, adresse
     ).catch(err => console.error('[Reservierung] Bestätigungs-Email Fehler:', err));
+
+    // SMS (nur wenn Telefon angegeben — 95% Öffnungsrate)
+    if (telefon) {
+      gastSmsSenden(telefon, gastSmsBestaetigung(gast_name, r.name, datum, personenZahl))
+        .catch(err => console.error('[Reservierung] Bestätigungs-SMS Fehler:', err));
+    }
 
     // Live-Update an alle Mitarbeiter des Restaurants via Socket.io
     io.to(`restaurant:${restaurantId}`).emit('neue_reservierung', {
@@ -265,11 +281,15 @@ router.post('/token/:token/stornieren', asyncHandler(async (req: Request, res: R
     return;
   }
 
-  // Stornierungsbestätigung per Email
+  // Stornierungsbestätigung per E-Mail + SMS
   if (vorher.email) {
     reservierungStornierungSenden(
       vorher.email, vorher.gast_name, vorher.restaurant_name, vorher.datum
     ).catch(err => console.error('[Reservierung] Storno-Email Fehler:', err));
+  }
+  if (vorher.telefon) {
+    gastSmsSenden(vorher.telefon, gastSmsStornierung(vorher.gast_name, vorher.restaurant_name, vorher.datum))
+      .catch(err => console.error('[Reservierung] Storno-SMS Fehler:', err));
   }
 
   // Live-Update an Mitarbeiter
@@ -328,12 +348,16 @@ router.post('/token/:token/umbuchen', asyncHandler(async (req: Request, res: Res
     req.params.token, datum, neueZuweisung?.hauptId || null, verweilzeit
   );
 
-  // Umbuchungsbestätigung per Email
+  // Umbuchungsbestätigung per E-Mail + SMS
   if (vorher.email && reservierung) {
     reservierungUmbuchungSenden(
       vorher.email, vorher.gast_name, vorher.restaurant_name,
       datum, vorher.personen, req.params.token
     ).catch(err => console.error('[Reservierung] Umbuchungs-Email Fehler:', err));
+  }
+  if (vorher.telefon && reservierung) {
+    gastSmsSenden(vorher.telefon, gastSmsUmbuchung(vorher.gast_name, vorher.restaurant_name, datum, vorher.personen))
+      .catch(err => console.error('[Reservierung] Umbuchungs-SMS Fehler:', err));
   }
 
   // Live-Update an Mitarbeiter

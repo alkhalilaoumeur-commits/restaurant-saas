@@ -67,7 +67,7 @@
 - [x] Konflikterkennung mit Gelb/Rot-Warnungen (Doppelbuchung, Ruhezeitverstoss, Ueberstunden) ✅ erledigt 2026-04-09
 - [x] Mitarbeiter-Verfuegbarkeit (MA tragen ein wann sie koennen/nicht koennen — Wochentag-Editor + Admin-Indikatoren) ✅ erledigt 2026-04-09
 - [x] Abwesenheiten (konkrete Daten/Zeiträume — Urlaub, Krank, Sonstiges + Admin-Konflikt-Notification via Socket.io) ✅ erledigt 2026-04-09
-- [ ] Schicht-Templates (wiederkehrende Wochen als Vorlage speichern + anwenden)
+- [x] Schicht-Templates (wiederkehrende Wochen als Vorlage speichern + anwenden) ✅ erledigt 2026-04-12
 - [x] Reservierungs-basierter Personalbedarf (Reservierungen → automatische Empfehlung Mitarbeiterzahl) ✅ erledigt 2026-04-09
 - [x] Budget-Overlay (Personalkosten live waehrend der Planung anzeigen) ✅ erledigt 2026-04-09
 - [x] Schichttausch 3-Tap-Flow (Anfrage → Claim → Genehmigung) ✅ erledigt 2026-04-11
@@ -156,6 +156,13 @@
 - [x] "Zum Kalender hinzufuegen" auf Bestaetigungsseite (Google Calendar + iCal-Download) ✅
 - [x] DB-Migration: `anlass` + `sitzplatz_wunsch` auf `reservierungen` ✅
 - [x] Backend + Admin-UI + Detailseite erweitert ✅
+
+## Bekannte Bugs (Bugfix-Session 2026-04-13)
+
+- [x] 🔴 **KRITISCH: DB-Schema `quelle` CHECK fehlt `'google'`** — `schema.sql:219` gefixt: `'google'` zur Constraint hinzugefügt. ✅ erledigt 2026-04-13
+- [x] 🔴 **KRITISCH: Socket.io Room-Namen falsch in `reservierungen.ts`** — `io.to(restaurantId)` → `io.to(\`restaurant:${restaurantId}\`)` an 3 Stellen. ✅ erledigt 2026-04-13
+- [x] 🟡 **MITTEL: Socket.io Room-Namen falsch in `walk-ins.ts`** — Gleicher Fix, 3 Stellen. ✅ erledigt 2026-04-13
+- [x] 🔴 **KRITISCH: Registrierung "Email nicht verifiziert" obwohl Code bestätigt** — `verifiedTokens` war eine In-Memory Map, die bei Server-Neustart (nodemon) geleert wurde. Fix: Token jetzt als signiertes JWT ausgestellt (`verifTokenErstellen`/`verifTokenPruefen`) → kein Server-State nötig. ✅ erledigt 2026-04-13
 
 ## Vor Release (Pflicht!)
 - [ ] E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)

@@ -79,6 +79,10 @@
 | POST | /api/dienstplan | Neue Schicht anlegen | Ja (Admin) |
 | PATCH | /api/dienstplan/:id | Schicht bearbeiten | Ja (Admin) |
 | DELETE | /api/dienstplan/:id | Schicht löschen | Ja (Admin) |
+| GET | /api/dienstplan/templates | Alle Schicht-Vorlagen laden | Ja (Admin) |
+| POST | /api/dienstplan/templates | Neue Vorlage speichern (mit Einträgen) | Ja (Admin) |
+| POST | /api/dienstplan/templates/:id/anwenden | Vorlage auf Woche anwenden | Ja (Admin) |
+| DELETE | /api/dienstplan/templates/:id | Vorlage löschen | Ja (Admin) |
 
 ## Statistiken
 | Methode | Route | Beschreibung | Auth nötig |

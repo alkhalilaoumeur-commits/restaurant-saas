@@ -23,6 +23,9 @@ interface ReservierungSlot {
 interface RestaurantEinstellungen {
   max_gaeste_pro_slot: number | null;
   reservierung_puffer_min: number;
+  buchungsintervall_min: number;
+  tisch_dauer_min: number;
+  max_gleichzeitige_reservierungen: number | null;
 }
 
 interface Tisch {
@@ -79,6 +82,13 @@ export const VerfuegbarkeitModel = {
     personen: number
   ): Promise<ZeitSlot[]> {
 
+    // 0. Ausnahmetag prüfen (Feiertag / manuell geschlossen) → sofort keine Slots
+    const ausnahmetag = await q1<{ id: string }>(
+      'SELECT id FROM ausnahmetage WHERE restaurant_id = $1 AND datum = $2',
+      [restaurantId, datum]
+    );
+    if (ausnahmetag) return [];
+
     // 1. Öffnungszeiten für den Wochentag
     const datumObj = new Date(datum + 'T00:00:00');
     const wochentag = wochentagISO(datumObj);
@@ -91,12 +101,19 @@ export const VerfuegbarkeitModel = {
     // Kein Eintrag oder geschlossen → keine Slots
     if (!oeffnung || oeffnung.geschlossen) return [];
 
-    // 2. Restaurant-Einstellungen laden
+    // Ungültige Zeiten (00:00-00:00 = Platzhalter für geschlossene Tage) → keine Slots
+    if (oeffnung.von === '00:00:00' && oeffnung.bis === '00:00:00') return [];
+
+    // 2. Restaurant-Einstellungen laden (inkl. konfigurierbares Buchungsintervall)
     const einstellungen = await q1<RestaurantEinstellungen>(
-      'SELECT max_gaeste_pro_slot, reservierung_puffer_min FROM restaurants WHERE id = $1',
+      `SELECT max_gaeste_pro_slot, reservierung_puffer_min,
+              buchungsintervall_min, tisch_dauer_min, max_gleichzeitige_reservierungen
+       FROM restaurants WHERE id = $1`,
       [restaurantId]
     );
     if (!einstellungen) return [];
+
+    const intervall = einstellungen.buchungsintervall_min || 15;
 
     // Max-Kapazität berechnen: Override oder Summe der Tischkapazitäten
     let maxKapazitaet = einstellungen.max_gaeste_pro_slot;
@@ -111,10 +128,11 @@ export const VerfuegbarkeitModel = {
     // Wenn keine Kapazität definiert → keine Slots
     if (maxKapazitaet <= 0) return [];
 
-    // 3. Alle 15-Min-Slots generieren
+    // 3. Slots generieren (Intervall aus Einstellungen statt hartkodiert 15)
     const vonMin = zeitZuMinuten(oeffnung.von);
     const bisMin = zeitZuMinuten(oeffnung.bis);
-    const verweilzeit = verweilzeitBerechnen(personen);
+    // Verweilzeit: konfigurierte Tischdauer überschreibt die gruppenbasierte Berechnung
+    const verweilzeit = einstellungen.tisch_dauer_min || verweilzeitBerechnen(personen);
 
     const slots: ZeitSlot[] = [];
 
@@ -130,8 +148,8 @@ export const VerfuegbarkeitModel = {
     const heute = jetzt.toISOString().split('T')[0];
     const jetztMinuten = jetzt.getHours() * 60 + jetzt.getMinutes();
 
-    // 6. Jeden 15-Min-Slot prüfen
-    for (let slotMin = vonMin; slotMin < bisMin; slotMin += 15) {
+    // 6. Jeden Slot (im konfigurierten Abstand) prüfen
+    for (let slotMin = vonMin; slotMin < bisMin; slotMin += intervall) {
       // Verweilzeit muss vor Schließung enden
       if (slotMin + verweilzeit > bisMin) continue;
 
@@ -141,17 +159,25 @@ export const VerfuegbarkeitModel = {
 
       // Belegte Plätze in diesem Slot berechnen
       let belegtePlaetze = 0;
+      let belegteSlots = 0;
       for (const res of reservierungen) {
         const resDatum = new Date(res.datum);
         const resStartMin = resDatum.getHours() * 60 + resDatum.getMinutes();
         const resEndeMin = resStartMin + res.verweilzeit_min;
 
-        // Überlappung prüfen: Slot-Zeitfenster [slotMin, slotMin+verweilzeit]
-        // überlappt mit Reservierung [resStartMin, resEndeMin]?
+        // Überlappung prüfen
         const slotEnde = slotMin + verweilzeit;
         if (slotMin < resEndeMin && slotEnde > resStartMin) {
           belegtePlaetze += res.personen;
+          belegteSlots += 1;
         }
+      }
+
+      // Max gleichzeitige Reservierungen prüfen (falls konfiguriert)
+      if (einstellungen.max_gleichzeitige_reservierungen !== null &&
+          belegteSlots >= einstellungen.max_gleichzeitige_reservierungen) {
+        slots.push({ zeit: minutenZuZeit(slotMin), verfuegbar: false, restplaetze: 0 });
+        continue;
       }
 
       const restplaetze = maxKapazitaet - belegtePlaetze;

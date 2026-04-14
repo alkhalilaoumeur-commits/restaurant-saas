@@ -23,7 +23,8 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
 
 // PUT /api/restaurant – Restaurant-Daten aktualisieren
 router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, oeffnungszeiten, primaerfarbe, layout_id, logo_url } = req.body;
+  const { name, oeffnungszeiten, primaerfarbe, layout_id, logo_url,
+          buchungsintervall_min, tisch_dauer_min, max_gleichzeitige_reservierungen } = req.body;
 
   // Farbwert validieren (Hex-Format)
   if (primaerfarbe !== undefined && !/^#[0-9a-fA-F]{6}$/.test(primaerfarbe)) {
@@ -44,12 +45,30 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
     return;
   }
 
+  // Buchungsintervall validieren (nur erlaubte Werte)
+  const erlaubteIntervalle = [15, 30, 60];
+  if (buchungsintervall_min !== undefined && !erlaubteIntervalle.includes(Number(buchungsintervall_min))) {
+    res.status(400).json({ fehler: 'Buchungsintervall muss 15, 30 oder 60 Minuten sein' });
+    return;
+  }
+
+  // Tischdauer validieren (mind. 30, max. 480 Min.)
+  if (tisch_dauer_min !== undefined && (Number(tisch_dauer_min) < 30 || Number(tisch_dauer_min) > 480)) {
+    res.status(400).json({ fehler: 'Tischdauer muss zwischen 30 und 480 Minuten liegen' });
+    return;
+  }
+
   const restaurant = await RestaurantModel.aktualisieren(req.auth!.restaurantId, {
     name,
     oeffnungszeiten,
     primaerfarbe,
     layout_id,
     logo_url,
+    buchungsintervall_min: buchungsintervall_min !== undefined ? Number(buchungsintervall_min) : undefined,
+    tisch_dauer_min: tisch_dauer_min !== undefined ? Number(tisch_dauer_min) : undefined,
+    max_gleichzeitige_reservierungen: max_gleichzeitige_reservierungen !== undefined
+      ? (max_gleichzeitige_reservierungen === null ? null : Number(max_gleichzeitige_reservierungen))
+      : undefined,
   });
 
   if (!restaurant) {

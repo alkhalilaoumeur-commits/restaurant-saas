@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { q, q1 } from './db';
 
-export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert';
+export type ReservierungStatus = 'ausstehend' | 'bestaetigt' | 'storniert' | 'no_show' | 'abgeschlossen';
 export type ReservierungQuelle = 'app' | 'whatsapp' | 'telefon' | 'online' | 'google';
 
 export interface Reservierung {
@@ -9,6 +9,7 @@ export interface Reservierung {
   restaurant_id: string;
   tisch_id: string | null;
   tisch_kombiniert_id: string | null;
+  gast_id: string | null;
   gast_name: string;
   telefon: string | null; // DSGVO: personenbezogen, 30 Tage Löschfrist
   email: string | null;   // DSGVO: personenbezogen, 30 Tage Löschfrist
@@ -86,7 +87,8 @@ export const ReservierungModel = {
     restaurant_id: string;
     tisch_id: string | null;
     gast_name: string;
-    email: string;
+    /** DSGVO: Bei Google-Reserve-Webhook kann Email fehlen — dann null speichern */
+    email: string | null;
     telefon: string | null;
     datum: string;
     personen: number;

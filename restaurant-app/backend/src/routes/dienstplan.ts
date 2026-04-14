@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { SchichtModel } from '../models/Schicht';
 import { SchichttauschModel } from '../models/Schichttausch';
+import { SchichtTemplateModel } from '../models/SchichtTemplate';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 
@@ -220,6 +221,62 @@ router.post('/tausch/:id/ablehnen', requireAuth, asyncHandler(async (req: AuthRe
     return;
   }
   res.json(tausch);
+}));
+
+// ── Schicht-Templates ────────────────────────────────────────────────────────
+
+// GET /api/dienstplan/templates — Alle Templates laden (nur Admin)
+router.get('/templates', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const templates = await SchichtTemplateModel.alle(req.auth!.restaurantId);
+  res.json(templates);
+}));
+
+// POST /api/dienstplan/templates — Neue Vorlage speichern
+// Body: { name: string, eintraege: Array<{ mitarbeiter_id, wochentag, beginn, ende, notiz? }> }
+router.post('/templates', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { name, eintraege } = req.body;
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    res.status(400).json({ fehler: 'Name ist erforderlich' });
+    return;
+  }
+  if (!Array.isArray(eintraege)) {
+    res.status(400).json({ fehler: 'eintraege muss ein Array sein' });
+    return;
+  }
+
+  const template = await SchichtTemplateModel.erstellenMitEintraegen(
+    req.auth!.restaurantId,
+    name.trim(),
+    eintraege
+  );
+  res.status(201).json(template);
+}));
+
+// POST /api/dienstplan/templates/:id/anwenden — Vorlage auf eine Woche anwenden
+// Body: { montag: "2026-04-14" }
+router.post('/templates/:id/anwenden', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { montag } = req.body;
+  if (!montag || !/^\d{4}-\d{2}-\d{2}$/.test(montag)) {
+    res.status(400).json({ fehler: 'montag ist erforderlich (Format: YYYY-MM-DD)' });
+    return;
+  }
+
+  const ergebnis = await SchichtTemplateModel.anwenden(
+    req.auth!.restaurantId,
+    req.params.id,
+    montag
+  );
+  res.json(ergebnis);
+}));
+
+// DELETE /api/dienstplan/templates/:id — Vorlage löschen
+router.delete('/templates/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
+  const geloescht = await SchichtTemplateModel.loeschen(req.auth!.restaurantId, req.params.id);
+  if (!geloescht) {
+    res.status(404).json({ fehler: 'Vorlage nicht gefunden' });
+    return;
+  }
+  res.json({ geloescht: true });
 }));
 
 // POST /api/dienstplan/tausch/:id/zurueckziehen — Anbieter zieht Anfrage zurück
