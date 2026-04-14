@@ -474,8 +474,7 @@ export default function Gaeste() {
     }
     setExportLaden(true);
     try {
-      const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001/api';
-      const res = await fetch(`${apiBase}/gaeste/export`, {
+      const res = await fetch(`/api/gaeste/export`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Export fehlgeschlagen');
