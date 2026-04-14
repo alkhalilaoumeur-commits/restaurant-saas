@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ServeFlow</string>
+    <string name="title_activity_main">ServeFlow</string>
+    <string name="package_name">de.drvn.serveflow</string>
+    <string name="custom_url_scheme">de.drvn.serveflow</string>
+</resources>
