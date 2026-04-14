@@ -52,7 +52,7 @@
     @apply transition-all duration-150;
   }
 
-  /* Dark Mode Inputs */
+  /* Dark Mode Inputs — hoher Kontrast damit Felder klar erkennbar sind */
   .dark input[type="text"],
   .dark input[type="email"],
   .dark input[type="password"],
@@ -64,9 +64,10 @@
   .dark input[type="search"],
   .dark select,
   .dark textarea {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #F8FAFC;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: #F1F5F9 !important;
+    border-radius: 0.5rem;
   }
   .dark input::placeholder,
   .dark textarea::placeholder {
@@ -75,20 +76,29 @@
   .dark input:focus,
   .dark select:focus,
   .dark textarea:focus {
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.11) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+    outline: none;
   }
   .dark label {
     color: #CBD5E1;
+  }
+  /* Select-Dropdown im Dark-Mode */
+  .dark select option {
+    background-color: #1E293B;
+    color: #F1F5F9;
   }
 }
 
 @layer utilities {
   /* Unsichtbare Scrollbar — für horizontale Tab-Leisten */
-  .no-scrollbar::-webkit-scrollbar {
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  .no-scrollbar {
+  .no-scrollbar,
+  .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }

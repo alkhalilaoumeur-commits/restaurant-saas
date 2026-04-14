@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Gericht } from '../../types';
 import { formatPreis } from '../../lib/utils';
 
@@ -10,6 +11,8 @@ interface GerichtKarteProps {
 }
 
 export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoeschen, onExtras }: GerichtKarteProps) {
+  const [bestaetigung, setBestaetigung] = useState(false);
+
   return (
     <div className={`bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-4 shadow-sm flex gap-4 card-hover ${!gericht.verfuegbar ? 'opacity-60' : ''}`}>
       {gericht.bild_url && (
@@ -52,12 +55,30 @@ export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoesch
           >
             Extras
           </button>
-          <button
-            onClick={() => onLoeschen(gericht.id)}
-            className="text-xs px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 font-medium"
-          >
-            Löschen
-          </button>
+          {!bestaetigung ? (
+            <button
+              onClick={() => setBestaetigung(true)}
+              className="text-xs px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 font-medium"
+            >
+              Löschen
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-red-600 font-medium">Sicher?</span>
+              <button
+                onClick={() => { onLoeschen(gericht.id); setBestaetigung(false); }}
+                className="text-xs px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 font-medium"
+              >
+                Ja, löschen
+              </button>
+              <button
+                onClick={() => setBestaetigung(false)}
+                className="text-xs px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200 font-medium"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -128,8 +128,8 @@ export default function BestellenPro() {
   const positionen = warenkorb;
 
   const gesamtpreis = positionen.reduce((s, p) => {
-    const extrasAufpreis = p.extras.reduce((es, e) => es + e.aufpreis, 0);
-    return s + (p.gericht.preis + extrasAufpreis) * p.menge;
+    const extrasAufpreis = p.extras.reduce((es, e) => es + Number(e.aufpreis), 0);
+    return s + (Number(p.gericht.preis) + extrasAufpreis) * p.menge;
   }, 0);
 
   // Bestellung absenden — mit Extras pro Position

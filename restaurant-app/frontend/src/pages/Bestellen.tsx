@@ -7,6 +7,7 @@ import { useSpeisekarte } from '../hooks/useSpeisekarte';
 import { useGaesteSocket } from '../hooks/useGaesteSocket';
 import { useRestaurantDesign } from '../hooks/useRestaurantDesign';
 import { useGastroTheme } from '../hooks/useGastroTheme';
+import { api } from '../lib/api';
 import { WarenkorbPosition, BestellungStatus } from '../types';
 
 export default function Bestellen() {
@@ -45,34 +46,28 @@ export default function Bestellen() {
     .filter((g) => mengen[g.id])
     .map((g) => ({ key: g.id, gericht: g, menge: mengen[g.id], extras: [] }));
 
-  const gesamtpreis = positionen.reduce((s, p) => s + p.gericht.preis * p.menge, 0);
+  const gesamtpreis = positionen.reduce((s, p) => s + Number(p.gericht.preis) * p.menge, 0);
 
   async function bestellen() {
     setFehler('');
     setSendenLaden(true);
     try {
-      const res = await fetch('/api/bestellungen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurant_id: restaurantId,
-          tisch_id: tischId,
-          anmerkung: anmerkung || null,
-          positionen: positionen.map((p) => ({
-            gericht_id: p.gericht.id,
-            menge: p.menge,
-          })),
-        }),
+      const data = await api.post<{ id: string; gesamtpreis: number }>('/bestellungen', {
+        restaurant_id: restaurantId,
+        tisch_id: tischId,
+        anmerkung: anmerkung || null,
+        positionen: positionen.map((p) => ({
+          gericht_id: p.gericht.id,
+          menge: p.menge,
+        })),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.fehler || 'Bestellung fehlgeschlagen');
 
       setBestellungId(data.id);
       setGespeicherterPreis(data.gesamtpreis);
       setBestellStatus('offen');
       setBestellt(true);
     } catch (err) {
-      setFehler((err as Error).message || 'Bestellung fehlgeschlagen ��� bitte erneut versuchen');
+      setFehler((err as Error).message || 'Bestellung fehlgeschlagen — bitte erneut versuchen');
     } finally {
       setSendenLaden(false);
     }

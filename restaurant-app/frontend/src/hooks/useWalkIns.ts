@@ -42,9 +42,9 @@ export function useWalkIns() {
     await laden_();
   }, [laden_]);
 
-  const platzieren = useCallback(async (id: string): Promise<boolean> => {
+  const platzieren = useCallback(async (id: string, tischId?: string): Promise<boolean> => {
     try {
-      await api.post(`/walk-ins/${id}/platzieren`, {});
+      await api.post(`/walk-ins/${id}/platzieren`, tischId ? { tisch_id: tischId } : {});
       await laden_();
       return true;
     } catch {
@@ -57,10 +57,15 @@ export function useWalkIns() {
     await laden_();
   }, [laden_]);
 
+  const reaktivieren = useCallback(async (id: string) => {
+    await api.patch(`/walk-ins/${id}/reaktivieren`, {});
+    await laden_();
+  }, [laden_]);
+
   const loeschen = useCallback(async (id: string) => {
     await api.delete(`/walk-ins/${id}`);
     await laden_();
   }, [laden_]);
 
-  return { walkIns, laden, fehler, laden_, hinzufuegen, platzieren, abgegangen, loeschen };
+  return { walkIns, laden, fehler, laden_, hinzufuegen, platzieren, abgegangen, reaktivieren, loeschen };
 }

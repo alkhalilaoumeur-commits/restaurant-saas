@@ -63,5 +63,19 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Safe-Area Insets für iPhone Notch + Home Indicator
+    // Klassen: pt-safe, pb-safe, pl-safe, pr-safe, mb-safe, etc.
+    function ({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      addUtilities({
+        '.pt-safe': { paddingTop: 'env(safe-area-inset-top)' },
+        '.pb-safe': { paddingBottom: 'env(safe-area-inset-bottom)' },
+        '.pl-safe': { paddingLeft: 'env(safe-area-inset-left)' },
+        '.pr-safe': { paddingRight: 'env(safe-area-inset-right)' },
+        '.mt-safe': { marginTop: 'env(safe-area-inset-top)' },
+        '.mb-safe': { marginBottom: 'env(safe-area-inset-bottom)' },
+        '.h-safe-bottom': { height: 'env(safe-area-inset-bottom)' },
+      });
+    },
+  ],
 } satisfies Config;

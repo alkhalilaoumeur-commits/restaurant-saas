@@ -3,6 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { TischModel } from '../models/Tisch';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { q } from '../models/db';
+import { io } from '../server';
 
 const router = Router();
 
@@ -33,6 +35,23 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
     }
     const tisch = await TischModel.statusAendern(req.params.id, req.auth!.restaurantId, status);
     if (!tisch) { res.status(404).json({ fehler: 'Tisch nicht gefunden' }); return; }
+
+    // Wenn Tisch → 'frei': alle nicht-bezahlten Bestellungen dieses Tisches → bezahlt
+    if (status === 'frei') {
+      const offene = await q<{ id: string }>(
+        `UPDATE bestellungen SET status = 'bezahlt'
+         WHERE tisch_id = $1 AND restaurant_id = $2 AND status != 'bezahlt'
+         RETURNING id`,
+        [req.params.id, req.auth!.restaurantId]
+      );
+      if (offene.length > 0) {
+        io.to(`restaurant:${req.auth!.restaurantId}`).emit('bestellungen_bezahlt', {
+          tisch_id: req.params.id,
+          ids: offene.map(b => b.id),
+        });
+      }
+    }
+
     res.json(tisch);
   })
 );

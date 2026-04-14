@@ -144,10 +144,27 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner', 'kuech
     if (!bestellung) { res.status(404).json({ fehler: 'Bestellung nicht gefunden' }); return; }
 
     io.to(`restaurant:${req.auth!.restaurantId}`).emit('bestellung_aktualisiert', bestellung);
-    // Auch an den Tisch-Raum senden, damit Gäste den Status sehen
     if (bestellung.tisch_id) {
       io.to(`tisch:${req.auth!.restaurantId}:${bestellung.tisch_id}`).emit('bestellung_aktualisiert', bestellung);
     }
+
+    // Wenn Bestellung → bezahlt: Prüfen ob ALLE aktiven Bestellungen des Tisches bezahlt sind
+    // → Tisch automatisch auf 'frei' setzen
+    if (status === 'bezahlt' && bestellung.tisch_id) {
+      const offene = await q<{ id: string }>(
+        `SELECT id FROM bestellungen
+         WHERE tisch_id = $1 AND restaurant_id = $2 AND status != 'bezahlt'`,
+        [bestellung.tisch_id, req.auth!.restaurantId]
+      );
+      if (offene.length === 0) {
+        await q(`UPDATE tische SET status = 'frei' WHERE id = $1 AND restaurant_id = $2`,
+          [bestellung.tisch_id, req.auth!.restaurantId]);
+        io.to(`restaurant:${req.auth!.restaurantId}`).emit('tisch_aktualisiert', {
+          id: bestellung.tisch_id, status: 'frei',
+        });
+      }
+    }
+
     res.json(bestellung);
   })
 );
