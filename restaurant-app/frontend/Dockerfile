@@ -7,7 +7,7 @@ RUN npm run build
 
 FROM nginx:alpine
 COPY --from=builder /app/dist /app
-COPY nginx.template.conf /etc/nginx/conf.d/nginx.template.conf
+COPY nginx.template.conf /etc/nginx/nginx.template.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 EXPOSE 80
