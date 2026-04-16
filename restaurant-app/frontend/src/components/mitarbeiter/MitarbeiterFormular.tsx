@@ -9,6 +9,7 @@ interface MitarbeiterFormularProps {
     email?: string;
     rolle: Rolle;
     stundenlohn?: number | null;
+    telefon?: string | null;
   }) => Promise<void>;
   onPasswortAendern?: (passwort: string) => Promise<void>;
   onAbbrechen: () => void;
@@ -23,6 +24,7 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
   const [stundenlohn, setStundenlohn] = useState(
     mitarbeiter?.stundenlohn != null ? String(mitarbeiter.stundenlohn) : ''
   );
+  const [telefon, setTelefon] = useState(mitarbeiter?.telefon || '');
   const [laden, setLaden] = useState(false);
   const [fehler, setFehler] = useState('');
 
@@ -42,7 +44,8 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
         const stundenlohnWert = stundenlohn.trim() === ''
           ? null
           : Number(stundenlohn.replace(',', '.'));
-        await onSpeichern({ name, rolle, stundenlohn: stundenlohnWert });
+        const telefonWert = telefon.trim() === '' ? null : telefon.trim();
+        await onSpeichern({ name, rolle, stundenlohn: stundenlohnWert, telefon: telefonWert });
       }
     } catch (e: any) {
       setFehler(e.data?.fehler || e.message || 'Fehler beim Speichern');
@@ -128,6 +131,24 @@ export default function MitarbeiterFormular({ mitarbeiter, onSpeichern, onPasswo
                 className="w-full border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20 focus:border-blue-400"
               />
             </div>
+          </div>
+        )}
+
+        {/* Telefonnummer — nur im Bearbeitungsmodus */}
+        {!istNeu && (
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+              Telefon
+              <span className="ml-1 text-gray-300 dark:text-slate-600 font-normal">— für SMS-Benachrichtigungen (optional)</span>
+            </label>
+            <input
+              type="tel"
+              value={telefon}
+              onChange={(e) => setTelefon(e.target.value)}
+              placeholder="+4915112345678"
+              className="w-full border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20 focus:border-blue-400"
+            />
+            <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Internationales Format: +49 für Deutschland</p>
           </div>
         )}
 

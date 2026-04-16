@@ -9,16 +9,18 @@ interface KategorieVerwaltungProps {
   onUmbenennen: (id: string, name: string) => Promise<void>;
   onBildAktualisieren: (id: string, bild_url: string | null) => Promise<void>;
   onLoeschen: (id: string) => Promise<void>;
+  onReihenfolgeAendern: (id: string, reihenfolge: number) => Promise<void>;
 }
 
 export default function KategorieVerwaltung({
-  kategorien, gerichteProKategorie, onErstellen, onUmbenennen, onBildAktualisieren, onLoeschen,
+  kategorien, gerichteProKategorie, onErstellen, onUmbenennen, onBildAktualisieren, onLoeschen, onReihenfolgeAendern,
 }: KategorieVerwaltungProps) {
   const [neueName, setNeueName] = useState('');
   const [neueBildDatei, setNeueBildDatei] = useState<File | null>(null);
   const [neueBildVorschau, setNeueBildVorschau] = useState<string | null>(null);
   const [laden, setLaden] = useState(false);
   const [bildLaden, setBildLaden] = useState<string | null>(null); // ID der Kategorie die gerade hochlädt
+  const [reihenfolgeAendert, setReihenfolgeAendert] = useState<string | null>(null);
   const [bearbeiteId, setBearbeiteId] = useState<string | null>(null);
   const [bearbeiteName, setBearbeiteName] = useState('');
   const [fehler, setFehler] = useState('');
@@ -92,6 +94,24 @@ export default function KategorieVerwaltung({
     }
   }
 
+  async function verschiebenAuf(idx: number, richtung: -1 | 1) {
+    const nachbarIdx = idx + richtung;
+    if (nachbarIdx < 0 || nachbarIdx >= kategorien.length) return;
+    setReihenfolgeAendert(kategorien[idx].id);
+    setFehler('');
+    try {
+      // Beide Kategorien tauschen ihre reihenfolge-Werte
+      await Promise.all([
+        onReihenfolgeAendern(kategorien[idx].id, nachbarIdx),
+        onReihenfolgeAendern(kategorien[nachbarIdx].id, idx),
+      ]);
+    } catch (e) {
+      setFehler((e as Error).message);
+    } finally {
+      setReihenfolgeAendert(null);
+    }
+  }
+
   async function loeschen(id: string) {
     setFehler('');
     try {
@@ -107,8 +127,27 @@ export default function KategorieVerwaltung({
       <input ref={updateDateiRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={bildAktualisieren} className="hidden" />
 
       <div className="space-y-3 mb-4">
-        {kategorien.map((k) => (
+        {kategorien.map((k, idx) => (
           <div key={k.id} className="flex items-center gap-3 p-2 rounded-lg border border-gray-100 bg-gray-50/50">
+            {/* Reihenfolge-Buttons */}
+            <div className="flex flex-col gap-0.5 shrink-0">
+              <button
+                onClick={() => verschiebenAuf(idx, -1)}
+                disabled={idx === 0 || reihenfolgeAendert === k.id}
+                className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                title="Nach oben"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button
+                onClick={() => verschiebenAuf(idx, 1)}
+                disabled={idx === kategorien.length - 1 || reihenfolgeAendert === k.id}
+                className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                title="Nach unten"
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
             {/* Bild-Vorschau / Upload */}
             <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-gray-200">
               {k.bild_url ? (

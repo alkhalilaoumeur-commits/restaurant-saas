@@ -109,7 +109,7 @@
 - [ ] Warteliste (Walk-in + Online, automatisches Nachruecken bei Stornierung, SMS-Benachrichtigung)
 - [x] Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung) ✅ erledigt 2026-04-09
 - [ ] Reservierungs-basierte Personalplanung (Alleinstellungsmerkmal! Reservierungen → Personalbedarf)
-- [ ] Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen)
+- [x] Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen) ✅ erledigt 2026-04-15
 - [ ] Erlebnis-Buchung (Menue + Tisch als Prepaid-Paket, eliminiert No-Shows)
 
 ## Extras/Modifier-System ✅ (erledigt 2026-04-08)
@@ -157,6 +157,17 @@
 - [x] DB-Migration: `anlass` + `sitzplatz_wunsch` auf `reservierungen` ✅
 - [x] Backend + Admin-UI + Detailseite erweitert ✅
 
+## Bugfix + Feature-Session 2026-04-15
+- [x] 🟡 Dienstplan MA-Ansicht: `/mitarbeiter/alle`-Endpoint + useMitarbeiter für Nicht-Admins ✅
+- [x] 🟡 Bestellung Dankeschön-Screen: `status === 'offen'` zeigt Bestätigungs-Banner ✅
+- [x] 🟡 no_show Cronjob: `starteNoShowCron()` in server.ts, alle 15 Min ✅
+- [x] 🟡 Speisekarte Reihenfolge: ↑↓ Buttons für Kategorien + Gerichte ✅
+- [x] 🟡 Telefon-Validierung Backend (buchung.ts) ✅
+- [x] 🟡 Preis ≥ 0 Validierung Backend (speisekarte.ts) ✅
+- [x] 🟡 Bestellmenge 1–99 Validierung Backend (bestellungen.ts) ✅
+- [x] 🟡 Leere Kategorien in Admin-Speisekarte ausgeblendet ✅
+- [x] 🟡 Profilbild-System: foto_url in DB-Schema + Backend-Routes + useMitarbeiter-Hook + MitarbeiterZeile Upload-UI ✅
+
 ## Bekannte Bugs (Bugfix-Session 2026-04-13)
 
 - [x] 🔴 **KRITISCH: DB-Schema `quelle` CHECK fehlt `'google'`** — `schema.sql:219` gefixt: `'google'` zur Constraint hinzugefügt. ✅ erledigt 2026-04-13
@@ -165,7 +176,7 @@
 - [x] 🔴 **KRITISCH: Registrierung "Email nicht verifiziert" obwohl Code bestätigt** — `verifiedTokens` war eine In-Memory Map, die bei Server-Neustart (nodemon) geleert wurde. Fix: Token jetzt als signiertes JWT ausgestellt (`verifTokenErstellen`/`verifTokenPruefen`) → kein Server-State nötig. ✅ erledigt 2026-04-13
 
 ## Vor Release (Pflicht!)
-- [ ] E-Mail-Vorlagen umgestalten — aktuell Standard-Text, muss professionelles ServeFlow-Design bekommen (Bestätigung, Erinnerung, Stornierung, Einladung, Passwort-Reset)
+- [x] E-Mail-Vorlagen umgestalten — professionelles ServeFlow-Design mit Dark-Header, Blue/Cyan-Gradient, QR-Code, klaren CTAs ✅ erledigt 2026-04-16
 - [ ] Email-Benachrichtigung bei Abwesenheits-Konflikt (TODO in `routes/abwesenheiten.ts` Zeile ~76) — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
 - [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)

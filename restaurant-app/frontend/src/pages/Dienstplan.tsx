@@ -721,15 +721,514 @@ function VorlagenPanel({ templates, aktuellerMontag, onAnwenden, onLoeschen, onS
   );
 }
 
+// ─── Monatsansicht ────────────────────────────────────────────────────────────
+
+const WOCHENTAG_KURZ_SO_ZUERST = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+interface MonatsAnsichtProps {
+  monatReferenz: Date;
+  schichten: Schicht[];
+  schichtMap: Map<string, Schicht[]>;
+  mitarbeiter: MitarbeiterDetail[];
+  istAdmin: boolean;
+  heuteStr: string;
+  onZelleKlicken: (mitarbeiterId: string, datum: string) => void;
+  onSchichtKlicken: (s: Schicht) => void;
+}
+
+function MonatsAnsicht({
+  monatReferenz,
+  schichten,
+  schichtMap,
+  mitarbeiter,
+  istAdmin,
+  heuteStr,
+  onZelleKlicken,
+  onSchichtKlicken,
+}: MonatsAnsichtProps) {
+  const tageImMonat = new Date(monatReferenz.getFullYear(), monatReferenz.getMonth() + 1, 0).getDate();
+
+  const tageSpalten = useMemo(() => {
+    return Array.from({ length: tageImMonat }, (_, i) => {
+      return new Date(monatReferenz.getFullYear(), monatReferenz.getMonth(), i + 1);
+    });
+  }, [monatReferenz, tageImMonat]);
+
+  return (
+    <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="border-collapse" style={{ minWidth: `${176 + tageImMonat * 58}px` }}>
+          <thead>
+            <tr className="border-b border-gray-100 dark:border-white/10">
+              {/* Sticky Spalte: Name */}
+              <th className="sticky left-0 z-10 bg-white dark:bg-slate-900 w-44 px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 border-r border-gray-100 dark:border-white/10">
+                Mitarbeiter
+              </th>
+              {tageSpalten.map((tag, i) => {
+                const wochentag = tag.getDay(); // 0=So, 6=Sa
+                const istWochenende = wochentag === 0 || wochentag === 6;
+                const istHeute = datumStr(tag) === heuteStr;
+                return (
+                  <th
+                    key={i}
+                    className={`w-14 px-1 py-2 text-center ${
+                      istHeute
+                        ? 'bg-blue-50 dark:bg-blue-900/20'
+                        : istWochenende
+                        ? 'bg-gray-50/80 dark:bg-white/[0.02]'
+                        : ''
+                    }`}
+                  >
+                    <p className={`text-[10px] font-semibold uppercase tracking-wide ${istHeute ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500'}`}>
+                      {WOCHENTAG_KURZ_SO_ZUERST[wochentag]}
+                    </p>
+                    <p className={`text-sm font-bold leading-tight ${istHeute ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-slate-200'}`}>
+                      {tag.getDate()}
+                    </p>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {mitarbeiter.length === 0 && (
+              <tr>
+                <td colSpan={tageImMonat + 1} className="px-4 py-8 text-center text-sm text-gray-400 dark:text-slate-500">
+                  Keine aktiven Mitarbeiter vorhanden.
+                </td>
+              </tr>
+            )}
+            {mitarbeiter.map((m) => {
+              const farbe = ROLLEN_FARBE[m.rolle] || ROLLEN_FARBE.kellner;
+              // Gesamtstunden diesen Monat berechnen
+              let monatsStunden = 0;
+              for (const tag of tageSpalten) {
+                const ds = datumStr(tag);
+                for (const s of (schichtMap.get(`${m.id}_${ds}`) || [])) {
+                  const [bH, bM] = s.beginn.slice(0, 5).split(':').map(Number);
+                  const [eH, eM] = s.ende.slice(0, 5).split(':').map(Number);
+                  monatsStunden += (eH * 60 + eM - bH * 60 - bM) / 60;
+                }
+              }
+
+              return (
+                <tr key={m.id} className="border-b border-gray-50 dark:border-white/[0.05] group hover:bg-gray-50/30 dark:hover:bg-white/[0.01] transition-colors">
+                  {/* Sticky Name-Spalte */}
+                  <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-gray-50 dark:group-hover:bg-slate-800/60 px-3 py-2 border-r border-gray-100 dark:border-white/10 transition-colors">
+                    <div className="flex items-center gap-2">
+                      {m.foto_url ? (
+                        <img src={m.foto_url} alt={m.name} className="w-7 h-7 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className={`w-7 h-7 rounded-lg ${farbe.bg} flex items-center justify-center text-[11px] font-bold ${farbe.text} shrink-0`}>
+                          {m.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-800 dark:text-slate-200 truncate">{m.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] ${farbe.text}`}>{m.rolle}</span>
+                          {monatsStunden > 0 && (
+                            <span className="text-[10px] text-gray-400 dark:text-slate-500 tabular-nums">{Math.round(monatsStunden * 10) / 10}h</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Tag-Zellen */}
+                  {tageSpalten.map((tag, i) => {
+                    const ds = datumStr(tag);
+                    const zellenSchichten = schichtMap.get(`${m.id}_${ds}`) || [];
+                    const wochentag = tag.getDay();
+                    const istWochenende = wochentag === 0 || wochentag === 6;
+                    const istHeute = ds === heuteStr;
+
+                    return (
+                      <td
+                        key={i}
+                        className={`px-0.5 py-1 align-top min-w-[56px] ${
+                          istHeute
+                            ? 'bg-blue-50/40 dark:bg-blue-900/10'
+                            : istWochenende
+                            ? 'bg-gray-50/60 dark:bg-white/[0.01]'
+                            : ''
+                        } ${istAdmin ? 'cursor-pointer' : ''}`}
+                        onClick={() => istAdmin && zellenSchichten.length === 0 && onZelleKlicken(m.id, ds)}
+                      >
+                        {zellenSchichten.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {zellenSchichten.map(s => (
+                              <div
+                                key={s.id}
+                                onClick={(e) => { e.stopPropagation(); if (istAdmin) onSchichtKlicken(s); }}
+                                className={`px-1.5 py-1 rounded text-center ${farbe.bg} border ${farbe.border} ${istAdmin ? 'cursor-pointer hover:opacity-75 transition-opacity' : ''}`}
+                              >
+                                <p className={`text-[10px] font-semibold ${farbe.text} tabular-nums leading-tight`}>{s.beginn.slice(0, 5)}</p>
+                                <p className={`text-[9px] ${farbe.text} opacity-60 leading-tight`}>–{s.ende.slice(0, 5)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className={`h-11 rounded flex items-center justify-center ${istAdmin ? 'hover:bg-gray-100 dark:hover:bg-white/10 transition-colors' : ''}`}>
+                            {istAdmin && <span className="text-gray-200 dark:text-slate-700 text-base">+</span>}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Zusammenfassung */}
+      <div className="border-t border-gray-100 dark:border-white/10 px-4 py-3 bg-gray-50/50 dark:bg-white/[0.02] flex items-center gap-4 flex-wrap">
+        <span className="text-xs text-gray-400 dark:text-slate-500">{schichten.length} Schichten im Monat</span>
+        <span className="text-xs text-gray-400 dark:text-slate-500">{mitarbeiter.length} Mitarbeiter</span>
+        <div className="ml-auto flex items-center gap-3">
+          {Object.entries(ROLLEN_FARBE).map(([rolle, farbe]) => (
+            <div key={rolle} className="flex items-center gap-1.5">
+              <div className={`w-2.5 h-2.5 rounded ${farbe.bg} border ${farbe.border}`} />
+              <span className="text-[10px] text-gray-400 dark:text-slate-500 capitalize">{rolle}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Excel-Import Modal ───────────────────────────────────────────────────────
+
+interface ExcelImportModalProps {
+  onSchliessen: () => void;
+  onImportiert: () => void;
+}
+
+interface ImportVorschau {
+  vorschau: { mitarbeiter_name: string; mitarbeiter_id: string; datum: string; beginn: string; ende: string }[];
+  fehler: string[];
+  nichtGefunden: string[];
+}
+
+function ExcelImportModal({ onSchliessen, onImportiert }: ExcelImportModalProps) {
+  const token = useAuthStore(s => s.token);
+  const [datei, setDatei] = useState<File | null>(null);
+  const [laden, setLaden] = useState(false);
+  const [vorschau, setVorschau] = useState<ImportVorschau | null>(null);
+  const [ergebnis, setErgebnis] = useState<{ erstellt: number; fehler: string[] } | null>(null);
+  const [fehlerMsg, setFehlerMsg] = useState<string | null>(null);
+
+  async function vorschauLaden(f: File) {
+    setLaden(true);
+    setFehlerMsg(null);
+    setVorschau(null);
+    setErgebnis(null);
+    try {
+      const form = new FormData();
+      form.append('datei', f);
+      const res = await fetch('/api/dienstplan/import-excel?trockenlauf=true', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.fehler || 'Fehler beim Lesen der Datei');
+      setVorschau(data as ImportVorschau);
+    } catch (e: unknown) {
+      setFehlerMsg(e instanceof Error ? e.message : 'Unbekannter Fehler');
+    } finally {
+      setLaden(false);
+    }
+  }
+
+  async function importBestaetigen() {
+    if (!datei) return;
+    setLaden(true);
+    setFehlerMsg(null);
+    try {
+      const form = new FormData();
+      form.append('datei', datei);
+      const res = await fetch('/api/dienstplan/import-excel', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.fehler || 'Fehler beim Importieren');
+      setErgebnis({ erstellt: data.erstellt, fehler: data.fehler || [] });
+      onImportiert();
+    } catch (e: unknown) {
+      setFehlerMsg(e instanceof Error ? e.message : 'Unbekannter Fehler');
+    } finally {
+      setLaden(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10 shrink-0">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Excel-Import</h2>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">.xlsx Schichtplan hochladen und direkt importieren</p>
+          </div>
+          <button onClick={onSchliessen} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+
+          {/* Format-Erklärung */}
+          {!datei && !ergebnis && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 rounded-xl p-4">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2">Erwartetes Excel-Format</p>
+              <div className="overflow-x-auto mb-2">
+                <table className="text-[11px] text-blue-700 dark:text-blue-300 border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1 border border-blue-200 dark:border-blue-800/40 bg-blue-100/60 dark:bg-blue-900/40 font-semibold">Mitarbeiter</th>
+                      <th className="px-2 py-1 border border-blue-200 dark:border-blue-800/40 bg-blue-100/60 dark:bg-blue-900/40 font-semibold">01.04.2026</th>
+                      <th className="px-2 py-1 border border-blue-200 dark:border-blue-800/40 bg-blue-100/60 dark:bg-blue-900/40 font-semibold">02.04.2026</th>
+                      <th className="px-2 py-1 border border-blue-200 dark:border-blue-800/40 bg-blue-100/60 dark:bg-blue-900/40 font-semibold">…</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">Max Muster</td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">08:00-16:00</td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40"></td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">…</td>
+                    </tr>
+                    <tr>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">Lisa Schmidt</td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40"></td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">10:00-18:00</td>
+                      <td className="px-2 py-1 border border-blue-200 dark:border-blue-800/40">…</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[10px] text-blue-600 dark:text-blue-500">
+                Zeitformate: <strong>08:00-16:00</strong> · <strong>8-16</strong> · <strong>08.00-16.00</strong> · Namen müssen mit Mitarbeitern im System übereinstimmen
+              </p>
+            </div>
+          )}
+
+          {/* Datei-Upload */}
+          {!ergebnis && (
+            <label className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+              datei
+                ? 'border-green-300 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20'
+                : 'border-gray-200 dark:border-white/10 hover:border-orange-300 dark:hover:border-orange-700 hover:bg-orange-50/40 dark:hover:bg-orange-900/10'
+            }`}>
+              {datei ? (
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span className="text-sm font-medium">{datei.name}</span>
+                  <span className="text-xs opacity-60">(andere Datei wählen)</span>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <svg className="w-6 h-6 mx-auto text-gray-300 dark:text-slate-600 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">Excel-Datei (.xlsx / .xls) hier ablegen oder klicken</p>
+                </div>
+              )}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setDatei(f);
+                  setVorschau(null);
+                  setFehlerMsg(null);
+                  setErgebnis(null);
+                  vorschauLaden(f);
+                }}
+              />
+            </label>
+          )}
+
+          {/* Fehlermeldung */}
+          {fehlerMsg && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-3">
+              <p className="text-sm text-red-700 dark:text-red-400">{fehlerMsg}</p>
+            </div>
+          )}
+
+          {/* Ladeindikator */}
+          {laden && (
+            <div className="flex items-center justify-center py-6 gap-2">
+              <div className="animate-spin w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full" />
+              <span className="text-sm text-gray-500 dark:text-slate-400">Datei wird verarbeitet…</span>
+            </div>
+          )}
+
+          {/* Vorschau */}
+          {vorschau && !laden && !ergebnis && (
+            <div className="space-y-3">
+              {/* Statistik-Chips */}
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-lg border border-green-200 dark:border-green-800/40">
+                  {vorschau.vorschau.length} Schichten gefunden
+                </span>
+                {vorschau.nichtGefunden.length > 0 && (
+                  <span className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-semibold rounded-lg border border-amber-200 dark:border-amber-800/40">
+                    {vorschau.nichtGefunden.length} Namen nicht zugeordnet
+                  </span>
+                )}
+                {vorschau.fehler.length > 0 && (
+                  <span className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-800/40">
+                    {vorschau.fehler.length} Zeilen übersprungen
+                  </span>
+                )}
+              </div>
+
+              {/* Nicht gefundene Namen */}
+              {vorschau.nichtGefunden.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Namen nicht gefunden (werden übersprungen)</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-500">{vorschau.nichtGefunden.join(', ')}</p>
+                  <p className="text-[10px] text-amber-500 dark:text-amber-600 mt-1">Name in der Excel-Datei muss mit dem Mitarbeiternamen im System übereinstimmen.</p>
+                </div>
+              )}
+
+              {/* Parse-Fehler */}
+              {vorschau.fehler.length > 0 && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1">Zeilen mit ungültigem Format</p>
+                  <div className="space-y-0.5 max-h-20 overflow-y-auto">
+                    {vorschau.fehler.map((f, i) => <p key={i} className="text-[11px] text-red-600 dark:text-red-500">{f}</p>)}
+                  </div>
+                </div>
+              )}
+
+              {/* Vorschau-Tabelle */}
+              {vorschau.vorschau.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1.5">Vorschau der zu erstellenden Schichten</p>
+                  <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                    <div className="max-h-52 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gray-50 dark:bg-white/[0.03] sticky top-0">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-slate-400">Mitarbeiter</th>
+                            <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-slate-400">Datum</th>
+                            <th className="px-3 py-2 text-left font-semibold text-gray-500 dark:text-slate-400">Schicht</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50 dark:divide-white/[0.05]">
+                          {vorschau.vorschau.map((s, i) => (
+                            <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02]">
+                              <td className="px-3 py-1.5 font-medium text-gray-700 dark:text-slate-300">{s.mitarbeiter_name}</td>
+                              <td className="px-3 py-1.5 text-gray-500 dark:text-slate-400">
+                                {new Date(s.datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' })}
+                              </td>
+                              <td className="px-3 py-1.5 text-gray-500 dark:text-slate-400 tabular-nums font-medium">{s.beginn}–{s.ende}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Ergebnis nach erfolgreichem Import */}
+          {ergebnis && (
+            <div className="text-center py-8 space-y-3">
+              <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center mx-auto">
+                <svg className="w-7 h-7 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-base font-semibold text-gray-800 dark:text-white">Import abgeschlossen</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{ergebnis.erstellt} Schichten wurden erstellt</p>
+              </div>
+              {ergebnis.fehler.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3 text-left max-w-md mx-auto">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">{ergebnis.fehler.length} Einträge übersprungen</p>
+                  <div className="space-y-0.5 max-h-24 overflow-y-auto">
+                    {ergebnis.fehler.map((f, i) => <p key={i} className="text-[11px] text-amber-600 dark:text-amber-500">{f}</p>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-white/10 shrink-0 flex gap-2">
+          {ergebnis ? (
+            <button onClick={onSchliessen} className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-xl transition-colors">
+              Schließen
+            </button>
+          ) : (
+            <>
+              <button onClick={onSchliessen} className="flex-1 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors">
+                Abbrechen
+              </button>
+              <button
+                disabled={!vorschau || vorschau.vorschau.length === 0 || laden}
+                onClick={importBestaetigen}
+                className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                {laden ? 'Wird importiert…' : `${vorschau?.vorschau.length ?? 0} Schichten importieren`}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 
 export default function Dienstplan() {
+  // ── Ansichts-Modus ─────────────────────────────────────────────────────────
+  const [ansicht, setAnsicht] = useState<'woche' | 'monat'>('woche');
+  const [monatReferenz, setMonatReferenz] = useState(() => new Date());
+  const [excelImportOffen, setExcelImportOffen] = useState(false);
+
+  // ── Wochen-Berechnung ──────────────────────────────────────────────────────
   const [wochenStart, setWochenStart] = useState(() => montag(new Date()));
   const tage = useMemo(() => wocheTage(wochenStart), [wochenStart]);
   const start = datumStr(tage[0]);
   const ende  = datumStr(tage[6]);
 
-  const { schichten, erstellen, aktualisieren, loeschen, laden_: schichtenNeuLaden } = useDienstplan(start, ende);
+  // ── Monats-Berechnung ──────────────────────────────────────────────────────
+  const monatStartStr = useMemo(() => {
+    const j = monatReferenz.getFullYear();
+    const m = String(monatReferenz.getMonth() + 1).padStart(2, '0');
+    return `${j}-${m}-01`;
+  }, [monatReferenz]);
+
+  const monatEndeStr = useMemo(() => {
+    const letzter = new Date(monatReferenz.getFullYear(), monatReferenz.getMonth() + 1, 0);
+    return datumStr(letzter);
+  }, [monatReferenz]);
+
+  // ── Aktiver Zeitraum (je nach Ansicht) ────────────────────────────────────
+  const dienstplanStart = ansicht === 'monat' ? monatStartStr : start;
+  const dienstplanEnde  = ansicht === 'monat' ? monatEndeStr  : ende;
+
+  const { schichten, erstellen, aktualisieren, loeschen, laden_: schichtenNeuLaden } = useDienstplan(dienstplanStart, dienstplanEnde);
   const { mitarbeiter } = useMitarbeiter();
   const aktiveMitarbeiter = mitarbeiter.filter((m) => m.aktiv);
   const { bedarf: personalBedarf } = usePersonalbedarf(start, ende);
@@ -812,6 +1311,10 @@ export default function Dienstplan() {
   function vorherigeWoche() { const d = new Date(wochenStart); d.setDate(d.getDate() - 7); setWochenStart(d); }
   function naechsteWoche()  { const d = new Date(wochenStart); d.setDate(d.getDate() + 7); setWochenStart(d); }
   function heute() { setWochenStart(montag(new Date())); }
+
+  function vorherigerMonat() { setMonatReferenz(p => new Date(p.getFullYear(), p.getMonth() - 1, 1)); }
+  function naechsterMonat()  { setMonatReferenz(p => new Date(p.getFullYear(), p.getMonth() + 1, 1)); }
+  function heuteMonat()      { setMonatReferenz(new Date()); }
 
   function zelleKlicken(mitarbeiterId: string, datum: string) {
     if (!istAdmin) return;
@@ -956,7 +1459,31 @@ export default function Dienstplan() {
         titel="Dienstplan"
         untertitel={`KW ${kw} · ${monatLabel}`}
         aktion={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Ansichts-Toggle: Woche / Monat */}
+            <div className="flex items-center bg-gray-100 dark:bg-white/10 rounded-xl p-0.5 text-sm">
+              <button
+                onClick={() => setAnsicht('woche')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  ansicht === 'woche'
+                    ? 'bg-white dark:bg-slate-700 text-gray-800 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+                }`}
+              >
+                Woche
+              </button>
+              <button
+                onClick={() => setAnsicht('monat')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  ansicht === 'monat'
+                    ? 'bg-white dark:bg-slate-700 text-gray-800 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+                }`}
+              >
+                Monat
+              </button>
+            </div>
+
             {!istAdmin && fremdeOffeneTausche.length > 0 && (
               <button
                 onClick={() => setTauschAnnehmenOffen(true)}
@@ -983,19 +1510,33 @@ export default function Dienstplan() {
             )}
             {istAdmin && (
               <>
+                {ansicht === 'woche' && (
+                  <>
+                    <button
+                      onClick={() => setVorlageSpeichernOffen(true)}
+                      className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
+                      title="Aktuelle Woche als Vorlage speichern"
+                    >
+                      Woche speichern
+                    </button>
+                    <button
+                      onClick={handleVorlagenPanelOeffnen}
+                      className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
+                      title="Gespeicherte Vorlagen anwenden"
+                    >
+                      Vorlagen {templates.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">{templates.length}</span>}
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={() => setVorlageSpeichernOffen(true)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
-                  title="Aktuelle Woche als Vorlage speichern"
+                  onClick={() => setExcelImportOffen(true)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors flex items-center gap-1.5"
+                  title="Schichtplan aus Excel-Datei importieren"
                 >
-                  Woche speichern
-                </button>
-                <button
-                  onClick={handleVorlagenPanelOeffnen}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
-                  title="Gespeicherte Vorlagen anwenden"
-                >
-                  Vorlagen {templates.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 text-[10px] font-bold rounded-full">{templates.length}</span>}
+                  <svg className="w-3.5 h-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  Excel-Import
                 </button>
                 <button
                   onClick={() => { setBearbeitung(null); setVorauswahlDatum(''); setVorauswahlMitarbeiter(''); setModalOffen(true); }}
@@ -1029,25 +1570,63 @@ export default function Dienstplan() {
 
       {/* Navigation */}
       <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <button onClick={vorherigeWoche} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <button onClick={heute} className="px-3 py-1.5 rounded-lg bg-white dark:bg-white/5 shadow-sm text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
-            Heute
-          </button>
-          <button onClick={naechsteWoche} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">{monatLabel}</p>
-          <p className="text-xs text-gray-400 dark:text-slate-500">KW {kw}</p>
-        </div>
+        {ansicht === 'woche' ? (
+          <>
+            <div className="flex items-center gap-2">
+              <button onClick={vorherigeWoche} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button onClick={heute} className="px-3 py-1.5 rounded-lg bg-white dark:bg-white/5 shadow-sm text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                Heute
+              </button>
+              <button onClick={naechsteWoche} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">{monatLabel}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">KW {kw}</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <button onClick={vorherigerMonat} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button onClick={heuteMonat} className="px-3 py-1.5 rounded-lg bg-white dark:bg-white/5 shadow-sm text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                Heute
+              </button>
+              <button onClick={naechsterMonat} className="w-9 h-9 rounded-lg bg-white dark:bg-white/5 shadow-sm flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+                {monatReferenz.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+              </p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">{schichten.length} Schichten</p>
+            </div>
+          </>
+        )}
       </div>
 
+      {/* Monatsansicht */}
+      {ansicht === 'monat' && (
+        <MonatsAnsicht
+          monatReferenz={monatReferenz}
+          schichten={schichten}
+          schichtMap={schichtMap}
+          mitarbeiter={aktiveMitarbeiter}
+          istAdmin={istAdmin}
+          heuteStr={heuteStr}
+          onZelleKlicken={zelleKlicken}
+          onSchichtKlicken={schichtKlicken}
+        />
+      )}
+
       {/* Wochen-Tabelle */}
-      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
+      {ansicht === 'woche' && <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
@@ -1082,9 +1661,13 @@ export default function Dienstplan() {
                     {/* Name */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-lg ${farbe.bg} flex items-center justify-center text-xs font-bold ${farbe.text}`}>
-                          {m.name.charAt(0).toUpperCase()}
-                        </div>
+                        {m.foto_url ? (
+                          <img src={m.foto_url} alt={m.name} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                        ) : (
+                          <div className={`w-8 h-8 rounded-lg ${farbe.bg} flex items-center justify-center text-xs font-bold ${farbe.text} shrink-0`}>
+                            {m.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <p className="text-sm font-medium text-gray-800 dark:text-slate-200">
                             {m.name}
@@ -1282,7 +1865,7 @@ export default function Dienstplan() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Admin: Schicht-Modal */}
       {istAdmin && (
@@ -1356,6 +1939,14 @@ export default function Dienstplan() {
           schichtImTausch={schichtTauschStatus}
           onBestaetigen={handleDirekterTausch}
           onSchliessen={() => setDirektTauschFuer(null)}
+        />
+      )}
+
+      {/* Admin: Excel-Import */}
+      {istAdmin && excelImportOffen && (
+        <ExcelImportModal
+          onSchliessen={() => setExcelImportOffen(false)}
+          onImportiert={async () => { await schichtenNeuLaden(); }}
         />
       )}
     </div>

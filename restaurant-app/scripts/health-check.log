@@ -1,0 +1,80 @@
+
+🔍 ServeFlow Health Check v2 — 15.04.2026 00:00
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Vollstaendiger Funktionstest (CRUD fuer alle Module)
+
+📦 [1/9] Infrastruktur...
+  ✅ Backend node_modules vorhanden
+  ✅ Frontend node_modules vorhanden
+  ✅ DB-Schema vorhanden (schema.sql)
+  ✅ Seed-Daten vorhanden (seed.sql)
+  ✅ Backend .env vorhanden
+🔧 [2/9] TypeScript...
+  ✅ Backend kompiliert fehlerfrei
+  ✅ Frontend kompiliert fehlerfrei
+🌐 [3/9] Erreichbarkeit...
+  ✅ Backend Health-Endpunkt (/api/health)
+  ✅ Frontend erreichbar (Port 5173)
+🔐 [4/9] Auth (3 Rollen + Validierung)...
+  ✅ Admin-Login (admin@demo.de)
+  ✅ Kellner-Login (kellner@demo.de)
+  ✅ Kueche-Login (kueche@demo.de)
+  ✅ Falscher Login wird abgelehnt (401)
+  ✅ Login ohne Passwort → 400 (400)
+🍽️  [5/9] Speisekarte (Kategorie + Gericht CRUD)...
+  ✅ GET Kategorien abrufen
+  ✅ GET Speisekarte oeffentlich (ohne Auth)
+  ✅ POST Kategorie erstellen
+  ✅ PATCH Kategorie umbenennen
+  ✅ POST Gericht erstellen
+  ✅ PATCH Gericht Preis aendern (9.99→12.50)
+  ✅ PATCH Gericht verfuegbar → false
+  ✅ POST Gericht ohne Name → 400 (400)
+🪑 [6/9] Tische (CRUD + Statuswechsel)...
+  ✅ GET Tische abrufen
+  ✅ POST Tisch erstellen (Nr. 999)
+  ✅ PATCH Tisch Kapazitaet aendern (4→6)
+  ✅ PATCH Tisch frei → besetzt
+  ✅ PATCH Tisch besetzt → frei
+  ✅ PATCH Tisch-Status als Kellner
+  ✅ PATCH Tisch ungueltiger Status → 400 (400)
+📋 [7/9] Bestellungen (Erstellen + Status-Workflow)...
+  ✅ POST Bestellung erstellen (als Gast)
+  ✅ GET Bestellungen abrufen (aktive)
+  ✅ PATCH Bestellung offen → in_zubereitung
+  ✅ PATCH Bestellung → serviert
+  ✅ PATCH Bestellung → bezahlt
+  ✅ PATCH Bestellung ungueltiger Status → 400 (400)
+  ✅ POST Bestellung ohne Positionen → 400 (400)
+📅 [8/9] Reservierungen (CRUD + Status)...
+  ✅ POST Reservierung erstellen (als Gast)
+  ✅ GET Reservierungen abrufen
+  ✅ PATCH Reservierung ausstehend → bestaetigt
+  ✅ PATCH Reservierung → storniert
+  ✅ POST Reservierung ohne Gastname → 400 (400)
+🏪 [9/9] Restaurant, Statistiken & Dienstplan...
+  ✅ GET Restaurant-Daten (Admin)
+  ✅ GET Restaurant-Design (oeffentlich)
+  ✅ GET Statistiken (7 Tage)
+  ✅ GET Mitarbeiter-Liste
+  ✅ GET Dienstplan abrufen
+  ✅ POST Schicht erstellen
+  ✅ PATCH Schicht bearbeiten
+  ✅ POST Schicht ohne Datum → 400 (400)
+  ✅ POST Schicht Ende vor Beginn → 400 (400)
+
+🧹 Aufraeum-Phase...
+  🗑️  Schicht geloescht
+  🗑️  Reservierung geloescht
+  ℹ️  Bestellung bleibt als 'bezahlt' (kein DELETE-Endpunkt)
+  🗑️  Gericht geloescht
+  🗑️  Kategorie geloescht
+  🗑️  Tisch geloescht
+  → 5 aufgeraeumt, 0 fehlgeschlagen
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟢 Alles in Ordnung! 50/50 Funktionstests bestanden.
+
+📊 Dashboard aktualisiert
+📨 Telegram-Nachricht gesendet!
+

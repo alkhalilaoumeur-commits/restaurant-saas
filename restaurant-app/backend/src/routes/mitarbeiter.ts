@@ -16,6 +16,13 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
   res.json(mitarbeiter);
 }));
 
+// GET /api/mitarbeiter/alle – Aktive Mitarbeiter (Name, ID, Rolle) — alle Rollen sichtbar
+// Wird im Dienstplan verwendet damit Kellner/Küche ihre Kollegen sehen können
+router.get('/alle', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const mitarbeiter = await MitarbeiterModel.alleAktiv(req.auth!.restaurantId);
+  res.json(mitarbeiter);
+}));
+
 // GET /api/mitarbeiter/ich – Eigene Daten inkl. Stundenlohn (alle Rollen)
 // Muss VOR /:id stehen damit Express nicht "ich" als UUID interpretiert
 router.get('/ich', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -121,9 +128,42 @@ router.post('/:id/erneut-einladen', requireAuth, requireRolle('admin'), asyncHan
   res.json({ nachricht: 'Einladung erneut gesendet' });
 }));
 
-// PATCH /api/mitarbeiter/:id – Mitarbeiter aktualisieren (Name, Rolle, Aktiv, Stundenlohn)
+// PATCH /api/mitarbeiter/ich/foto – Eigenes Profilbild aktualisieren (alle Rollen)
+router.patch('/ich/foto', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { foto_url } = req.body;
+  if (foto_url !== null && typeof foto_url !== 'string') {
+    res.status(400).json({ fehler: 'foto_url muss ein String oder null sein' });
+    return;
+  }
+  const mitarbeiter = await MitarbeiterModel.aktualisieren(
+    req.auth!.mitarbeiterId, req.auth!.restaurantId, { foto_url: foto_url ?? null }
+  );
+  if (!mitarbeiter) { res.status(404).json({ fehler: 'Mitarbeiter nicht gefunden' }); return; }
+  res.json(mitarbeiter);
+}));
+
+// PATCH /api/mitarbeiter/ich/telefon – Eigene Telefonnummer setzen (alle Rollen)
+router.patch('/ich/telefon', requireAuth, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { telefon } = req.body;
+  if (telefon !== null && typeof telefon !== 'string') {
+    res.status(400).json({ fehler: 'telefon muss ein String oder null sein' });
+    return;
+  }
+  // Internationales Format validieren wenn gesetzt
+  if (telefon && !/^\+[1-9]\d{7,14}$/.test(telefon)) {
+    res.status(400).json({ fehler: 'Telefon muss im internationalen Format sein (+4915112345678)' });
+    return;
+  }
+  const mitarbeiter = await MitarbeiterModel.aktualisieren(
+    req.auth!.mitarbeiterId, req.auth!.restaurantId, { telefon: telefon ?? null }
+  );
+  if (!mitarbeiter) { res.status(404).json({ fehler: 'Mitarbeiter nicht gefunden' }); return; }
+  res.json(mitarbeiter);
+}));
+
+// PATCH /api/mitarbeiter/:id – Mitarbeiter aktualisieren (Name, Rolle, Aktiv, Stundenlohn, Foto, Telefon)
 router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { name, rolle, aktiv, stundenlohn, urlaubsanspruch_tage } = req.body;
+  const { name, rolle, aktiv, stundenlohn, urlaubsanspruch_tage, foto_url, telefon } = req.body;
 
   if (rolle !== undefined && !GUELTIGE_ROLLEN.includes(rolle)) {
     res.status(400).json({ fehler: 'Ungültige Rolle. Erlaubt: admin, kellner, kueche' });
@@ -151,12 +191,20 @@ router.patch('/:id', requireAuth, requireRolle('admin'), asyncHandler(async (req
     }
   }
 
+  // Telefon: internationales Format wenn gesetzt
+  if (telefon !== undefined && telefon !== null && !/^\+[1-9]\d{7,14}$/.test(telefon)) {
+    res.status(400).json({ fehler: 'Telefon muss im internationalen Format sein (+4915112345678)' });
+    return;
+  }
+
   const mitarbeiter = await MitarbeiterModel.aktualisieren(req.params.id, req.auth!.restaurantId, {
     name,
     rolle,
     aktiv,
     stundenlohn: stundenlohn !== undefined ? (stundenlohn === null ? null : Number(stundenlohn)) : undefined,
     urlaubsanspruch_tage: urlaubsanspruch_tage !== undefined ? Number(urlaubsanspruch_tage) : undefined,
+    foto_url: foto_url !== undefined ? (foto_url === null ? null : String(foto_url)) : undefined,
+    telefon: telefon !== undefined ? (telefon === null ? null : String(telefon)) : undefined,
   });
 
   if (!mitarbeiter) {

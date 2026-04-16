@@ -38,6 +38,7 @@ export function useRestaurant() {
     buchungsintervall_min?: number;
     tisch_dauer_min?: number;
     max_gleichzeitige_reservierungen?: number | null;
+    google_bewertungs_link?: string | null;
   }) => {
     if (demo) return;
     const data = await api.put<Restaurant>('/restaurant', felder);
@@ -68,4 +69,5 @@ const DEMO_RESTAURANT: Restaurant = {
   max_gleichzeitige_reservierungen: null,
   erstellt_am: new Date().toISOString(),
   aktive_mitarbeiter: 3,
+  google_bewertungs_link: null,
 };

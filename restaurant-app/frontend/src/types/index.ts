@@ -8,6 +8,8 @@ export interface Mitarbeiter {
   email: string;
   rolle: Rolle;
   restaurantId: string;
+  foto_url?: string | null;
+  telefon?: string | null;
 }
 
 // ─── Restaurant ───────────────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ export interface Restaurant {
   max_gleichzeitige_reservierungen: number | null;
   erstellt_am: string;
   aktive_mitarbeiter: number;
+  google_bewertungs_link: string | null;
 }
 
 export interface Oeffnungszeit {
@@ -121,6 +124,7 @@ export interface Gericht {
   allergene: string | null;
   verfuegbar: boolean;
   modell_3d_url: string | null;
+  reihenfolge: number;
   /** true wenn das Gericht Extras/Modifier hat (vom Backend berechnet) */
   hat_extras?: boolean;
 }
@@ -324,6 +328,10 @@ export interface MitarbeiterDetail {
   stundenlohn?: number | null;
   /** Jährlicher Urlaubsanspruch in Arbeitstagen (Standard: 20 Tage laut BUrlG) */
   urlaubsanspruch_tage?: number;
+  /** Profilbild-URL (optional) */
+  foto_url?: string | null;
+  /** Telefonnummer im internationalen Format (+4915112345678) — für SMS-Benachrichtigungen */
+  telefon?: string | null;
 }
 
 // ─── Schicht (Dienstplan) ─────────────────────────────────────────────────────
@@ -473,6 +481,42 @@ export interface PersonalbedarfTag {
   empfohlen_kellner: number;  // 0 nur wenn geschlossen
   empfohlen_kueche: number;   // 0 nur wenn geschlossen
   geoeffnet: boolean;         // false = Ruhetag laut Öffnungszeiten
+}
+
+// ─── Bewertung ────────────────────────────────────────────────────────────────
+
+export interface Bewertung {
+  id: string;
+  restaurant_id: string;
+  buchungs_id: string | null;
+  token: string;
+  stern: number | null;
+  kommentar: string | null;
+  gast_name: string;
+  gast_email: string;
+  dsgvo_einwilligung: boolean;
+  antwort_text: string | null;
+  antwort_datum: string | null;
+  status: 'offen' | 'abgeschlossen';
+  erstellt_am: string;
+}
+
+export interface BewertungStats {
+  gesamt: number;
+  abgeschlossen: number;
+  durchschnitt: number | null;
+  verteilung: Record<string, number>;
+}
+
+/** Daten die die öffentliche Bewertungsseite vom Backend bekommt */
+export interface BewertungPublic {
+  gast_name: string;
+  restaurant_name: string;
+  status: 'offen' | 'abgeschlossen';
+  stern: number | null;
+  kommentar: string | null;
+  antwort_text: string | null;
+  google_bewertungs_link: string | null;
 }
 
 // ─── Warenkorb (nur Frontend) ─────────────────────────────────────────────────

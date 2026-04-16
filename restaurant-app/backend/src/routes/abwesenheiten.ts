@@ -4,6 +4,7 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { io } from '../server';
 import { q, q1 } from '../models/db';
+import { abwesenheitKonfliktEmailSenden } from '../services/email';
 
 const router = Router();
 
@@ -149,7 +150,43 @@ router.post('/', requireAuth, asyncHandler(async (req: AuthRequest, res: Respons
         betroffene_schichten: konflikte.length,
       });
 
-      // TODO: Email-Benachrichtigung an Admin senden (wird später implementiert)
+      // Alle Admins des Restaurants laden und per Email benachrichtigen
+      q<{ name: string; email: string }>(
+        `SELECT name, email FROM mitarbeiter WHERE restaurant_id = $1 AND rolle = 'admin' AND aktiv = true`,
+        [restaurantId]
+      ).then(admins => {
+        const restaurantBranding = { name: restaurantId }; // Fallback — wird überschrieben wenn Restaurant geladen
+        q1<{ name: string }>('SELECT name FROM restaurants WHERE id = $1', [restaurantId])
+          .then(restaurant => {
+            const branding = { name: restaurant?.name || 'Restaurant' };
+            for (const admin of admins) {
+              abwesenheitKonfliktEmailSenden(
+                admin.email,
+                admin.name,
+                abwesenheit.mitarbeiter_name ?? 'Mitarbeiter',
+                von_datum,
+                bis_datum,
+                typ,
+                konflikte.length,
+                branding,
+              ).catch(err => console.error('[Abwesenheit Konflikt Email]:', err));
+            }
+          })
+          .catch(() => {
+            // Restaurant-Name nicht geladen — trotzdem ohne Branding senden
+            for (const admin of admins) {
+              abwesenheitKonfliktEmailSenden(
+                admin.email,
+                admin.name,
+                abwesenheit.mitarbeiter_name ?? 'Mitarbeiter',
+                von_datum,
+                bis_datum,
+                typ,
+                konflikte.length,
+              ).catch(err => console.error('[Abwesenheit Konflikt Email]:', err));
+            }
+          });
+      }).catch(err => console.error('[Abwesenheit Admins laden]:', err));
     }
   }
 

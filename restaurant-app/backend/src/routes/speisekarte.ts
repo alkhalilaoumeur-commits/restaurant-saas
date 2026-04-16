@@ -126,12 +126,21 @@ router.post('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Au
     res.status(400).json({ fehler: 'kategorie_id, name und preis sind erforderlich' });
     return;
   }
+  if (parseFloat(preis) < 0) {
+    res.status(400).json({ fehler: 'Preis darf nicht negativ sein' });
+    return;
+  }
+  // Reihenfolge: neues Gericht ans Ende der Kategorie anfügen
+  const letztesGericht = await q1<{ maxr: number }>(
+    'SELECT COALESCE(MAX(reihenfolge), -1) AS maxr FROM gerichte WHERE kategorie_id = $1 AND restaurant_id = $2',
+    [kategorie_id, req.auth!.restaurantId]
+  );
   const gericht = await GerichtModel.erstellen({
     id: uuid(), restaurant_id: req.auth!.restaurantId, kategorie_id,
     unterkategorie_id: unterkategorie_id || null,
     name, beschreibung: beschreibung || null, preis,
     bild_url: bild_url || null, allergene: allergene || null, verfuegbar: true,
-    modell_3d_url: null,
+    modell_3d_url: null, reihenfolge: (letztesGericht?.maxr ?? -1) + 1,
   });
   res.status(201).json(gericht);
 }));

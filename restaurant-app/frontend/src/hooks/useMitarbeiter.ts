@@ -19,13 +19,18 @@ export function useMitarbeiter() {
     try {
       if (!auth?.restaurantId) { setLaden(false); return; }
       if (auth.rolle === 'admin') {
-        // Admin: alle Mitarbeiter laden
+        // Admin: alle Mitarbeiter mit vollen Details (inkl. Stundenlohn, E-Mail)
         const data = await api.get<MitarbeiterDetail[]>('/mitarbeiter');
         setMitarbeiter(data);
       } else {
-        // Kellner/Küche: nur eigene Daten laden (inkl. Stundenlohn)
-        const ich = await api.get<MitarbeiterDetail>('/mitarbeiter/ich');
-        setMitarbeiter([ich]);
+        // Kellner/Küche: alle aktiven MA (nur Basis-Felder für Dienstplan) + eigene Details
+        const [alle, ich] = await Promise.all([
+          api.get<MitarbeiterDetail[]>('/mitarbeiter/alle'),
+          api.get<MitarbeiterDetail>('/mitarbeiter/ich'),
+        ]);
+        // Eigene Details (mit Stundenlohn) in die Liste einbauen
+        const merged = alle.map((m) => (m.id === ich.id ? { ...m, ...ich } : m));
+        setMitarbeiter(merged);
       }
     } catch (e: any) {
       setFehler(e.message || 'Fehler beim Laden');
@@ -62,7 +67,7 @@ export function useMitarbeiter() {
     await api.post(`/mitarbeiter/${id}/erneut-einladen`, {});
   }, [demo]);
 
-  const aktualisieren = useCallback(async (id: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null }) => {
+  const aktualisieren = useCallback(async (id: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null; telefon?: string | null }) => {
     if (demo) {
       setMitarbeiter((prev) => prev.map((m) => m.id === id ? { ...m, ...felder } : m));
       return;
@@ -76,7 +81,17 @@ export function useMitarbeiter() {
     await api.patch(`/mitarbeiter/${id}/passwort`, { passwort });
   }, [demo]);
 
-  return { mitarbeiter, laden, fehler, laden_, einladen, erneutEinladen, aktualisieren, passwortAendern };
+  /** Profilbild für einen Mitarbeiter setzen (Admin: beliebiger MA, sonst: eigenes) */
+  const fotoAktualisieren = useCallback(async (id: string, foto_url: string | null) => {
+    if (demo) {
+      setMitarbeiter((prev) => prev.map((m) => m.id === id ? { ...m, foto_url } : m));
+      return;
+    }
+    await api.patch(`/mitarbeiter/${id}`, { foto_url });
+    await laden_();
+  }, [demo, laden_]);
+
+  return { mitarbeiter, laden, fehler, laden_, einladen, erneutEinladen, aktualisieren, passwortAendern, fotoAktualisieren };
 }
 
 // Demo-Daten

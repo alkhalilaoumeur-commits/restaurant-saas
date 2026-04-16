@@ -72,6 +72,7 @@ export const RestaurantModel = {
       buchungsintervall_min?: number;
       tisch_dauer_min?: number;
       max_gleichzeitige_reservierungen?: number | null;
+      google_bewertungs_link?: string | null;
     },
   ): Promise<Restaurant | null> {
     const sets: string[] = [];
@@ -85,6 +86,7 @@ export const RestaurantModel = {
     if (felder.buchungsintervall_min !== undefined) { sets.push(`buchungsintervall_min = $${idx++}`); vals.push(felder.buchungsintervall_min); }
     if (felder.tisch_dauer_min !== undefined) { sets.push(`tisch_dauer_min = $${idx++}`); vals.push(felder.tisch_dauer_min); }
     if (felder.max_gleichzeitige_reservierungen !== undefined) { sets.push(`max_gleichzeitige_reservierungen = $${idx++}`); vals.push(felder.max_gleichzeitige_reservierungen); }
+    if (felder.google_bewertungs_link !== undefined) { sets.push(`google_bewertungs_link = $${idx++}`); vals.push(felder.google_bewertungs_link); }
     if (sets.length === 0) return null;
     vals.push(restaurantId);
     return q1<Restaurant>(

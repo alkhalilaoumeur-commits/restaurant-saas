@@ -11,7 +11,7 @@ import { Gericht } from '../types';
 export default function Speisekarte() {
   const {
     gerichte, kategorien, laden, laden_,
-    verfuegbarkeitToggle, gerichtLoeschen,
+    verfuegbarkeitToggle, gerichtAktualisieren, gerichtLoeschen,
     kategorieErstellen, kategorieAktualisieren, kategorieLoeschen,
   } = useSpeisekarte();
 
@@ -94,6 +94,7 @@ export default function Speisekarte() {
           onUmbenennen={(id, name) => kategorieAktualisieren(id, { name })}
           onBildAktualisieren={(id, bild_url) => kategorieAktualisieren(id, { bild_url })}
           onLoeschen={kategorieLoeschen}
+          onReihenfolgeAendern={(id, reihenfolge) => kategorieAktualisieren(id, { reihenfolge })}
         />
       </Modal>
 
@@ -126,27 +127,59 @@ export default function Speisekarte() {
         </div>
       )}
 
-      {gruppiertNachKategorie.map(({ kategorie, gerichte: g }) => (
-        <section key={kategorie.id} className="mb-6">
-          <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase mb-3">{kategorie.name}</h2>
-          {g.length > 0 ? (
+      {gruppiertNachKategorie
+        .filter(({ gerichte: g }) => g.length > 0)
+        .map(({ kategorie, gerichte: g }) => (
+          <section key={kategorie.id} className="mb-6">
+            <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase mb-3">{kategorie.name}</h2>
             <div className="space-y-3">
-              {g.map((gericht) => (
-                <GerichtKarte
-                  key={gericht.id}
-                  gericht={gericht}
-                  onToggle={verfuegbarkeitToggle}
-                  onBearbeiten={gerichtBearbeiten}
-                  onLoeschen={gerichtLoeschen}
-                  onExtras={setExtrasGericht}
-                />
+              {g.map((gericht, idx) => (
+                <div key={gericht.id} className="flex gap-2 items-start">
+                  {/* Reihenfolge-Buttons für Gerichte */}
+                  <div className="flex flex-col gap-0.5 pt-3 shrink-0">
+                    <button
+                      disabled={idx === 0}
+                      onClick={() => {
+                        const nachbar = g[idx - 1];
+                        Promise.all([
+                          gerichtAktualisieren(gericht.id, { reihenfolge: nachbar.reihenfolge }),
+                          gerichtAktualisieren(nachbar.id, { reihenfolge: gericht.reihenfolge }),
+                        ]).then(laden_);
+                      }}
+                      className="w-5 h-5 flex items-center justify-center rounded text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      title="Nach oben"
+                    >
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+                    </button>
+                    <button
+                      disabled={idx === g.length - 1}
+                      onClick={() => {
+                        const nachbar = g[idx + 1];
+                        Promise.all([
+                          gerichtAktualisieren(gericht.id, { reihenfolge: nachbar.reihenfolge }),
+                          gerichtAktualisieren(nachbar.id, { reihenfolge: gericht.reihenfolge }),
+                        ]).then(laden_);
+                      }}
+                      className="w-5 h-5 flex items-center justify-center rounded text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      title="Nach unten"
+                    >
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <GerichtKarte
+                      gericht={gericht}
+                      onToggle={verfuegbarkeitToggle}
+                      onBearbeiten={gerichtBearbeiten}
+                      onLoeschen={gerichtLoeschen}
+                      onExtras={setExtrasGericht}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-          ) : (
-            <p className="text-xs text-gray-300 dark:text-slate-600 italic">Keine Gerichte in dieser Kategorie.</p>
-          )}
-        </section>
-      ))}
+          </section>
+        ))}
     </div>
   );
 }

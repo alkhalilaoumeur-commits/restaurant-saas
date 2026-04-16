@@ -28,14 +28,35 @@ export default function BestellStatusTracker({ status, gesamtpreis }: Props) {
   return (
     <div className="min-h-screen bg-gastro flex items-center justify-center p-6 font-theme-body">
       <div className="w-full max-w-sm animate-fade-in-up">
-        {/* Aktiver Status */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3 animate-pulse-dot inline-block">{SCHRITT_ICON[status]}</div>
-          <h2 className="text-xl font-semibold text-gastro-text font-theme-heading">
-            {BESTELLUNG_STATUS_LABEL[status]}
-          </h2>
-          <p className="text-sm text-gastro-muted mt-1">{SCHRITT_TEXT[status]}</p>
-        </div>
+
+        {/* Dankeschön-Banner (nur wenn Bestellung gerade eingegangen) */}
+        {status === 'offen' && (
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-3">🙏</div>
+            <h1 className="text-2xl font-bold text-gastro-text font-theme-heading mb-1">
+              Vielen Dank!
+            </h1>
+            <p className="text-sm text-gastro-muted">Deine Bestellung ist eingegangen.</p>
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gastro-surface border border-gastro-border">
+              <svg className="w-4 h-4 text-gastro-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span className="text-sm font-medium text-gastro-text">ca. 20–30 Minuten</span>
+              <span className="text-xs text-gastro-muted">geschätzte Wartezeit</span>
+            </div>
+          </div>
+        )}
+
+        {/* Aktiver Status (für alle anderen Status) */}
+        {status !== 'offen' && (
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-3 animate-pulse-dot inline-block">{SCHRITT_ICON[status]}</div>
+            <h2 className="text-xl font-semibold text-gastro-text font-theme-heading">
+              {BESTELLUNG_STATUS_LABEL[status]}
+            </h2>
+            <p className="text-sm text-gastro-muted mt-1">{SCHRITT_TEXT[status]}</p>
+          </div>
+        )}
 
         {/* Fortschrittsleiste */}
         <div className="flex items-center justify-between mb-8 px-2">

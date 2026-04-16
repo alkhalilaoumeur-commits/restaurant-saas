@@ -110,6 +110,14 @@ function IconGaeste({ className }: { className?: string }) {
   );
 }
 
+function IconBewertungen({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
 function IconEinstellungen({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -159,7 +167,8 @@ const SEKTIONEN: NavSection[] = [
     items: [
       { to: '/speisekarte',  label: 'Speisekarte',  icon: IconSpeisekarte,  rollen: ['admin'] },
       { to: '/mitarbeiter',  label: 'Mitarbeiter',  icon: IconMitarbeiter,  rollen: ['admin'] },
-      { to: '/gaeste',       label: 'Gäste',        icon: IconGaeste,       rollen: ['admin'] },
+      { to: '/gaeste',         label: 'Gäste',          icon: IconGaeste,         rollen: ['admin'] },
+      { to: '/bewertungen',    label: 'Bewertungen',    icon: IconBewertungen,    rollen: ['admin'] },
       { to: '/statistiken',    label: 'Statistiken',    icon: IconStatistiken,    rollen: ['admin'] },
       { to: '/einstellungen',  label: 'Einstellungen',  icon: IconEinstellungen,  rollen: ['admin'] },
     ],
@@ -247,8 +256,14 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
         <div className="px-4 py-4">
           {/* Benutzer-Info */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200 shrink-0 ring-1 ring-white/10">
-              {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
+            <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden ring-1 ring-white/10">
+              {mitarbeiter?.foto_url ? (
+                <img src={mitarbeiter.foto_url} alt={mitarbeiter.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200">
+                  {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-medium text-slate-200 truncate">{mitarbeiter?.name}</p>

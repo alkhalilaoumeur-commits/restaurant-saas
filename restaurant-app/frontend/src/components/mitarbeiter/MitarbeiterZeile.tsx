@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { MitarbeiterDetail, Rolle } from '../../types';
 import { formatDatum } from '../../lib/utils';
+import { api } from '../../lib/api';
 
 const ROLLEN_LABEL: Record<Rolle, string> = {
   admin: 'Administrator',
@@ -27,11 +28,31 @@ interface MitarbeiterZeileProps {
   onBearbeiten: (m: MitarbeiterDetail) => void;
   onToggleAktiv: (id: string, aktiv: boolean) => void;
   onErneutEinladen: (id: string) => Promise<void>;
+  /** Wenn gesetzt, wird der Avatar klickbar und lädt ein neues Foto hoch */
+  onFotoAktualisieren?: (id: string, foto_url: string | null) => Promise<void>;
 }
 
-export default function MitarbeiterZeile({ mitarbeiter, istEigenerAccount, onBearbeiten, onToggleAktiv, onErneutEinladen }: MitarbeiterZeileProps) {
+export default function MitarbeiterZeile({ mitarbeiter, istEigenerAccount, onBearbeiten, onToggleAktiv, onErneutEinladen, onFotoAktualisieren }: MitarbeiterZeileProps) {
   const [einladungLaden, setEinladungLaden] = useState(false);
   const [einladungGesendet, setEinladungGesendet] = useState(false);
+  const [fotoLaden, setFotoLaden] = useState(false);
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+
+  async function fotoHochladen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !onFotoAktualisieren) return;
+    setFotoLaden(true);
+    try {
+      const url = await api.upload(file);
+      await onFotoAktualisieren(mitarbeiter.id, url);
+    } catch {
+      // Fehler ignorieren – Hook zeigt ggf. Fehler an
+    } finally {
+      setFotoLaden(false);
+      // Input zurücksetzen damit dieselbe Datei nochmal wählbar ist
+      if (fotoInputRef.current) fotoInputRef.current.value = '';
+    }
+  }
 
   async function erneutEinladenKlick() {
     setEinladungLaden(true);
@@ -48,9 +69,49 @@ export default function MitarbeiterZeile({ mitarbeiter, istEigenerAccount, onBea
 
   return (
     <div className={`bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-xl p-4 shadow-sm flex items-center gap-4 card-hover ${!mitarbeiter.aktiv ? 'opacity-60' : ''}`}>
-      {/* Avatar mit Rollen-Gradient */}
-      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${AVATAR_GRADIENT[mitarbeiter.rolle]} flex items-center justify-center text-sm font-bold shrink-0 ring-1 ring-black/5`}>
-        {mitarbeiter.name.charAt(0).toUpperCase()}
+      {/* Avatar — klickbar für Foto-Upload wenn Admin */}
+      <div
+        className={`w-10 h-10 rounded-xl shrink-0 relative overflow-hidden ${onFotoAktualisieren ? 'cursor-pointer group' : ''}`}
+        onClick={() => onFotoAktualisieren && fotoInputRef.current?.click()}
+        title={onFotoAktualisieren ? 'Profilbild ändern' : undefined}
+      >
+        {mitarbeiter.foto_url ? (
+          <img src={mitarbeiter.foto_url} alt={mitarbeiter.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${AVATAR_GRADIENT[mitarbeiter.rolle]} flex items-center justify-center text-sm font-bold ring-1 ring-black/5`}>
+            {fotoLaden ? (
+              <svg className="w-4 h-4 animate-spin opacity-60" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+            ) : (
+              mitarbeiter.name.charAt(0).toUpperCase()
+            )}
+          </div>
+        )}
+        {/* Hover-Overlay für Upload-Hinweis */}
+        {onFotoAktualisieren && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {fotoLaden ? (
+              <svg className="w-4 h-4 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            )}
+          </div>
+        )}
+        <input
+          ref={fotoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={fotoHochladen}
+        />
       </div>
 
       {/* Info */}

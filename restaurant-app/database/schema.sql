@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS gerichte (
   allergene         TEXT,
   verfuegbar        BOOLEAN NOT NULL DEFAULT true,
   modell_3d_url     TEXT,
+  reihenfolge       INTEGER NOT NULL DEFAULT 0,
   erstellt_am       TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_gerichte_restaurant ON gerichte(restaurant_id);
@@ -262,6 +263,7 @@ CREATE TABLE IF NOT EXISTS mitarbeiter (
   verifizierung_token   TEXT    UNIQUE,
   stundenlohn           NUMERIC(8,2),
   urlaubsanspruch_tage  INTEGER DEFAULT 20,
+  foto_url              TEXT,
   erstellt_am           TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_mitarbeiter_restaurant ON mitarbeiter(restaurant_id);

@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { q1, transaction } from '../models/db';
 import { RestaurantModel } from '../models/Restaurant';
 import { emailVerifizierungSenden, verifizierungsCodeEmailSenden, willkommensEmailSenden, passwortResetSenden } from '../services/email';
-import { smsSenden } from '../services/sms';
+import { smsSenden, smsTextVerifizierung } from '../services/sms';
 
 const router = Router();
 
@@ -21,6 +21,7 @@ interface Mitarbeiter {
   rolle: 'admin' | 'kellner' | 'kueche';
   aktiv: boolean;
   email_verifiziert: boolean;
+  foto_url?: string | null;
 }
 
 /** Token generieren: 32 zufällige Bytes → 64 Hex-Zeichen */
@@ -191,7 +192,7 @@ router.post('/code-senden', codeSendenLimiter, async (req: Request, res: Respons
       console.error('[Code-Email] Fehler:', err)
     );
   } else {
-    smsSenden(empfaenger, `Dein Verifizierungscode: ${code}`).catch((err) =>
+    smsSenden(empfaenger, smsTextVerifizierung(code)).catch((err) =>
       console.error('[Code-SMS] Fehler:', err)
     );
   }
@@ -279,6 +280,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
       rolle: mitarbeiter.rolle,
       restaurantId: mitarbeiter.restaurant_id,
       emailVerifiziert: mitarbeiter.email_verifiziert,
+      foto_url: mitarbeiter.foto_url ?? null,
     },
   });
 });
@@ -649,6 +651,7 @@ router.post('/einladung-annehmen', async (req: Request, res: Response): Promise<
       rolle: mitarbeiter.rolle,
       restaurantId: mitarbeiter.restaurant_id,
       emailVerifiziert: true,
+      foto_url: null,
     },
     nachricht: 'Passwort gesetzt. Willkommen!',
   });

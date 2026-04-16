@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Topbar from '../components/layout/Topbar';
 import { useRestaurant } from '../hooks/useRestaurant';
 import { useThemeStore } from '../store/theme';
+import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
 import { Oeffnungszeit, Ausnahmetag } from '../types';
 
@@ -77,10 +78,67 @@ function IconDarkMode() {
 export default function Einstellungen() {
   const { restaurant, laden, aktualisieren } = useRestaurant();
   const { theme, toggle: toggleTheme } = useThemeStore();
+  const { mitarbeiter: ichDaten, setFotoUrl } = useAuthStore();
   const [layoutSpeichern, setLayoutSpeichern] = useState(false);
   const [logoLaden, setLogoLaden] = useState(false);
   const [logoFehler, setLogoFehler] = useState('');
+  const [profilLaden, setProfilLaden] = useState(false);
+  const [profilFehler, setProfilFehler] = useState('');
+  const [telefonWert, setTelefonWert] = useState(ichDaten?.telefon || '');
+  const [telefonLaden, setTelefonLaden] = useState(false);
+  const [telefonErfolg, setTelefonErfolg] = useState(false);
+  const [telefonFehler, setTelefonFehler] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const profilInputRef = useRef<HTMLInputElement>(null);
+
+  async function telefonSpeichern() {
+    setTelefonFehler('');
+    const val = telefonWert.trim();
+    if (val && !/^\+[1-9]\d{7,14}$/.test(val)) {
+      setTelefonFehler('Internationales Format erforderlich, z.B. +4915112345678');
+      return;
+    }
+    setTelefonLaden(true);
+    try {
+      await api.patch('/mitarbeiter/ich/telefon', { telefon: val || null });
+      setTelefonErfolg(true);
+      setTimeout(() => setTelefonErfolg(false), 2500);
+    } catch (err) {
+      setTelefonFehler((err as Error).message || 'Fehler beim Speichern');
+    } finally {
+      setTelefonLaden(false);
+    }
+  }
+
+  async function profilbildHochladen(e: React.ChangeEvent<HTMLInputElement>) {
+    const datei = e.target.files?.[0];
+    if (!datei) return;
+    setProfilFehler('');
+    setProfilLaden(true);
+    try {
+      const url = await api.upload(datei);
+      await api.patch('/mitarbeiter/ich/foto', { foto_url: url });
+      setFotoUrl(url);
+    } catch (err) {
+      setProfilFehler((err as Error).message || 'Upload fehlgeschlagen');
+    } finally {
+      setProfilLaden(false);
+      if (profilInputRef.current) profilInputRef.current.value = '';
+    }
+  }
+
+  async function profilbildEntfernen() {
+    setProfilFehler('');
+    setProfilLaden(true);
+    try {
+      await api.patch('/mitarbeiter/ich/foto', { foto_url: null });
+      setFotoUrl(null);
+    } catch (err) {
+      setProfilFehler((err as Error).message || 'Fehler beim Entfernen');
+    } finally {
+      setProfilLaden(false);
+    }
+  }
 
   async function logoHochladen(e: React.ChangeEvent<HTMLInputElement>) {
     const datei = e.target.files?.[0];
@@ -688,11 +746,120 @@ export default function Einstellungen() {
           </div>
         </div>
 
+        {/* Mein Profilbild */}
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Mein Profilbild</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Wird im Dienstplan und in der Sidebar angezeigt</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-5">
+            {/* Bild-Vorschau */}
+            <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/15 flex items-center justify-center overflow-hidden shrink-0 bg-gray-50 dark:bg-white/5">
+              {ichDaten?.foto_url ? (
+                <img src={ichDaten.foto_url} alt={ichDaten.name} className="w-full h-full object-cover rounded-xl" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-violet-100 to-violet-50 dark:from-violet-900/30 dark:to-violet-800/20 flex items-center justify-center text-2xl font-bold text-violet-500 dark:text-violet-400">
+                  {ichDaten?.name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
+            </div>
+
+            {/* Upload-Buttons */}
+            <div className="flex-1">
+              <input
+                ref={profilInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={profilbildHochladen}
+                className="hidden"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => profilInputRef.current?.click()}
+                  disabled={profilLaden}
+                  className="px-4 py-2 bg-violet-500 text-white rounded-lg text-sm font-medium hover:bg-violet-600 disabled:opacity-50 transition-colors"
+                >
+                  {profilLaden ? 'Wird hochgeladen...' : ichDaten?.foto_url ? 'Bild ändern' : 'Bild hochladen'}
+                </button>
+                {ichDaten?.foto_url && (
+                  <button
+                    onClick={profilbildEntfernen}
+                    disabled={profilLaden}
+                    className="px-4 py-2 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-500/20 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                  >
+                    Entfernen
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">JPG, PNG oder WebP. Max. 5 MB.</p>
+              {profilFehler && <p className="text-xs text-red-500 mt-1">{profilFehler}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Meine Telefonnummer */}
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-green-100 dark:bg-green-500/15 flex items-center justify-center text-green-600 dark:text-green-400">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.64A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Meine Telefonnummer</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Für SMS-Benachrichtigungen (Schichttausch, neue Schichten)</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                Telefonnummer <span className="text-gray-300 dark:text-slate-600 font-normal">— optional</span>
+              </label>
+              <input
+                type="tel"
+                value={telefonWert}
+                onChange={(e) => setTelefonWert(e.target.value)}
+                placeholder="+4915112345678"
+                className="w-full border border-gray-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100 dark:focus:ring-green-500/20 focus:border-green-400"
+              />
+              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Internationales Format: +49 für Deutschland, +43 für Österreich</p>
+            </div>
+            <button
+              onClick={telefonSpeichern}
+              disabled={telefonLaden}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                telefonErfolg
+                  ? 'bg-green-500 text-white'
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`}
+            >
+              {telefonErfolg ? '✓ Gespeichert' : telefonLaden ? '...' : 'Speichern'}
+            </button>
+          </div>
+          {telefonFehler && <p className="text-xs text-red-500 mt-2">{telefonFehler}</p>}
+        </div>
+
         {/* Buchungswidget */}
         <BuchungsWidget restaurantId={restaurant.id} />
 
         {/* Google Reserve Integration */}
         <GoogleIntegration restaurantId={restaurant.id} />
+
+        {/* Google Bewertungslink */}
+        <GoogleBewertungslink
+          aktuell={restaurant.google_bewertungs_link}
+          onSpeichern={(link) => aktualisieren({ google_bewertungs_link: link })}
+        />
 
         {/* Öffnungszeiten */}
         <OeffnungszeitenSektion restaurantId={restaurant.id} />
@@ -1257,6 +1424,98 @@ function ReservierungsEinstellungen({ restaurant, onSpeichern }: {
         >
           {gespeichert ? '✓ Gespeichert' : laedt ? 'Speichert...' : 'Einstellungen speichern'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Google Bewertungslink ────────────────────────────────────────────────────
+
+function GoogleBewertungslink({
+  aktuell,
+  onSpeichern,
+}: {
+  aktuell: string | null;
+  onSpeichern: (link: string | null) => Promise<void>;
+}) {
+  const [link, setLink] = useState(aktuell || '');
+  const [laedt, setLaedt] = useState(false);
+  const [gespeichert, setGespeichert] = useState(false);
+  const [fehler, setFehler] = useState('');
+
+  const speichern = async () => {
+    setFehler('');
+    if (link && !link.startsWith('https://')) {
+      setFehler('Der Link muss mit https:// beginnen');
+      return;
+    }
+    setLaedt(true);
+    try {
+      await onSpeichern(link || null);
+      setGespeichert(true);
+      setTimeout(() => setGespeichert(false), 2000);
+    } catch {
+      setFehler('Fehler beim Speichern');
+    } finally {
+      setLaedt(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
+          <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Google Bewertungslink</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">
+            Wird Gästen mit 4–5 Sternen nach ihrer internen Bewertung angezeigt
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">
+            Google Maps Bewertungslink
+          </label>
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-2">
+            Öffne Google Maps → dein Restaurant → „Rezension schreiben" → Link kopieren
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://g.page/r/..."
+              className="flex-1 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={speichern}
+              disabled={laedt}
+              className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shrink-0 ${
+                gespeichert
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50'
+              }`}
+            >
+              {gespeichert ? '✓ Gespeichert' : laedt ? '...' : 'Speichern'}
+            </button>
+          </div>
+          {fehler && <p className="text-xs text-red-600 mt-1.5">{fehler}</p>}
+        </div>
+
+        {link && (
+          <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-500/10 rounded-xl p-3">
+            <span className="text-amber-500 text-sm">★</span>
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              Gäste die intern 4 oder 5 Sterne geben, sehen nach der Bewertung einen Button „Auf Google bewerten" mit diesem Link.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

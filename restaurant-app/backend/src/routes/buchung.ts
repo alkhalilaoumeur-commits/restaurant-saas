@@ -130,6 +130,12 @@ router.post('/:restaurantId', asyncHandler(async (req: Request, res: Response) =
     return;
   }
 
+  // Telefon-Format validieren (optional, aber wenn angegeben: 6–25 Zeichen, nur Ziffern/+/-/Leerzeichen)
+  if (telefon && !/^[+\d\s\-().]{6,25}$/.test(telefon)) {
+    res.status(400).json({ fehler: 'Ungültiges Telefonnummer-Format (z.B. +49 170 1234567)' });
+    return;
+  }
+
   // Restaurant prüfen
   const restaurant = await q<{ id: string; name: string; strasse: string | null; plz: string | null; stadt: string | null }>(
     'SELECT id, name, strasse, plz, stadt FROM restaurants WHERE id = $1',

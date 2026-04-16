@@ -10,7 +10,7 @@ import { MitarbeiterDetail } from '../types';
 
 export default function Mitarbeiter() {
   const auth = useAuthStore((s) => s.mitarbeiter);
-  const { mitarbeiter, laden, einladen, erneutEinladen, aktualisieren, passwortAendern } = useMitarbeiter();
+  const { mitarbeiter, laden, einladen, erneutEinladen, aktualisieren, passwortAendern, fotoAktualisieren } = useMitarbeiter();
   const { restaurant } = useRestaurant();
 
   const [formularOffen, setFormularOffen] = useState(false);
@@ -115,7 +115,7 @@ export default function Mitarbeiter() {
           <MitarbeiterFormular
             mitarbeiter={bearbeitung}
             onSpeichern={async (daten) => {
-              await aktualisieren(bearbeitung.id, { name: daten.name, rolle: daten.rolle, stundenlohn: daten.stundenlohn });
+              await aktualisieren(bearbeitung.id, { name: daten.name, rolle: daten.rolle, stundenlohn: daten.stundenlohn, telefon: daten.telefon });
               formularSchliessen();
             }}
             onPasswortAendern={async (pw) => {
@@ -144,6 +144,7 @@ export default function Mitarbeiter() {
             onBearbeiten={(m) => { setFormularOffen(false); setBearbeitung(m); }}
             onToggleAktiv={(id, aktiv) => aktualisieren(id, { aktiv })}
             onErneutEinladen={erneutEinladen}
+            onFotoAktualisieren={fotoAktualisieren}
           />
         ))}
       </div>

@@ -14,6 +14,7 @@ export interface Gericht {
   allergene: string | null;
   verfuegbar: boolean;
   modell_3d_url: string | null;
+  reihenfolge: number;
 }
 
 export interface Unterkategorie {
@@ -50,7 +51,7 @@ export const GerichtModel = {
       JOIN kategorien k ON g.kategorie_id = k.id
       LEFT JOIN unterkategorien uk ON g.unterkategorie_id = uk.id
       WHERE g.restaurant_id = $1
-      ORDER BY k.reihenfolge, g.name
+      ORDER BY k.reihenfolge, g.reihenfolge, g.name
     `, [restaurantId]);
   },
 
@@ -63,16 +64,16 @@ export const GerichtModel = {
 
   erstellen(data: Omit<Gericht, 'kategorie_name' | 'unterkategorie_name'>) {
     return q1<Gericht>(`
-      INSERT INTO gerichte (id, restaurant_id, kategorie_id, unterkategorie_id, name, beschreibung, preis, bild_url, allergene, verfuegbar, modell_3d_url)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
+      INSERT INTO gerichte (id, restaurant_id, kategorie_id, unterkategorie_id, name, beschreibung, preis, bild_url, allergene, verfuegbar, modell_3d_url, reihenfolge)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *
     `, [data.id, data.restaurant_id, data.kategorie_id, data.unterkategorie_id ?? null,
         data.name, data.beschreibung, data.preis, data.bild_url, data.allergene,
-        data.verfuegbar, data.modell_3d_url ?? null]);
+        data.verfuegbar, data.modell_3d_url ?? null, data.reihenfolge ?? 0]);
   },
 
   aktualisieren(id: string, restaurantId: string, felder: Partial<Gericht>) {
     // Dynamisches SET — nur übergebene Felder werden aktualisiert
-    const erlaubt = ['name', 'beschreibung', 'preis', 'bild_url', 'allergene', 'verfuegbar', 'kategorie_id', 'modell_3d_url', 'unterkategorie_id'] as const;
+    const erlaubt = ['name', 'beschreibung', 'preis', 'bild_url', 'allergene', 'verfuegbar', 'kategorie_id', 'modell_3d_url', 'unterkategorie_id', 'reihenfolge'] as const;
     const sets: string[] = [];
     const vals: unknown[] = [];
     let idx = 1;

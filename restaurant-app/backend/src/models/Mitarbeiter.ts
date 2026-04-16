@@ -18,9 +18,11 @@ export type MitarbeiterOhnePasswort = Omit<Mitarbeiter, 'passwort_hash'> & {
   einladung_ausstehend?: boolean;
   stundenlohn?: number | null;
   urlaubsanspruch_tage?: number;
+  foto_url?: string | null;
+  telefon?: string | null;
 };
 
-const OEFFENTLICHE_FELDER = 'id, restaurant_id, name, email, rolle, aktiv, erstellt_am, stundenlohn, urlaubsanspruch_tage';
+const OEFFENTLICHE_FELDER = 'id, restaurant_id, name, email, rolle, aktiv, erstellt_am, stundenlohn, urlaubsanspruch_tage, foto_url, telefon';
 const OEFFENTLICHE_FELDER_MIT_STATUS = `${OEFFENTLICHE_FELDER}, (passwort_hash IS NULL) AS einladung_ausstehend`;
 
 export const MitarbeiterModel = {
@@ -54,7 +56,7 @@ export const MitarbeiterModel = {
     );
   },
 
-  aktualisieren(id: string, restaurantId: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null; urlaubsanspruch_tage?: number }) {
+  aktualisieren(id: string, restaurantId: string, felder: { name?: string; rolle?: Rolle; aktiv?: boolean; stundenlohn?: number | null; urlaubsanspruch_tage?: number; foto_url?: string | null; telefon?: string | null }) {
     const sets: string[] = [];
     const vals: unknown[] = [];
     let idx = 1;
@@ -63,6 +65,8 @@ export const MitarbeiterModel = {
     if (felder.aktiv !== undefined) { sets.push(`aktiv = $${idx++}`); vals.push(felder.aktiv); }
     if (felder.stundenlohn !== undefined) { sets.push(`stundenlohn = $${idx++}`); vals.push(felder.stundenlohn); }
     if (felder.urlaubsanspruch_tage !== undefined) { sets.push(`urlaubsanspruch_tage = $${idx++}`); vals.push(felder.urlaubsanspruch_tage); }
+    if (felder.foto_url !== undefined) { sets.push(`foto_url = $${idx++}`); vals.push(felder.foto_url); }
+    if (felder.telefon !== undefined) { sets.push(`telefon = $${idx++}`); vals.push(felder.telefon); }
     if (sets.length === 0) return null;
     vals.push(id, restaurantId);
     return q1<MitarbeiterOhnePasswort>(
@@ -77,6 +81,23 @@ export const MitarbeiterModel = {
       `UPDATE mitarbeiter SET passwort_hash = $1 WHERE id = $2 AND restaurant_id = $3
        RETURNING ${OEFFENTLICHE_FELDER}`,
       [passwortHash, id, restaurantId]
+    );
+  },
+
+  /** Alle aktiven Mitarbeiter (nur Basis-Felder) — auch für Nicht-Admins sichtbar */
+  alleAktiv(restaurantId: string) {
+    return q<Pick<MitarbeiterOhnePasswort, 'id' | 'name' | 'rolle' | 'aktiv' | 'erstellt_am' | 'telefon'>>(
+      `SELECT id, name, rolle, aktiv, erstellt_am, telefon FROM mitarbeiter
+       WHERE restaurant_id = $1 AND aktiv = true ORDER BY name`,
+      [restaurantId]
+    );
+  },
+
+  /** Telefonnummer eines einzelnen Mitarbeiters für SMS-Versand */
+  telefonnummer(id: string, restaurantId: string) {
+    return q1<{ id: string; name: string; telefon: string | null }>(
+      `SELECT id, name, telefon FROM mitarbeiter WHERE id = $1 AND restaurant_id = $2`,
+      [id, restaurantId]
     );
   },
 

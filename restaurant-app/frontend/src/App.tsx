@@ -25,6 +25,8 @@ import ReservierungUmbuchen from './pages/ReservierungUmbuchen';
 import Dienstplan from './pages/Dienstplan';
 import Einstellungen from './pages/Einstellungen';
 import Gaeste from './pages/Gaeste';
+import Bewertungen from './pages/Bewertungen';
+import Bewertung from './pages/Bewertung';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -57,6 +59,7 @@ export default function App() {
       <Route path="/reservierung/:token" element={<ReservierungDetail />} />
       <Route path="/reservierung/:token/stornieren" element={<ReservierungStornieren />} />
       <Route path="/reservierung/:token/aendern" element={<ReservierungUmbuchen />} />
+      <Route path="/bewertung/:token" element={<Bewertung />} />
 
       {/* Geschützter Admin-Bereich */}
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
@@ -68,6 +71,7 @@ export default function App() {
         <Route path="/dienstplan"      element={<Dienstplan />} />
         <Route path="/mitarbeiter"     element={<Mitarbeiter />} />
         <Route path="/gaeste"          element={<Gaeste />} />
+        <Route path="/bewertungen"     element={<Bewertungen />} />
         <Route path="/statistiken"    element={<Statistiken />} />
         <Route path="/einstellungen"  element={<Einstellungen />} />
       </Route>

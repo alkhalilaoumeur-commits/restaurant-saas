@@ -28,6 +28,15 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
+  // Menge pro Position validieren (1–99)
+  for (const pos of positionen as { gericht_id: string; menge: number }[]) {
+    const menge = Number(pos.menge);
+    if (!Number.isInteger(menge) || menge < 1 || menge > 99) {
+      res.status(400).json({ fehler: 'Menge muss zwischen 1 und 99 liegen' });
+      return;
+    }
+  }
+
   // Prüfen: Gehört der Tisch wirklich zu diesem Restaurant?
   const tisch = await q1('SELECT id FROM tische WHERE id = $1 AND restaurant_id = $2', [tisch_id, restaurant_id]);
   if (!tisch) {

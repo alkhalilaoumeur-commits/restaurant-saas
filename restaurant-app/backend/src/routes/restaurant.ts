@@ -24,7 +24,8 @@ router.get('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
 // PUT /api/restaurant – Restaurant-Daten aktualisieren
 router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: AuthRequest, res: Response) => {
   const { name, oeffnungszeiten, primaerfarbe, layout_id, logo_url,
-          buchungsintervall_min, tisch_dauer_min, max_gleichzeitige_reservierungen } = req.body;
+          buchungsintervall_min, tisch_dauer_min, max_gleichzeitige_reservierungen,
+          google_bewertungs_link } = req.body;
 
   // Farbwert validieren (Hex-Format)
   if (primaerfarbe !== undefined && !/^#[0-9a-fA-F]{6}$/.test(primaerfarbe)) {
@@ -68,6 +69,9 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
     tisch_dauer_min: tisch_dauer_min !== undefined ? Number(tisch_dauer_min) : undefined,
     max_gleichzeitige_reservierungen: max_gleichzeitige_reservierungen !== undefined
       ? (max_gleichzeitige_reservierungen === null ? null : Number(max_gleichzeitige_reservierungen))
+      : undefined,
+    google_bewertungs_link: google_bewertungs_link !== undefined
+      ? (google_bewertungs_link === '' ? null : google_bewertungs_link)
       : undefined,
   });
 

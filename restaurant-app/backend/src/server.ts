@@ -25,8 +25,10 @@ import walkInsRoutes from './routes/walk-ins';
 import gaesteRoutes from './routes/gaeste';
 import googleReserveRoutes from './routes/google-reserve';
 import oeffnungszeitenRoutes from './routes/oeffnungszeiten';
+import bewertungenRoutes from './routes/bewertungen';
 import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
+import { starteNoShowCron } from './services/no-show';
 
 dotenv.config();
 
@@ -73,6 +75,7 @@ app.use('/api/walk-ins', walkInsRoutes);
 app.use('/api/gaeste', gaesteRoutes);
 app.use('/api/google-reserve', googleReserveRoutes);
 app.use('/api/oeffnungszeiten', oeffnungszeitenRoutes);
+app.use('/api/bewertungen', bewertungenRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });
@@ -121,4 +124,5 @@ const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Server läuft auf http://localhost:${PORT}`);
   starteErinnerungen();
+  starteNoShowCron();
 });
