@@ -118,6 +118,17 @@ function IconBewertungen({ className }: { className?: string }) {
   );
 }
 
+function IconInventur({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 8h14" />
+      <path d="M5 12h14" />
+      <path d="M5 16h6" />
+      <rect x="2" y="3" width="20" height="18" rx="2" />
+    </svg>
+  );
+}
+
 function IconEinstellungen({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -169,6 +180,7 @@ const SEKTIONEN: NavSection[] = [
       { to: '/mitarbeiter',  label: 'Mitarbeiter',  icon: IconMitarbeiter,  rollen: ['admin'] },
       { to: '/gaeste',         label: 'Gäste',          icon: IconGaeste,         rollen: ['admin'] },
       { to: '/bewertungen',    label: 'Bewertungen',    icon: IconBewertungen,    rollen: ['admin'] },
+      { to: '/inventur',       label: 'Inventur',       icon: IconInventur,       rollen: ['admin'] },
       { to: '/statistiken',    label: 'Statistiken',    icon: IconStatistiken,    rollen: ['admin'] },
       { to: '/einstellungen',  label: 'Einstellungen',  icon: IconEinstellungen,  rollen: ['admin'] },
     ],

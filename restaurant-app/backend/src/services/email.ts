@@ -514,3 +514,120 @@ export async function bewertungsAnfrageSenden(
     `, restaurant),
   });
 }
+
+// ════════════════════════════════════════════════
+// INVENTUR-EMAILS
+// ════════════════════════════════════════════════
+
+/** 11. Mindestbestand-Alarm — wird gesendet wenn Artikel unter Mindestbestand fällt */
+export async function mindestbestandAlarmSenden(
+  adminEmail: string,
+  restaurantName: string,
+  artikel: { name: string; einheit: string; aktueller_bestand: number; mindestbestand: number }[]
+): Promise<void> {
+  const zeilen = artikel.map(a =>
+    `<tr>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;">${a.name}</td>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;color:#EF4444;font-weight:600;">${a.aktueller_bestand} ${a.einheit}</td>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;color:#64748B;">${a.mindestbestand} ${a.einheit}</td>
+     </tr>`
+  ).join('');
+
+  await senden({
+    an: adminEmail,
+    betreff: `⚠️ Mindestbestand unterschritten — ${artikel.length} Artikel`,
+    html: emailTemplate(`
+      ${heading('Mindestbestand unterschritten')}
+      ${text(`Bei <strong>${restaurantName}</strong> haben folgende Artikel den Mindestbestand unterschritten:`)}
+      <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;margin:16px 0;">
+        <thead>
+          <tr style="background:#F8FAFC;">
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Artikel</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Aktuell</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Minimum</th>
+          </tr>
+        </thead>
+        <tbody>${zeilen}</tbody>
+      </table>
+      ${primaryButton('Zum Inventar', `${FRONTEND_URL}/inventur`)}
+      ${divider()}
+      ${hinweis('Diese Benachrichtigung wird automatisch gesendet, sobald ein Artikel nach einer Bestellung unter den Mindestbestand fällt.')}
+    `),
+  });
+}
+
+/** 12. KSS-Fehler-Alert — wird gesendet wenn 3+ Pushes hintereinander scheitern */
+export async function kssAlertEmailSenden(
+  adminEmail: string,
+  restaurantName: string,
+  anbieter: string,
+  fehler: string
+): Promise<void> {
+  await senden({
+    an: adminEmail,
+    betreff: `⚠️ Kassensystem-Verbindung fehlgeschlagen — ${restaurantName}`,
+    html: emailTemplate(`
+      ${heading('Kassensystem nicht erreichbar')}
+      ${text(`Die Verbindung zwischen ServeFlow und dem Kassensystem <strong>${anbieter}</strong> bei <strong>${restaurantName}</strong> ist 3-mal hintereinander fehlgeschlagen. Neue Bestellungen werden <strong>nicht</strong> automatisch an die Kasse übertragen.`)}
+      ${infoBox([
+        `🏪 Restaurant: <strong>${restaurantName}</strong>`,
+        `🖥️ Kassensystem: <strong>${anbieter}</strong>`,
+        `❌ Fehler: <strong>${fehler}</strong>`,
+      ])}
+      ${text('Bitte prüfe die Kassensystem-Einstellungen und stelle die Verbindung wieder her.')}
+      ${primaryButton('Kassensystem-Einstellungen öffnen', `${FRONTEND_URL}/einstellungen`)}
+      ${divider()}
+      ${hinweis('Diese Benachrichtigung wird gesendet, sobald 3 aufeinanderfolgende Übertragungen fehlschlagen. Bestellungen gehen in ServeFlow weiterhin ein — sie müssen jedoch manuell in die Kasse übertragen werden.')}
+    `),
+  });
+}
+
+/** 12. Lieferanten-Bestellanfrage — Admin schickt Bestellung direkt an Lieferanten */
+export async function lieferantenBestellungSenden(daten: {
+  lieferantEmail: string;
+  lieferantName: string;
+  restaurantName: string;
+  restaurantEmail: string | null;
+  restaurantTelefon: string | null;
+  artikel: { name: string; einheit: string; bestellmenge: number; aktueller_bestand: number }[];
+  notiz: string | null;
+}): Promise<void> {
+  const zeilen = daten.artikel.map(a =>
+    `<tr>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;">${a.name}</td>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;font-weight:600;color:#1E40AF;">${a.bestellmenge} ${a.einheit}</td>
+       <td style="padding:8px 12px;border-bottom:1px solid #E2E8F0;color:#64748B;">${a.aktueller_bestand} ${a.einheit}</td>
+     </tr>`
+  ).join('');
+
+  await senden({
+    an: daten.lieferantEmail,
+    betreff: `Bestellanfrage von ${daten.restaurantName}`,
+    html: emailTemplate(`
+      ${heading('Bestellanfrage')}
+      <p style="font-size:15px;color:#334155;margin:0 0 16px;">
+        Sehr geehrte Damen und Herren,<br><br>
+        wir möchten folgende Artikel bei Ihnen bestellen:
+      </p>
+      <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;margin:16px 0;">
+        <thead>
+          <tr style="background:#F8FAFC;">
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Artikel</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Bestellmenge</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em;">Aktueller Bestand</th>
+          </tr>
+        </thead>
+        <tbody>${zeilen}</tbody>
+      </table>
+      ${daten.notiz ? `<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:12px 16px;margin:16px 0;"><p style="margin:0;font-size:14px;color:#92400E;"><strong>Hinweis:</strong> ${daten.notiz}</p></div>` : ''}
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin:16px 0;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#1E293B;">Absender</p>
+        <p style="margin:0;font-size:14px;color:#475569;">${daten.restaurantName}</p>
+        ${daten.restaurantEmail ? `<p style="margin:4px 0 0;font-size:13px;color:#64748B;">✉ ${daten.restaurantEmail}</p>` : ''}
+        ${daten.restaurantTelefon ? `<p style="margin:4px 0 0;font-size:13px;color:#64748B;">📞 ${daten.restaurantTelefon}</p>` : ''}
+      </div>
+      ${divider()}
+      ${hinweis('Diese Bestellanfrage wurde über ServeFlow ausgelöst und vom Restaurant manuell bestätigt.')}
+    `),
+  });
+}

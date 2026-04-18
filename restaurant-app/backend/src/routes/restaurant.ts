@@ -34,7 +34,7 @@ router.put('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Aut
   }
 
   // Layout-ID validieren
-  const erlaubteLayouts = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase'];
+  const erlaubteLayouts = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase', 'qr-menu'];
   if (layout_id !== undefined && !erlaubteLayouts.includes(layout_id)) {
     res.status(400).json({ fehler: 'Ungültige Layout-ID' });
     return;

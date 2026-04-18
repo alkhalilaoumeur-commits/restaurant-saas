@@ -281,7 +281,7 @@ const DEFAULT_DATA = {
     { id: "os-1", name: "Tisch_Status", values: ["frei", "besetzt", "wartet_auf_zahlung"] },
     { id: "os-2", name: "Bestellung_Status", values: ["offen", "in_zubereitung", "serviert", "bezahlt"] },
     { id: "os-3", name: "Reservierung_Status", values: ["ausstehend", "bestaetigt", "storniert"] },
-    { id: "os-4", name: "Reservierung_Quelle", values: ["app", "telefon", "walk_in", "email", "whatsapp"] },
+    { id: "os-4", name: "Reservierung_Quelle", values: ["online", "manuell", "walk_in", "telefon", "google"] },
     { id: "os-5", name: "Mitarbeiter_Rolle", values: ["admin", "kellner", "kueche"] },
     { id: "os-6", name: "Abo_Status", values: ["trial", "active", "expired"] },
   ],
@@ -398,8 +398,11 @@ const DEFAULT_DATA = {
     { id: "pg-8", name: "Mitarbeiterverwaltung", desc: "Anlegen, Rollen zuweisen, deaktivieren, Passwort aendern, Lizenz-Limit", status: "Fertig", dataTypes: ["User", "Restaurant"], reusables: ["MitarbeiterZeile", "MitarbeiterFormular"], responsive: { desktop: true, tablet: true, mobile: false } },
     { id: "pg-9", name: "Statistiken", desc: "Umsatz pro Tag, Top-Gerichte, Stosszeiten, Kategorie-Umsatz (Recharts)", status: "Fertig", dataTypes: ["Bestellung", "Gericht", "Kategorie"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
     { id: "pg-10", name: "Dienstplan", desc: "Wochenansicht, Schicht-CRUD, Stundenzaehler pro Mitarbeiter", status: "Fertig", dataTypes: ["User"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
-    { id: "pg-11", name: "Einstellungen", desc: "Restaurant-Name, Primaerfarbe, Oeffnungszeiten, Lizenz-Info", status: "Fertig", dataTypes: ["Restaurant"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
+    { id: "pg-11", name: "Einstellungen", desc: "Restaurant-Name, Primaerfarbe, Oeffnungszeiten, Abo-Status, Stripe-Checkout, Rabattcodes", status: "Fertig", dataTypes: ["Restaurant"], reusables: [], responsive: { desktop: true, tablet: true, mobile: false } },
     { id: "pg-12", name: "Registrierung", desc: "Neues Restaurant + Admin-Account anlegen, Lizenzcode automatisch", status: "Fertig", dataTypes: ["Restaurant", "User"], reusables: [], responsive: { desktop: true, tablet: true, mobile: true } },
+    { id: "pg-13", name: "Inventur", desc: "Artikel-Verwaltung, Lagerbewegungen, Lieferanten, Rezepturen, Auswertung, Bestellanfrage", status: "Fertig", dataTypes: ["Inventar", "Lieferant", "Rezeptur"], reusables: [], responsive: { desktop: true, tablet: false, mobile: false } },
+    { id: "pg-14", name: "Gast Buchungsseite", desc: "Oeffentliche Online-Reservierung via /buchung/:restaurantId — Slots, Formular, Bestaetigung", status: "Fertig", dataTypes: ["Reservierung", "Oeffnungszeiten"], reusables: [], responsive: { desktop: true, tablet: true, mobile: true } },
+    { id: "pg-15", name: "QR Bestellseite (Pro)", desc: "Erweiterte Gast-Bestellseite mit Extras, Gruppenbestellungen, Live-Status-Tracker", status: "Fertig", dataTypes: ["Gericht", "Extras", "Bestellung"], reusables: [], responsive: { desktop: true, tablet: true, mobile: true } },
   ],
 
   integrations: [
@@ -407,9 +410,10 @@ const DEFAULT_DATA = {
     { id: "int-2", name: "Socket.io", typ: "WebSocket", status: "Verbunden", desc: "Echtzeit-Updates: Neue Bestellungen, Status-Aenderungen. Mitarbeiter-Raum + Gast-Tisch-Raum.", url: "localhost:3001" },
     { id: "int-3", name: "JWT + bcrypt", typ: "Auth", status: "Verbunden", desc: "Authentifizierung: JWT-Token (7 Tage), Passwort-Hashing mit bcrypt (12 Runden).", url: "" },
     { id: "int-4", name: "Recharts", typ: "SDK", status: "Verbunden", desc: "Dashboard-Charts: Umsatz-Balkendiagramm, Auslastung-Donut, Bestellverteilung.", url: "npm: recharts" },
-    { id: "int-5", name: "Mollie", typ: "REST API", status: "Nicht eingerichtet", desc: "Abo-Zahlungen fuer Restaurants. DSGVO-konform (NL). Kern des SaaS-Geschaeftsmodells.", url: "api.mollie.com" },
-    { id: "int-6", name: "WhatsApp Business API", typ: "REST API", status: "Nicht eingerichtet", desc: "Reservierungsbestaetigungen und Benachrichtigungen per WhatsApp.", url: "graph.facebook.com" },
-    { id: "int-7", name: "E-Mail SMTP", typ: "REST API", status: "Nicht eingerichtet", desc: "Reservierungsbestaetigungen, Passwort-Reset und Benachrichtigungen per E-Mail.", url: "" },
+    { id: "int-5", name: "Stripe", typ: "REST API", status: "Konfigurierbar", desc: "Abo-Zahlungen (Stripe Checkout). Lazy-Init: funktioniert ohne Key, wirft Fehler erst beim Checkout. Webhook-Verifizierung implementiert.", url: "stripe.com" },
+    { id: "int-6", name: "Twilio SMS", typ: "REST API", status: "Konfigurierbar", desc: "SMS fuer Gast-Reservierungsbestaetigung, Stornierung, Umbuchung + interne Schichttausch-Benachrichtigungen.", url: "twilio.com" },
+    { id: "int-7", name: "E-Mail SMTP (Nodemailer)", typ: "SMTP", status: "Konfigurierbar", desc: "Reservierungsbestaetigung + Stornierung + Umbuchung per Email. Lieferanten-Bestellanfragen. Konfigurierbar via SMTP_HOST/..", url: "" },
+    { id: "int-8", name: "Google Reserve", typ: "Webhook", status: "Vorbereitet", desc: "Webhooks fuer Buchungen via Google Maps implementiert (POST /api/google-reserve/webhook). Partnervertrag noch ausstehend.", url: "maps.google.com/business" },
   ],
 
   roles: [
@@ -424,8 +428,10 @@ const DEFAULT_DATA = {
     { id: "is-4", title: "Login & Privacy Rules implementiert", desc: "JWT-Auth mit 3 Rollen (Admin, Kellner, Kueche). requireAuth + requireRolle Middleware auf allen geschuetzten Routen.", priority: "Hoch", area: "Seite", status: "Erledigt", created: "2026-04-02" },
     { id: "is-5", title: "Tischplan-Seite gebaut", desc: "Visuelle Uebersicht mit Status-Farben, QR-Code-Generierung, Einzel- und Sammeldruck.", priority: "Normal", area: "Seite", status: "Erledigt", created: "2026-04-04" },
     { id: "is-6", title: "Supabase entfernt — alles ueber Express API", desc: "Frontend lief doppelt (Supabase + Express). Komplett auf Express API migriert. Supabase-Abhaengigkeit entfernt.", priority: "Hoch", area: "Allgemein", status: "Erledigt", created: "2026-04-05" },
-    { id: "is-7", title: "Abonnement-Verwaltung (Mollie) einbauen", desc: "Restaurants muessen bezahlen koennen. Mollie-Integration fuer Abo-Zahlungen. Kern des Geschaeftsmodells.", priority: "Kritisch", area: "Workflow", status: "Backlog", created: "2026-04-05" },
-    { id: "is-8", title: "Hosting-Setup (Hetzner + Coolify)", desc: "App muss online deploybar sein. Hetzner Cloud Frankfurt (DSGVO), Coolify fuer Deployment.", priority: "Hoch", area: "Allgemein", status: "Backlog", created: "2026-04-05" },
+    { id: "is-7", title: "Abonnement-Verwaltung (Stripe)", desc: "Stripe Checkout implementiert. Rabattcodes, Webhook-Verifizierung, 100%-Rabatt-Logik. STRIPE_SECRET_KEY in .env fuer echte Zahlungen noetig.", priority: "Kritisch", area: "Workflow", status: "Erledigt", created: "2026-04-05" },
+    { id: "is-8", title: "Hosting-Setup (Hetzner + Coolify)", desc: "Hetzner CX33 Frankfurt, Coolify live seit 2026-04-14. Traefik-Routing, Webhook-Deploy aktiv.", priority: "Hoch", area: "Allgemein", status: "Erledigt", created: "2026-04-05" },
+    { id: "is-9", title: "Inventur-Modul implementiert", desc: "Artikel, Lagerbewegungen, Lieferanten, Rezepturen, Auswertung, Bestellanfrage per Email.", priority: "Normal", area: "Feature", status: "Erledigt", created: "2026-04-14" },
+    { id: "is-10", title: "Gaeste-CRM implementiert", desc: "Smart-Upsert, Stammgast-Erkennung, Besuchshistorie, CRM-Metriken in Statistiken.", priority: "Normal", area: "Feature", status: "Erledigt", created: "2026-04-14" },
   ],
 
   roadmap: [],
@@ -447,6 +453,15 @@ const DEFAULT_DATA = {
     { id: "cl-6", text: "Bestellseite fuer Gaeste fertiggestellt", date: "2026-04-04" },
     { id: "cl-7", text: "Backend komplett: Express + TypeScript + Socket.io", date: "2026-04-04" },
     { id: "cl-8", text: "Login-Seite mit JWT-Authentifizierung gebaut", date: "2026-04-04" },
+    { id: "cl-9", text: "Verfuegbarkeit + Buchungssystem (Slots, Tischzuweisung, Self-Service-Stornierung)", date: "2026-04-10" },
+    { id: "cl-10", text: "Gaeste-CRM (Smart-Upsert, Stammgast-Erkennung, Besuchshistorie)", date: "2026-04-12" },
+    { id: "cl-11", text: "SMS-Integration (Twilio): Gast-Bestaetigung, Stornierung, Umbuchung", date: "2026-04-12" },
+    { id: "cl-12", text: "Hosting live: Hetzner CX33 + Coolify + Traefik + Webhook-Deploy", date: "2026-04-14" },
+    { id: "cl-13", text: "Inventur-Modul: Artikel, Lager, Lieferanten, Rezepturen, Auswertung", date: "2026-04-14" },
+    { id: "cl-14", text: "Stripe Checkout + Rabattcodes + Webhook-Verifizierung", date: "2026-04-14" },
+    { id: "cl-15", text: "Google Reserve Webhook-Empfaenger (Infrastruktur bereit, Partnervertrag ausstehend)", date: "2026-04-15" },
+    { id: "cl-16", text: "Theme-System (gastro-* Klassen, Kategorie-First, Custom-Builder vorbereitet)", date: "2026-04-16" },
+    { id: "cl-17", text: "Bewertungssystem, Walk-Ins, Monatsansicht Reservierungen, Excel-Import", date: "2026-04-17" },
   ]
 };
 
@@ -455,7 +470,7 @@ const DEFAULT_DATA = {
 // ============================================================
 
 const STORAGE_KEY = 'projekt-dashboard-restaurant-saas';
-const DATA_VERSION = 3; // Erhoehen bei jedem groesseren DEFAULT_DATA-Update
+const DATA_VERSION = 4; // Erhoehen bei jedem groesseren DEFAULT_DATA-Update
 
 function loadData() {
   try {

@@ -5,6 +5,7 @@ import GerichtKarte from '../components/speisekarte/GerichtKarte';
 import GerichtFormular from '../components/speisekarte/GerichtFormular';
 import KategorieVerwaltung from '../components/speisekarte/KategorieVerwaltung';
 import ExtrasVerwaltung from '../components/speisekarte/ExtrasVerwaltung';
+import RezepturVerwaltung from '../components/speisekarte/RezepturVerwaltung';
 import { useSpeisekarte } from '../hooks/useSpeisekarte';
 import { Gericht } from '../types';
 
@@ -19,6 +20,7 @@ export default function Speisekarte() {
   const [bearbeiteGericht, setBearbeiteGericht] = useState<Gericht | null>(null);
   const [kategorienOffen, setKategorienOffen] = useState(false);
   const [extrasGericht, setExtrasGericht] = useState<Gericht | null>(null);
+  const [rezepturGericht, setRezepturGericht] = useState<Gericht | null>(null);
 
   const gruppiertNachKategorie = kategorien.map((k) => ({
     kategorie: k,
@@ -113,6 +115,16 @@ export default function Speisekarte() {
         )}
       </Modal>
 
+      {/* Inventur-Verknüpfung Modal */}
+      <Modal
+        offen={!!rezepturGericht}
+        onSchliessen={() => setRezepturGericht(null)}
+        titel={`Inventur: ${rezepturGericht?.name ?? ''}`}
+        breit
+      >
+        {rezepturGericht && <RezepturVerwaltung gericht={rezepturGericht} />}
+      </Modal>
+
       {laden && <p className="text-sm text-gray-400 dark:text-slate-500">Wird geladen...</p>}
 
       {!laden && kategorien.length === 0 && (
@@ -173,6 +185,7 @@ export default function Speisekarte() {
                       onBearbeiten={gerichtBearbeiten}
                       onLoeschen={gerichtLoeschen}
                       onExtras={setExtrasGericht}
+                      onRezeptur={setRezepturGericht}
                     />
                   </div>
                 </div>

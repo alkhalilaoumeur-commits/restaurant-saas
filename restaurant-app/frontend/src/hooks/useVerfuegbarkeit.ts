@@ -8,7 +8,7 @@ export function useVerfuegbarkeit() {
 
   const laden_ = useCallback(async () => {
     try {
-      const daten = await api.get<MitarbeiterVerfuegbarkeit[]>('/api/verfuegbarkeit');
+      const daten = await api.get<MitarbeiterVerfuegbarkeit[]>('/verfuegbarkeit');
       setEintraege(daten);
     } finally {
       setLaden(false);
@@ -26,7 +26,7 @@ export function useVerfuegbarkeit() {
     notiz?: string | null;
     mitarbeiter_id?: string;   // nur für Admin
   }) => {
-    const neuer = await api.post<MitarbeiterVerfuegbarkeit>('/api/verfuegbarkeit', daten);
+    const neuer = await api.post<MitarbeiterVerfuegbarkeit>('/verfuegbarkeit', daten);
     setEintraege((prev) => {
       // bestehenden Eintrag für denselben MA+Tag ersetzen, sonst anhängen
       const gefiltert = prev.filter(
@@ -39,7 +39,7 @@ export function useVerfuegbarkeit() {
 
   // Eintrag löschen
   const loeschen = useCallback(async (id: string) => {
-    await api.delete(`/api/verfuegbarkeit/${id}`);
+    await api.delete(`/verfuegbarkeit/${id}`);
     setEintraege((prev) => prev.filter((e) => e.id !== id));
   }, []);
 

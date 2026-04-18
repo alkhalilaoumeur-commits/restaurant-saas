@@ -35,7 +35,7 @@
 - [x] Restaurant-Registrierung & Onboarding ✅ erledigt 2026-04-05
 - [x] Lizenzcode-System (pro Restaurant, Mitarbeiteranzahl) ✅ erledigt 2026-04-05
 - [x] Design-Anpassung pro Restaurant (Primärfarbe für Gäste-Seite) ✅ erledigt 2026-04-05
-- [ ] Abonnement-Verwaltung (Mollie)
+- [x] Abonnement-Verwaltung (Mollie) — Option B (Einzelzahlung + Webhook), Rabattcodes, Paywall ✅ erledigt 2026-04-16
 
 ## Phase 5 – Extras
 - [x] Statistiken & Berichte (Umsatz, Top-Gerichte, Stoßzeiten, Kategorien) ✅ erledigt 2026-04-05
@@ -180,6 +180,15 @@
 - [ ] Email-Benachrichtigung bei Abwesenheits-Konflikt (TODO in `routes/abwesenheiten.ts` Zeile ~76) — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
 - [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)
+
+## Phase 9 – Inventurmanagement ✅ (erledigt 2026-04-18)
+- [x] Inventar-Datenbank: Zutaten/Artikel mit Einheit, Mindestbestand, Kategorie ✅
+- [x] Lagerbestand erfassen + manuell anpassen (Eingänge, Abgänge, Korrekturen) ✅
+- [x] Automatischer Abzug bei Bestellung bezahlt (Rezeptur: Gericht → Zutaten-Verbrauch) ✅
+- [x] Mindestbestand-Alarm (Email an Admin wenn Artikel nach Bestellung unter Schwellenwert fällt) ✅
+- [x] Lieferanten-Verwaltung (Name, Kontakt, Liefertage) ✅
+- [x] Bestellvorschläge (Artikel unter Mindestbestand — rotes Banner im Dashboard) ✅
+- [x] Inventur-Auswertung (Verbrauch + Kosten pro 7/14/30/90 Tage) ✅
 
 ## Irgendwann
 - [ ] Mobile App (falls gewünscht)

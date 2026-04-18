@@ -226,11 +226,34 @@ export const THEME_PRESETS: Record<ThemePresetId, Theme> = {
     ecken: 'rund',
     cardStil: 'border',
   },
+
+  // ── 10. QR-Menu ──────────────────────────────────────────────────────────────
+  // Violettes App-Design mit linker Kategorie-Sidebar und 2-Spalten-Gerichte-Grid.
+  // Inspiration: Webnum QR Menu UI Kit (Dribbble) — clean, modern, mobile-first.
+  'qr-menu': {
+    id: 'qr-menu',
+    name: 'QR-Menu',
+    beschreibung: 'Violet & clean — Sidebar-Navigation, App-Stil',
+    emoji: '📱',
+    farben: {
+      hintergrund: '#F7F6FF',
+      oberflaeche: '#FFFFFF',
+      primaer: '#7B61FF',        // Violet
+      sekundaer: '#5A45E0',      // Dunkleres Violet
+      text: '#1A1A2E',           // Fast-Schwarz mit Blau-Unterton
+      textGedaempft: '#9CA3AF',
+      border: '#EEECFA',         // Violet-getönter Border
+    },
+    fontHeading: 'Inter',
+    fontBody: 'Inter',
+    ecken: 'rund',
+    cardStil: 'schatten',
+  },
 };
 
 /** Alle Preset-IDs als Array (für Iteration in der UI) */
 export const THEME_PRESET_IDS: ThemePresetId[] = [
-  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal', 'osteria', 'editorial', 'showcase',
+  'modern', 'eleganz', 'trattoria', 'fresh', 'street', 'rustikal', 'osteria', 'editorial', 'showcase', 'qr-menu',
 ];
 
 /** Standard-Theme wenn nichts konfiguriert ist */

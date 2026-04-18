@@ -44,9 +44,9 @@ export default function BestellenPro() {
   const layout = getLayout(design?.layout_id);
   useGastroTheme(layout.themeId);
 
-  const istPills = layout.kategorienAnzeige === 'pills';
+  const istPills     = layout.kategorienAnzeige === 'pills';
   const istEditorial = layout.kategorienAnzeige === 'editorial';
-  const istShowcase = layout.kategorienAnzeige === 'showcase';
+  const istShowcase  = layout.kategorienAnzeige === 'showcase';
 
   // ── Navigation ────────────────────────────────────────────────────────────
   // Grid/Liste: gewaehlteKategorie = null → Übersicht, sonst → Detail

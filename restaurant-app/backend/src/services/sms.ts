@@ -57,8 +57,15 @@ export async function smsSenden(telefon: string, nachricht: string): Promise<voi
 
 /** 6-stelliger Verifizierungscode (Registrierung, SMS-Verifizierung) */
 export function smsTextVerifizierung(code: string, restaurantName?: string): string {
-  const von = restaurantName ? ` für ${restaurantName}` : '';
-  return `Dein ServeFlow-Code${von}: ${code}. Gültig 10 Minuten. Nicht weitergeben.`;
+  const von = restaurantName ? ` – ${restaurantName}` : '';
+  return [
+    `ServeFlow${von}`,
+    ``,
+    `Dein Verifizierungscode: ${code}`,
+    ``,
+    `Gueltig fuer 10 Minuten.`,
+    `Bitte nicht weitergeben.`,
+  ].join('\n');
 }
 
 /** Schichttausch genehmigt — geht an BEIDE Mitarbeiter */
@@ -68,8 +75,16 @@ export function smsTextTauschGenehmigt(
   meineDatum: string,
   meineUhrzeit: string,
 ): string {
-  const datum = new Date(meineDatum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
-  return `ServeFlow: Schichttausch genehmigt! Du tauschst mit ${partnerName}. Deine neue Schicht: ${datum} ${meineUhrzeit}. Gute Schicht, ${empfaengerName}!`;
+  const datum = new Date(meineDatum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  return [
+    `ServeFlow – Schichttausch genehmigt`,
+    ``,
+    `Hallo ${empfaengerName},`,
+    `dein Tausch mit ${partnerName} wurde bestaetigt.`,
+    ``,
+    `Deine neue Schicht:`,
+    `${datum}, ${meineUhrzeit} Uhr`,
+  ].join('\n');
 }
 
 /** Schichttausch abgelehnt — geht an den Anbieter */
@@ -78,8 +93,16 @@ export function smsTextTauschAbgelehnt(
   datum: string,
   uhrzeit: string,
 ): string {
-  const datumFormatiert = new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
-  return `ServeFlow: Dein Schichttausch für ${datumFormatiert} ${uhrzeit} wurde abgelehnt. Du behältst deine ursprüngliche Schicht, ${empfaengerName}.`;
+  const datumFormatiert = new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  return [
+    `ServeFlow – Schichttausch abgelehnt`,
+    ``,
+    `Hallo ${empfaengerName},`,
+    `dein Tausch wurde leider nicht genehmigt.`,
+    ``,
+    `Deine urspruengliche Schicht bleibt:`,
+    `${datumFormatiert}, ${uhrzeit} Uhr`,
+  ].join('\n');
 }
 
 /** Neue Schicht zugewiesen */
@@ -90,6 +113,15 @@ export function smsTextNeueSchicht(
   beginn: string,
   ende: string,
 ): string {
-  const datumFormatiert = new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
-  return `ServeFlow: Neue Schicht für dich, ${empfaengerName}! ${datumFormatiert} von ${beginn} bis ${ende} Uhr bei ${restaurantName}.`;
+  const datumFormatiert = new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  return [
+    `ServeFlow – Neue Schicht`,
+    ``,
+    `Hallo ${empfaengerName},`,
+    `du hast eine neue Schicht erhalten.`,
+    ``,
+    `${datumFormatiert}`,
+    `${beginn} – ${ende} Uhr`,
+    `${restaurantName}`,
+  ].join('\n');
 }

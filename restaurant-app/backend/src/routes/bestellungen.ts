@@ -5,6 +5,9 @@ import { pool, q, q1 } from '../models/db';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { io } from '../server';
+import { RezepturModel } from '../models/Inventur';
+import { mindestbestandAlarmSenden } from '../services/email';
+import { bestellungAnKssSenden } from '../services/kss';
 
 interface PositionExtras {
   extra_id: string;
@@ -46,8 +49,8 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 
   // Preise serverseitig aus DB holen – nie vom Client vertrauen
   const gerichtIds = positionen.map((p: { gericht_id: string }) => p.gericht_id);
-  const gerichte = await q<{ id: string; preis: number; verfuegbar: boolean }>(
-    'SELECT id, preis, verfuegbar FROM gerichte WHERE id = ANY($1) AND restaurant_id = $2 AND verfuegbar = true',
+  const gerichte = await q<{ id: string; name: string; preis: number; verfuegbar: boolean }>(
+    'SELECT id, name, preis, verfuegbar FROM gerichte WHERE id = ANY($1) AND restaurant_id = $2 AND verfuegbar = true',
     [gerichtIds, restaurant_id]
   );
 
@@ -138,6 +141,30 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 
   io.to(`restaurant:${restaurant_id}`).emit('neue_bestellung', { bestellungId, tisch_id });
 
+  // KSS-Push: Bestellung asynchron ans Kassensystem senden (non-blocking)
+  // Läuft im Hintergrund — Fehler hier brechen die API-Response nicht ab
+  const tischRow = await q1<{ tisch_nummer: number }>(
+    'SELECT tisch_nummer FROM tische WHERE id = $1',
+    [tisch_id]
+  );
+  bestellungAnKssSenden({
+    id: bestellungId,
+    restaurant_id,
+    tisch_nummer: tischRow?.tisch_nummer ?? 0,
+    anmerkung: anmerkung || null,
+    gesamtpreis,
+    positionen: (positionen as { gericht_id: string; menge: number; extras?: { extra_id: string }[] }[]).map((pos) => ({
+      name: gerichte.find(g => g.id === pos.gericht_id)?.name ?? pos.gericht_id,
+      menge: pos.menge,
+      einzelpreis: (preisMap.get(pos.gericht_id) ?? 0) +
+        (pos.extras?.reduce((sum, e) => sum + (extrasPreisMap.get(e.extra_id)?.aufpreis ?? 0), 0) ?? 0),
+      extras: (pos.extras ?? []).map(e => ({
+        name: extrasPreisMap.get(e.extra_id)?.name ?? e.extra_id,
+        aufpreis: extrasPreisMap.get(e.extra_id)?.aufpreis ?? 0,
+      })),
+    })),
+  }).catch(e => console.error('[KSS] Fehler beim Starten des KSS-Push:', e));
+
   res.status(201).json({ id: bestellungId, gesamtpreis });
 }));
 
@@ -155,6 +182,28 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner', 'kuech
     io.to(`restaurant:${req.auth!.restaurantId}`).emit('bestellung_aktualisiert', bestellung);
     if (bestellung.tisch_id) {
       io.to(`tisch:${req.auth!.restaurantId}:${bestellung.tisch_id}`).emit('bestellung_aktualisiert', bestellung);
+    }
+
+    // Wenn Bestellung → bezahlt: Inventar-Abzug via Rezepturen + Mindestbestand-Alarm
+    if (status === 'bezahlt') {
+      RezepturModel.bestandAbziehen(bestellung.id, req.auth!.restaurantId)
+        .then(async (unterMindestbestand) => {
+          if (unterMindestbestand.length === 0) return;
+          // Admin-Email für Mindestbestand-Alarm laden
+          const adminRow = await q1<{ email: string; restaurant_name: string }>(
+            `SELECT m.email, r.name AS restaurant_name
+             FROM mitarbeiter m
+             JOIN restaurants r ON r.id = m.restaurant_id
+             WHERE m.restaurant_id = $1 AND m.rolle = 'admin' AND m.aktiv = true
+             LIMIT 1`,
+            [req.auth!.restaurantId]
+          );
+          if (adminRow) {
+            mindestbestandAlarmSenden(adminRow.email, adminRow.restaurant_name, unterMindestbestand)
+              .catch(e => console.error('[Inventur] Alarm-Email Fehler:', e));
+          }
+        })
+        .catch(e => console.error('[Inventur] Bestand-Abzug Fehler:', e));
     }
 
     // Wenn Bestellung → bezahlt: Prüfen ob ALLE aktiven Bestellungen des Tisches bezahlt sind

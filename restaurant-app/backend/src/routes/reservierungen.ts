@@ -3,6 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { ReservierungModel } from '../models/Reservierung';
 import { VerfuegbarkeitModel, verweilzeitBerechnen } from '../models/Verfuegbarkeit';
 import { GastModel } from '../models/Gast';
+import { BewertungModel } from '../models/Bewertung';
+import { bewertungsAnfrageSenden } from '../services/email';
 import { q, q1 } from '../models/db';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -201,12 +203,26 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
       ).catch((e) => console.error('[No-Show Tag]', e));
     }
 
-    // ── Abgeschlossen: Tisch freigeben ────────────────────────────────────────
-    if (status === 'abgeschlossen' && r.tisch_id) {
-      await q(
-        `UPDATE tische SET status = 'frei' WHERE id = $1 AND restaurant_id = $2`,
-        [r.tisch_id, req.auth!.restaurantId]
-      );
+    // ── Abgeschlossen: Tisch freigeben + Bewertungs-Email senden ─────────────
+    if (status === 'abgeschlossen') {
+      if (r.tisch_id) {
+        await q(
+          `UPDATE tische SET status = 'frei' WHERE id = $1 AND restaurant_id = $2`,
+          [r.tisch_id, req.auth!.restaurantId]
+        );
+      }
+
+      // Bewertungs-Email nur wenn E-Mail-Adresse vorhanden
+      if (r.email) {
+        BewertungModel.erstellen({
+          restaurant_id: req.auth!.restaurantId,
+          buchungs_id: r.id,
+          gast_name: r.gast_name,
+          gast_email: r.email,
+        }).then(bewertung =>
+          bewertungsAnfrageSenden(r.email!, r.gast_name, bewertung.token)
+        ).catch(e => console.error('[Bewertung] Fehler beim automatischen Senden:', e));
+      }
     }
 
     // ── Socket.io: Live-Update ────────────────────────────────────────────────

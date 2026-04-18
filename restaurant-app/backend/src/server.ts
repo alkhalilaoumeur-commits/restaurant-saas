@@ -26,9 +26,13 @@ import gaesteRoutes from './routes/gaeste';
 import googleReserveRoutes from './routes/google-reserve';
 import oeffnungszeitenRoutes from './routes/oeffnungszeiten';
 import bewertungenRoutes from './routes/bewertungen';
+import aboRoutes from './routes/abo';
+import inventurRoutes from './routes/inventur';
+import kssRoutes from './routes/kss';
 import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
 import { starteNoShowCron } from './services/no-show';
+import { starteAboCron } from './services/abo-cron';
 
 dotenv.config();
 
@@ -52,6 +56,10 @@ app.use(cors({
     }
   },
 }));
+// Stripe Webhook braucht den raw (ungeparsten) Body für die Signatur-Verifizierung.
+// MUSS vor express.json() stehen — sonst ist der Body bereits als JSON geparst
+// und die Signaturprüfung schlägt fehl.
+app.use('/api/abo/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
 // Hochgeladene Bilder öffentlich bereitstellen unter /uploads/
@@ -76,6 +84,9 @@ app.use('/api/gaeste', gaesteRoutes);
 app.use('/api/google-reserve', googleReserveRoutes);
 app.use('/api/oeffnungszeiten', oeffnungszeitenRoutes);
 app.use('/api/bewertungen', bewertungenRoutes);
+app.use('/api/abo', aboRoutes);
+app.use('/api/inventur', inventurRoutes);
+app.use('/api/kss', kssRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });
@@ -125,4 +136,5 @@ httpServer.listen(PORT, () => {
   console.log(`Server läuft auf http://localhost:${PORT}`);
   starteErinnerungen();
   starteNoShowCron();
+  starteAboCron();
 });

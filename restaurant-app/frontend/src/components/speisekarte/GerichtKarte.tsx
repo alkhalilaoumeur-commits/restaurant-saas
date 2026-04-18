@@ -8,9 +8,10 @@ interface GerichtKarteProps {
   onBearbeiten: (gericht: Gericht) => void;
   onLoeschen: (id: string) => void;
   onExtras: (gericht: Gericht) => void;
+  onRezeptur: (gericht: Gericht) => void;
 }
 
-export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoeschen, onExtras }: GerichtKarteProps) {
+export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoeschen, onExtras, onRezeptur }: GerichtKarteProps) {
   const [bestaetigung, setBestaetigung] = useState(false);
 
   return (
@@ -54,6 +55,12 @@ export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoesch
             className="text-xs px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 hover:bg-violet-100 transition-all duration-200 font-medium"
           >
             Extras
+          </button>
+          <button
+            onClick={() => onRezeptur(gericht)}
+            className="text-xs px-2.5 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 dark:bg-teal-500/10 dark:text-teal-400 dark:hover:bg-teal-500/20 transition-all duration-200 font-medium"
+          >
+            Inventur
           </button>
           {!bestaetigung ? (
             <button

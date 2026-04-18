@@ -5,18 +5,8 @@ import { useThemeStore } from '../store/theme';
 import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
 import { Oeffnungszeit, Ausnahmetag } from '../types';
+import { useAbo, useRabattcodes, type RabattcodeInfo, type Rabattcode } from '../hooks/useAbo';
 
-const ABO_STATUS_LABEL: Record<string, string> = {
-  trial: 'Testphase',
-  active: 'Aktiv',
-  expired: 'Abgelaufen',
-};
-
-const ABO_STATUS_FARBE: Record<string, string> = {
-  trial: 'bg-blue-100 text-blue-700',
-  active: 'bg-green-100 text-green-700',
-  expired: 'bg-red-100 text-red-700',
-};
 
 function IconLizenz() {
   return (
@@ -74,6 +64,313 @@ function IconDarkMode() {
     </svg>
   );
 }
+
+// ─── Abo-Karte ────────────────────────────────────────────────────────────────
+
+function AboKarte() {
+  const { aboStatus, laeuftBis, preisCent, zahlungen, laden, checkout, codePruefen, neu } = useAbo();
+  const { codes: rabattcodes, erstellen, toggle, loeschen } = useRabattcodes();
+
+  const [codeInput, setCodeInput]       = useState('');
+  const [codeInfo, setCodeInfo]         = useState<RabattcodeInfo | null>(null);
+  const [codeFehler, setCodeFehler]     = useState('');
+  const [checkoutLaden, setCheckoutLaden] = useState(false);
+
+  // Neuer Rabattcode-Formular (Admin)
+  const [neuerCode, setNeuerCode]           = useState('');
+  const [neuerRabatt, setNeuerRabatt]       = useState(50);
+  const [neueMonate, setNeueMonate]         = useState(1);
+  const [neueMaxNutzungen, setNeueMaxNutzungen] = useState('');
+  const [codeErstellenLaden, setCodeErstellenLaden] = useState(false);
+
+  // URL-Param auswerten (Mollie Redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('abo') === 'success') {
+      neu();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [neu]);
+
+  const codeAnwenden = async () => {
+    setCodeFehler('');
+    setCodeInfo(null);
+    if (!codeInput.trim()) return;
+    try {
+      const info = await codePruefen(codeInput.trim());
+      setCodeInfo(info);
+    } catch {
+      setCodeFehler('Ungültiger oder abgelaufener Code');
+    }
+  };
+
+  const handleCheckout = async () => {
+    setCheckoutLaden(true);
+    try {
+      await checkout(codeInfo?.code);
+    } catch (e: unknown) {
+      alert((e as Error).message || 'Fehler beim Checkout');
+    } finally {
+      setCheckoutLaden(false);
+    }
+  };
+
+  const handleCodeErstellen = async () => {
+    if (!neuerCode.trim()) return;
+    setCodeErstellenLaden(true);
+    try {
+      await erstellen({
+        code: neuerCode.trim().toUpperCase(),
+        rabatt_prozent: neuerRabatt,
+        monate: neueMonate,
+        max_nutzungen: neueMaxNutzungen ? parseInt(neueMaxNutzungen) : null,
+      });
+      setNeuerCode(''); setNeuerRabatt(50); setNeueMonate(1); setNeueMaxNutzungen('');
+    } catch (e: unknown) {
+      alert((e as Error).message || 'Fehler beim Erstellen');
+    } finally {
+      setCodeErstellenLaden(false);
+    }
+  };
+
+  const statusFarbe = aboStatus === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+    : aboStatus === 'trial' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
+    : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400';
+
+  const statusLabel = aboStatus === 'active' ? 'Aktiv' : aboStatus === 'trial' ? 'Testphase' : 'Abgelaufen';
+
+  const endpreisCent = codeInfo ? codeInfo.endpreis_cent : preisCent;
+  const monateMitCode = codeInfo ? codeInfo.monate : 1;
+
+  if (laden) {
+    return (
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm animate-pulse">
+        <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-1/3 mb-4" />
+        <div className="h-3 bg-gray-100 dark:bg-white/5 rounded w-2/3" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 lg:col-span-2">
+
+      {/* Abo-Status-Karte */}
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400">
+            <IconLizenz />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Abo & Lizenz</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">Dein ServeFlow-Plan</p>
+          </div>
+          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusFarbe}`}>
+            {statusLabel}
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {laeuftBis && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 dark:text-slate-400">Läuft ab am</span>
+              <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
+                {new Date(laeuftBis).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-slate-400">Monatspreis</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
+              {(preisCent / 100).toFixed(2).replace('.', ',')} €
+            </span>
+          </div>
+        </div>
+
+        {/* Checkout-Bereich */}
+        {aboStatus !== 'active' && (
+          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-white/[0.06]">
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">Abo aktivieren</p>
+
+            {/* Rabattcode-Eingabe */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={codeInput}
+                onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeInfo(null); setCodeFehler(''); }}
+                onKeyDown={e => e.key === 'Enter' && codeAnwenden()}
+                placeholder="Rabattcode (optional)"
+                className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              />
+              <button
+                onClick={codeAnwenden}
+                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+              >
+                Prüfen
+              </button>
+            </div>
+
+            {codeFehler && <p className="text-xs text-red-500 mb-3">{codeFehler}</p>}
+
+            {/* Code-Info */}
+            {codeInfo && (
+              <div className="mb-3 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-sm">
+                <p className="font-semibold text-green-700 dark:text-green-400">
+                  ✓ Code <span className="font-mono">{codeInfo.code}</span> — {codeInfo.rabatt_prozent}% Rabatt
+                </p>
+                <p className="text-green-600 dark:text-green-500 text-xs mt-1">
+                  {codeInfo.monate} Monat{codeInfo.monate > 1 ? 'e' : ''} ·{' '}
+                  {codeInfo.endpreis_cent === 0
+                    ? 'Komplett gratis'
+                    : `${(codeInfo.endpreis_cent / 100).toFixed(2).replace('.', ',')} € statt ${(codeInfo.original_cent / 100).toFixed(2).replace('.', ',')} €`}
+                </p>
+              </div>
+            )}
+
+            {/* Preis-Zusammenfassung + Button */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-slate-400">Zu zahlen</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {endpreisCent === 0 ? 'Kostenlos' : `${(endpreisCent / 100).toFixed(2).replace('.', ',')} €`}
+                  <span className="text-sm font-normal text-gray-400 ml-1">/ {monateMitCode} Monat{monateMitCode > 1 ? 'e' : ''}</span>
+                </p>
+              </div>
+              <button
+                onClick={handleCheckout}
+                disabled={checkoutLaden}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {checkoutLaden ? 'Weiterleitung...' : endpreisCent === 0 ? 'Kostenlos aktivieren' : 'Jetzt bezahlen →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Abo verlängern (wenn aktiv) */}
+        {aboStatus === 'active' && (
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
+            <button
+              onClick={() => checkout()}
+              className="w-full py-2.5 rounded-xl border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+            >
+              Abo verlängern (+1 Monat)
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Zahlungshistorie */}
+      {zahlungen.length > 0 && (
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">Zahlungshistorie</p>
+          <div className="space-y-2">
+            {zahlungen.map(z => (
+              <div key={z.id} className="flex items-center justify-between text-sm">
+                <div>
+                  <span className="text-gray-700 dark:text-slate-300">
+                    {z.betrag_cent === 0 ? 'Gratis' : `${(z.betrag_cent / 100).toFixed(2).replace('.', ',')} €`}
+                  </span>
+                  {z.rabattcode && (
+                    <span className="ml-2 text-xs font-mono text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 px-1.5 py-0.5 rounded">
+                      {z.rabattcode}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    z.status === 'paid' ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                    : z.status === 'open' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400'
+                  }`}>
+                    {z.status === 'paid' ? 'Bezahlt' : z.status === 'open' ? 'Offen' : 'Fehlgeschlagen'}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(z.erstellt_am).toLocaleDateString('de-DE')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rabattcode-Verwaltung */}
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+        <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-4">Rabattcodes verwalten</p>
+
+        {/* Neuen Code erstellen */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <input
+            type="text"
+            value={neuerCode}
+            onChange={e => setNeuerCode(e.target.value)}
+            placeholder="CODE (z.B. SOMMER25)"
+            className="col-span-2 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          />
+          <div>
+            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rabatt %</label>
+            <input type="number" min={0} max={100} value={neuerRabatt} onChange={e => setNeuerRabatt(Number(e.target.value))}
+              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Monate</label>
+            <input type="number" min={1} value={neueMonate} onChange={e => setNeueMonate(Number(e.target.value))}
+              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Max. Nutzungen (leer = unbegrenzt)</label>
+            <input type="number" min={1} value={neueMaxNutzungen} onChange={e => setNeueMaxNutzungen(e.target.value)} placeholder="–"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
+          </div>
+        </div>
+        <button
+          onClick={handleCodeErstellen}
+          disabled={codeErstellenLaden || !neuerCode.trim()}
+          className="w-full py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-4"
+        >
+          {codeErstellenLaden ? 'Erstellt...' : '+ Code erstellen'}
+        </button>
+
+        {/* Bestehende Codes */}
+        {rabattcodes.length > 0 && (
+          <div className="space-y-2">
+            {rabattcodes.map((rc: Rabattcode) => (
+              <div key={rc.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
+                <div>
+                  <span className="text-sm font-mono font-bold text-gray-800 dark:text-slate-200">{rc.code}</span>
+                  <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">
+                    {rc.rabatt_prozent}% · {rc.monate} Mo.
+                    {rc.max_nutzungen ? ` · ${rc.nutzungen}/${rc.max_nutzungen}x` : ` · ${rc.nutzungen}x genutzt`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggle(rc.id, !rc.aktiv)}
+                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                      rc.aktiv
+                        ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400 hover:bg-red-100 hover:text-red-600'
+                        : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-slate-400 hover:bg-green-100 hover:text-green-600'
+                    }`}
+                  >
+                    {rc.aktiv ? 'Aktiv' : 'Inaktiv'}
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`Code "${rc.code}" löschen?`)) loeschen(rc.id); }}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Haupt-Komponente ─────────────────────────────────────────────────────────
 
 export default function Einstellungen() {
   const { restaurant, laden, aktualisieren } = useRestaurant();
@@ -195,37 +492,32 @@ export default function Einstellungen() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Lizenz-Karte */}
-        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400">
-              <IconLizenz />
+        {/* Kassensystem-Karte */}
+        <a
+          href="/einstellungen/kassensystem"
+          className="block bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm hover:dark:border-white/20 transition-colors group"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-cyan-100 dark:bg-cyan-500/15 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3M9 7V5a2 2 0 012-2h2m1 0h2a2 2 0 012 2v2M9 7h8" />
+              </svg>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Lizenz</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500">Dein aktueller Plan</p>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Kassensystem</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">orderbird, ready2order, Webhook</p>
             </div>
+            <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-200 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </div>
+          <p className="text-xs text-gray-400 dark:text-slate-500 leading-relaxed">
+            Bestellungen automatisch ans Kassensystem übertragen — kein manuelles Eintippen mehr.
+          </p>
+        </a>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-slate-400">Lizenzcode</span>
-              <span className="text-sm font-mono font-semibold text-gray-800 dark:text-slate-200">{restaurant.lizenz_code || '–'}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-slate-400">Abo-Status</span>
-              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${ABO_STATUS_FARBE[restaurant.abo_status] || 'bg-gray-100 text-gray-500'}`}>
-                {ABO_STATUS_LABEL[restaurant.abo_status] || restaurant.abo_status}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-slate-400">Registriert am</span>
-              <span className="text-sm text-gray-700 dark:text-slate-300">
-                {new Date(restaurant.erstellt_am).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Abo-Karte */}
+        <AboKarte />
 
         {/* Mitarbeiter-Nutzung */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
@@ -677,6 +969,86 @@ export default function Einstellungen() {
                 <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#818CF8]" />
                   Glasmorphismus
+                </span>
+              </div>
+            </button>
+
+            {/* ── QR-Menu (Violet App-Stil) ─────────────────────────────── */}
+            <button
+              disabled={layoutSpeichern}
+              onClick={async () => {
+                if (restaurant.layout_id === 'qr-menu') return;
+                setLayoutSpeichern(true);
+                try { await aktualisieren({ layout_id: 'qr-menu' }); } finally { setLayoutSpeichern(false); }
+              }}
+              className={`relative rounded-2xl p-4 text-left transition-all duration-200 ${
+                restaurant.layout_id === 'qr-menu'
+                  ? 'border-2 border-violet-400 bg-violet-50/50 dark:bg-violet-500/5 shadow-[0_0_20px_-5px] shadow-violet-500/20'
+                  : 'border-2 border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/40'
+              }`}
+            >
+              {/* Aktiv-Badge */}
+              {restaurant.layout_id === 'qr-menu' && (
+                <div className="absolute top-3 right-3">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-violet-600 dark:text-violet-300 bg-violet-100 dark:bg-violet-500/20 px-2 py-0.5 rounded-full">
+                    Aktiv
+                  </span>
+                </div>
+              )}
+
+              {/* Mini-Vorschau: Violet App-Stil mit Sidebar */}
+              <div className="w-full aspect-[3/2] rounded-xl bg-[#F7F6FF] p-1.5 mb-3 overflow-hidden flex gap-1.5">
+                {/* Linke Sidebar */}
+                <div className="w-6 flex flex-col gap-1 bg-white rounded-lg p-1">
+                  {[
+                    { active: true,  h: 'w-3' },
+                    { active: false, h: 'w-4' },
+                    { active: false, h: 'w-2' },
+                    { active: false, h: 'w-3' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex flex-col items-center gap-0.5">
+                      <div className={`w-4 h-4 rounded-md ${item.active ? 'bg-[#EDE8FF]' : 'bg-gray-100'}`} />
+                      <div className={`h-0.5 rounded ${item.h} ${item.active ? 'bg-[#7B61FF]' : 'bg-gray-200'}`} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Rechtes Grid */}
+                <div className="flex-1 grid grid-cols-2 gap-1">
+                  {[
+                    { color: 'bg-violet-100' },
+                    { color: 'bg-violet-50' },
+                    { color: 'bg-indigo-50' },
+                    { color: 'bg-purple-50' },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-white rounded-lg overflow-hidden flex flex-col">
+                      <div className={`flex-1 ${item.color}`} />
+                      <div className="px-1 py-0.5">
+                        <div className="h-1 w-5 rounded bg-gray-200" />
+                        <div className="flex items-center justify-between mt-0.5">
+                          <div className="h-1 w-3 rounded bg-[#7B61FF]/40" />
+                          <div className="w-2.5 h-2.5 rounded-md bg-[#7B61FF] flex items-center justify-center">
+                            <span className="text-[5px] text-white font-bold leading-none">+</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <h3 className="text-sm font-bold text-gray-800 dark:text-slate-200">QR-Menu</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                Violet App-Stil — Sidebar + 2-Spalten-Grid
+              </p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
+                  Violet
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#7B61FF]" />
+                  App-Stil
                 </span>
               </div>
             </button>

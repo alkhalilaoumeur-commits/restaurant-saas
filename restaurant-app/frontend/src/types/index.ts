@@ -454,7 +454,7 @@ export interface Theme {
 }
 
 /** Theme-ID eines der eingebauten Presets */
-export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal' | 'osteria' | 'editorial' | 'showcase';
+export type ThemePresetId = 'modern' | 'eleganz' | 'trattoria' | 'fresh' | 'street' | 'rustikal' | 'osteria' | 'editorial' | 'showcase' | 'qr-menu';
 
 // ─── Abwesenheit (datumsbezogene Auszeit) ────────────────────────────────────
 
@@ -517,6 +517,68 @@ export interface BewertungPublic {
   kommentar: string | null;
   antwort_text: string | null;
   google_bewertungs_link: string | null;
+}
+
+// ─── Inventur ────────────────────────────────────────────────────────────────
+
+export interface Lieferant {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  kontakt_email: string | null;
+  kontakt_telefon: string | null;
+  liefertage: string[];
+  notiz: string | null;
+  aktiv: boolean;
+  erstellt_am: string;
+}
+
+export interface InventarArtikel {
+  id: string;
+  restaurant_id: string;
+  lieferant_id: string | null;
+  lieferant_name?: string | null;
+  name: string;
+  kategorie: string;
+  einheit: string;
+  aktueller_bestand: number;
+  mindestbestand: number;
+  einkaufspreis: number | null;
+  aktiv: boolean;
+  erstellt_am: string;
+  unter_mindestbestand?: boolean;
+}
+
+export type LagerBewegungTyp = 'eingang' | 'abgang' | 'korrektur' | 'bestellung';
+
+export interface LagerBewegung {
+  id: string;
+  restaurant_id: string;
+  artikel_id: string;
+  artikel_name?: string;
+  einheit?: string;
+  typ: LagerBewegungTyp;
+  delta: number;
+  notiz: string | null;
+  erstellt_am: string;
+}
+
+export interface Rezeptur {
+  id: string;
+  gericht_id: string;
+  artikel_id: string;
+  artikel_name?: string;
+  einheit?: string;
+  menge: number;
+}
+
+export interface InventurAuswertung {
+  artikel_id: string;
+  artikel_name: string;
+  einheit: string;
+  eingang_gesamt: number;
+  abgang_gesamt: number;
+  kosten_gesamt: number;
 }
 
 // ─── Warenkorb (nur Frontend) ─────────────────────────────────────────────────

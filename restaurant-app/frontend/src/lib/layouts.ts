@@ -9,7 +9,7 @@ import { ThemePresetId } from '../types';
 //
 // Das Layout wird pro Restaurant in der DB gespeichert (Spalte `layout_id`).
 
-export type LayoutId = 'modern' | 'elegant-dunkel' | 'osteria' | 'editorial' | 'showcase';
+export type LayoutId = 'modern' | 'elegant-dunkel' | 'osteria' | 'editorial' | 'showcase' | 'qr-menu';
 
 export interface LayoutConfig {
   id: LayoutId;
@@ -18,7 +18,7 @@ export interface LayoutConfig {
   /** Welches Farb-Theme aus themes.ts benutzt wird */
   themeId: ThemePresetId;
   /** Kategorien: nebeneinander als Kacheln, untereinander als Balken, Pill-Tabs, oder nummerierte Liste */
-  kategorienAnzeige: 'grid' | 'liste' | 'pills' | 'editorial' | 'showcase';
+  kategorienAnzeige: 'grid' | 'liste' | 'pills' | 'editorial' | 'showcase' | 'qr-menu';
   /** Gerichte: nebeneinander als Cards oder untereinander als Zeilen */
   gerichteAnzeige: 'grid' | 'liste' | 'showcase';
 }
@@ -86,11 +86,23 @@ export const LAYOUTS: Record<LayoutId, LayoutConfig> = {
     kategorienAnzeige: 'showcase',
     gerichteAnzeige: 'showcase',
   },
+
+  // ── 6. QR-Menu ────────────────────────────────────────────────────────────────
+  // Violettes App-Design mit linker Kategorie-Sidebar und 2-Spalten-Gerichte-Grid.
+  // Inspiration: Webnum QR Menu UI Kit (Dribbble) — clean, mobile-first, App-Stil.
+  'qr-menu': {
+    id: 'qr-menu',
+    name: 'QR-Menu',
+    beschreibung: 'Violet App-Stil — linke Sidebar-Navigation, 2-Spalten-Grid',
+    themeId: 'qr-menu',
+    kategorienAnzeige: 'qr-menu',
+    gerichteAnzeige: 'grid',
+  },
 };
 
 export const DEFAULT_LAYOUT_ID: LayoutId = 'modern';
 
-export const LAYOUT_IDS: LayoutId[] = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase'];
+export const LAYOUT_IDS: LayoutId[] = ['modern', 'elegant-dunkel', 'osteria', 'editorial', 'showcase', 'qr-menu'];
 
 /** Gibt die Layout-Config für eine ID zurück, oder das Default-Layout */
 export function getLayout(id: string | null | undefined): LayoutConfig {
