@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import { Server as SocketServer } from 'socket.io';
 import { WartelisteModel } from '../models/Warteliste';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -140,7 +141,7 @@ export async function wartelisteNachruecken(
   restaurantId: string,
   datum: string,
   restaurantName: string,
-  io?: ReturnType<typeof import('socket.io').Server>
+  io?: SocketServer
 ): Promise<void> {
   const naechster = await WartelisteModel.naechsterWartender(restaurantId, datum);
   if (!naechster) return; // Warteliste leer
