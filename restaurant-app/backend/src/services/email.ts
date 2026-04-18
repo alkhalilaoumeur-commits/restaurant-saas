@@ -582,6 +582,33 @@ export async function kssAlertEmailSenden(
   });
 }
 
+/** 13. Warteliste — Benachrichtigung wenn Platz frei wird */
+export async function wartelisteBenachrichtigungSenden(
+  email: string,
+  gastName: string,
+  restaurantName: string,
+  datum: string,
+  personen: number
+): Promise<void> {
+  await senden({
+    an: email,
+    betreff: `🎉 Ein Tisch ist frei – ${restaurantName}`,
+    html: emailTemplate(`
+      ${heading('Ein Tisch ist frei geworden!')}
+      ${hallo(gastName)}
+      ${text(`Gute Neuigkeit! Bei <strong>${restaurantName}</strong> ist ein Tisch frei geworden. Sie stehen als Nächstes auf der Warteliste.`)}
+      ${infoBox([
+        `📅 ${datumFormatiert(datum)}`,
+        `👥 ${personen} ${personen === 1 ? 'Person' : 'Personen'}`,
+        `⏰ Bitte melden Sie sich innerhalb von <strong>30 Minuten</strong>`,
+      ])}
+      ${text('Bitte kontaktieren Sie das Restaurant direkt, um Ihre Reservierung zu bestätigen.')}
+      ${divider()}
+      ${hinweis('Diese Benachrichtigung wird automatisch gesendet, wenn eine Stornierung eingeht und Sie als Nächstes auf der Warteliste stehen. Wenn Sie kein Interesse mehr haben, können Sie diese E-Mail ignorieren.')}
+    `),
+  });
+}
+
 /** 12. Lieferanten-Bestellanfrage — Admin schickt Bestellung direkt an Lieferanten */
 export async function lieferantenBestellungSenden(daten: {
   lieferantEmail: string;

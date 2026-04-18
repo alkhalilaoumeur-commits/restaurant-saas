@@ -5,6 +5,7 @@ import { VerfuegbarkeitModel, verweilzeitBerechnen } from '../models/Verfuegbark
 import { GastModel } from '../models/Gast';
 import { BewertungModel } from '../models/Bewertung';
 import { bewertungsAnfrageSenden } from '../services/email';
+import { wartelisteNachruecken } from './warteliste';
 import { q, q1 } from '../models/db';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -222,6 +223,19 @@ router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
         }).then(bewertung =>
           bewertungsAnfrageSenden(r.email!, r.gast_name, bewertung.token)
         ).catch(e => console.error('[Bewertung] Fehler beim automatischen Senden:', e));
+      }
+    }
+
+    // ── Storniert/Abgeschlossen: Warteliste nachrücken ───────────────────────
+    if (status === 'storniert' || status === 'abgeschlossen') {
+      const datum = typeof r.datum === 'string' ? r.datum.slice(0, 10) : '';
+      if (datum) {
+        const restRow = await q1<{ name: string }>(
+          'SELECT name FROM restaurants WHERE id = $1', [req.auth!.restaurantId]
+        );
+        const io = req.app.get('io');
+        wartelisteNachruecken(req.auth!.restaurantId, datum, restRow?.name ?? '', io)
+          .catch((e) => console.error('[Warteliste Nachrücken]', e));
       }
     }
 

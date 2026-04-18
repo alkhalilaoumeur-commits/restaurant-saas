@@ -32,6 +32,7 @@ import Bewertungen from './pages/Bewertungen';
 import Bewertung from './pages/Bewertung';
 import Inventur from './pages/Inventur';
 import KassensystemEinstellungen from './pages/KassensystemEinstellungen';
+import Warteliste from './pages/Warteliste';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -94,6 +95,7 @@ export default function App() {
         <Route path="/gaeste"          element={<Gaeste />} />
         <Route path="/bewertungen"     element={<Bewertungen />} />
         <Route path="/inventur"        element={<Inventur />} />
+        <Route path="/warteliste"      element={<Warteliste />} />
         <Route path="/statistiken"    element={<Statistiken />} />
         <Route path="/einstellungen"  element={<Einstellungen />} />
         <Route path="/einstellungen/kassensystem" element={<KassensystemEinstellungen />} />

@@ -29,6 +29,7 @@ import bewertungenRoutes from './routes/bewertungen';
 import aboRoutes from './routes/abo';
 import inventurRoutes from './routes/inventur';
 import kssRoutes from './routes/kss';
+import wartelisteRoutes from './routes/warteliste';
 import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
 import { starteNoShowCron } from './services/no-show';
@@ -87,6 +88,7 @@ app.use('/api/bewertungen', bewertungenRoutes);
 app.use('/api/abo', aboRoutes);
 app.use('/api/inventur', inventurRoutes);
 app.use('/api/kss', kssRoutes);
+app.use('/api/warteliste', wartelisteRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });
