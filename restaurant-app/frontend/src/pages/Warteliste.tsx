@@ -151,7 +151,7 @@ export default function Warteliste() {
   const [formLaden, setFormLaden] = useState(false);
   const [filter, setFilter] = useState<'alle' | 'wartend' | 'bestaetigt' | 'storniert'>('alle');
 
-  const { eintraege, laden, fehler, neu_laden, hinzufuegen, bestaetigen, stornieren } = useWarteliste(datum);
+  const { eintraege, laden, fehler, hinzufuegen, bestaetigen, stornieren } = useWarteliste(datum);
 
   const gefiltertEintraege = filter === 'alle'
     ? eintraege
