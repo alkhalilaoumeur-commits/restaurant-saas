@@ -9,81 +9,15 @@ export interface Zahlung {
   betrag_cent: number;
   status: 'open' | 'paid' | 'failed' | 'cancelled' | 'expired';
   monate: number;
+  plan: 'basis' | 'standard' | 'pro' | null;
   rabattcode: string | null;
   erstellt_am: string;
   bezahlt_am: string | null;
 }
 
-export interface Rabattcode {
-  id: string;
-  code: string;
-  rabatt_prozent: number;
-  monate: number;
-  max_nutzungen: number | null;
-  nutzungen: number;
-  gueltig_bis: string | null;
-  aktiv: boolean;
-  erstellt_am: string;
-}
-
 // ─── AboModel ────────────────────────────────────────────────────────────────
 
 export const AboModel = {
-  // ── Rabattcodes ─────────────────────────────────────────────────────────────
-
-  /** Gibt einen gültigen Rabattcode zurück oder null */
-  async rabattcodePruefen(code: string): Promise<Rabattcode | null> {
-    const row = await q1<Rabattcode>(
-      `SELECT * FROM rabattcodes
-       WHERE code = $1
-         AND aktiv = true
-         AND (gueltig_bis IS NULL OR gueltig_bis > NOW())
-         AND (max_nutzungen IS NULL OR nutzungen < max_nutzungen)`,
-      [code.trim().toUpperCase()],
-    );
-    return row;
-  },
-
-  /** Erhöht den Nutzungszähler eines Codes */
-  async rabattcodeNutzen(code: string): Promise<void> {
-    await q(
-      `UPDATE rabattcodes SET nutzungen = nutzungen + 1 WHERE code = $1`,
-      [code.trim().toUpperCase()],
-    );
-  },
-
-  /** Alle Rabattcodes (Admin) */
-  async alleRabattcodes(): Promise<Rabattcode[]> {
-    return q<Rabattcode>('SELECT * FROM rabattcodes ORDER BY erstellt_am DESC', []);
-  },
-
-  /** Neuen Rabattcode erstellen */
-  async rabattcodeErstellen(data: {
-    code: string;
-    rabatt_prozent: number;
-    monate: number;
-    max_nutzungen: number | null;
-    gueltig_bis: string | null;
-  }): Promise<Rabattcode> {
-    const row = await q1<Rabattcode>(
-      `INSERT INTO rabattcodes (code, rabatt_prozent, monate, max_nutzungen, gueltig_bis)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [data.code.trim().toUpperCase(), data.rabatt_prozent, data.monate, data.max_nutzungen, data.gueltig_bis],
-    );
-    return row!;
-  },
-
-  /** Rabattcode aktivieren/deaktivieren */
-  async rabattcodeToggle(id: string, aktiv: boolean): Promise<void> {
-    await q(`UPDATE rabattcodes SET aktiv = $1 WHERE id = $2`, [aktiv, id]);
-  },
-
-  /** Rabattcode löschen */
-  async rabattcodeLoeschen(id: string): Promise<void> {
-    await q(`DELETE FROM rabattcodes WHERE id = $1`, [id]);
-  },
-
   // ── Zahlungen ────────────────────────────────────────────────────────────────
 
   /** Neue offene Zahlung anlegen (bevor Kunde zahlt) */
@@ -92,13 +26,14 @@ export const AboModel = {
     stripe_session_id: string;
     betrag_cent: number;
     monate: number;
+    plan: string;
     rabattcode: string | null;
   }): Promise<Zahlung> {
     const row = await q1<Zahlung>(
-      `INSERT INTO zahlungen (restaurant_id, stripe_session_id, betrag_cent, monate, rabattcode)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO zahlungen (restaurant_id, stripe_session_id, betrag_cent, monate, plan, rabattcode)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [data.restaurant_id, data.stripe_session_id, data.betrag_cent, data.monate, data.rabattcode],
+      [data.restaurant_id, data.stripe_session_id, data.betrag_cent, data.monate, data.plan, data.rabattcode],
     );
     return row!;
   },
@@ -114,15 +49,16 @@ export const AboModel = {
     );
     if (!zahlung) return; // Bereits verarbeitet (Stripe schickt Webhooks manchmal doppelt)
 
-    // 2. Restaurant-Abo verlängern
+    // 2. Restaurant-Abo verlängern + Plan setzen
     //    Wenn bereits aktiv und noch nicht abgelaufen → vom aktuellen Datum weiterzählen
     //    Wenn abgelaufen/neu → ab jetzt zählen
     await q(
       `UPDATE restaurants
        SET abo_status = 'active',
-           abo_laeuft_bis = GREATEST(NOW(), COALESCE(abo_laeuft_bis, NOW())) + ($1 * INTERVAL '1 month')
+           abo_plan = COALESCE($3, abo_plan),
+           abo_laeuft_bis = GREATEST(NOW(), COALESCE(abo_laeuft_bis, NOW())) + ($1 * INTERVAL '30 days')
        WHERE id = $2`,
-      [zahlung.monate, zahlung.restaurant_id],
+      [zahlung.monate, zahlung.restaurant_id, zahlung.plan],
     );
   },
 

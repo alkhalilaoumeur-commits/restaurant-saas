@@ -556,32 +556,6 @@ export async function mindestbestandAlarmSenden(
   });
 }
 
-/** 12. KSS-Fehler-Alert — wird gesendet wenn 3+ Pushes hintereinander scheitern */
-export async function kssAlertEmailSenden(
-  adminEmail: string,
-  restaurantName: string,
-  anbieter: string,
-  fehler: string
-): Promise<void> {
-  await senden({
-    an: adminEmail,
-    betreff: `⚠️ Kassensystem-Verbindung fehlgeschlagen — ${restaurantName}`,
-    html: emailTemplate(`
-      ${heading('Kassensystem nicht erreichbar')}
-      ${text(`Die Verbindung zwischen ServeFlow und dem Kassensystem <strong>${anbieter}</strong> bei <strong>${restaurantName}</strong> ist 3-mal hintereinander fehlgeschlagen. Neue Bestellungen werden <strong>nicht</strong> automatisch an die Kasse übertragen.`)}
-      ${infoBox([
-        `🏪 Restaurant: <strong>${restaurantName}</strong>`,
-        `🖥️ Kassensystem: <strong>${anbieter}</strong>`,
-        `❌ Fehler: <strong>${fehler}</strong>`,
-      ])}
-      ${text('Bitte prüfe die Kassensystem-Einstellungen und stelle die Verbindung wieder her.')}
-      ${primaryButton('Kassensystem-Einstellungen öffnen', `${FRONTEND_URL}/einstellungen`)}
-      ${divider()}
-      ${hinweis('Diese Benachrichtigung wird gesendet, sobald 3 aufeinanderfolgende Übertragungen fehlschlagen. Bestellungen gehen in ServeFlow weiterhin ein — sie müssen jedoch manuell in die Kasse übertragen werden.')}
-    `),
-  });
-}
-
 /** 13. Warteliste — Benachrichtigung wenn Platz frei wird */
 export async function wartelisteBenachrichtigungSenden(
   email: string,

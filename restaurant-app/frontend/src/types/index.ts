@@ -30,6 +30,7 @@ export interface Restaurant {
   lizenz_code: string | null;
   max_mitarbeiter: number;
   abo_status: 'trial' | 'active' | 'expired';
+  abo_plan: 'basis' | 'standard' | 'pro';
   buchungsintervall_min: number;
   tisch_dauer_min: number;
   max_gleichzeitige_reservierungen: number | null;

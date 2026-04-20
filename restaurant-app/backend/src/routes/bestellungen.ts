@@ -7,7 +7,6 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { io } from '../server';
 import { RezepturModel } from '../models/Inventur';
 import { mindestbestandAlarmSenden } from '../services/email';
-import { bestellungAnKssSenden } from '../services/kss';
 
 interface PositionExtras {
   extra_id: string;
@@ -140,30 +139,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
   }
 
   io.to(`restaurant:${restaurant_id}`).emit('neue_bestellung', { bestellungId, tisch_id });
-
-  // KSS-Push: Bestellung asynchron ans Kassensystem senden (non-blocking)
-  // Läuft im Hintergrund — Fehler hier brechen die API-Response nicht ab
-  const tischRow = await q1<{ tisch_nummer: number }>(
-    'SELECT tisch_nummer FROM tische WHERE id = $1',
-    [tisch_id]
-  );
-  bestellungAnKssSenden({
-    id: bestellungId,
-    restaurant_id,
-    tisch_nummer: tischRow?.tisch_nummer ?? 0,
-    anmerkung: anmerkung || null,
-    gesamtpreis,
-    positionen: (positionen as { gericht_id: string; menge: number; extras?: { extra_id: string }[] }[]).map((pos) => ({
-      name: gerichte.find(g => g.id === pos.gericht_id)?.name ?? pos.gericht_id,
-      menge: pos.menge,
-      einzelpreis: (preisMap.get(pos.gericht_id) ?? 0) +
-        (pos.extras?.reduce((sum, e) => sum + (extrasPreisMap.get(e.extra_id)?.aufpreis ?? 0), 0) ?? 0),
-      extras: (pos.extras ?? []).map(e => ({
-        name: extrasPreisMap.get(e.extra_id)?.name ?? e.extra_id,
-        aufpreis: extrasPreisMap.get(e.extra_id)?.aufpreis ?? 0,
-      })),
-    })),
-  }).catch(e => console.error('[KSS] Fehler beim Starten des KSS-Push:', e));
 
   res.status(201).json({ id: bestellungId, gesamtpreis });
 }));

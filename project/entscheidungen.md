@@ -61,3 +61,11 @@
 - Erinnerungen: **node-cron** im Express-Prozess (alle 15 Min), nicht separater Service
 - Widget: **iframe** auf `/buchen/:restaurantId` — kein separates Build nötig
 - DSGVO: Personenbezogene Daten (Name, Email, Telefon) werden 30 Tage nach Reservierungsdatum automatisch gelöscht (Cron täglich 3:00)
+
+## Abo-Modell: 3 Pläne (2026-04-18)
+- Kein Freemium — alle 3 Pläne sind vollwertige Bezahl-Pläne
+- Zahlungsanbieter: Stripe (bereits integriert)
+- **Basis (29€/Monat):** Reservierungen (unbegrenzt), Online-Buchungsseite, Speisekarte, Tischplan, Walk-ins, Öffnungszeiten, E-Mail-Bestätigung, bis 3 Mitarbeiter
+- **Standard (59€/Monat):** Alles aus Basis + QR-Bestellung, Gästebuch/CRM, Bewertungsmanagement, Warteliste, erweiterte Statistiken, SMS-Erinnerungen, bis 10 Mitarbeiter
+- **Pro (99€/Monat):** Alles aus Standard + Dienstplan (inkl. Templates + Excel-Import), Inventur, Kassensystem, unbegrenzt Mitarbeiter
+- Technisch umzusetzen: `abo_plan` Spalte (basis/standard/pro) auf `restaurants`, Feature-Guard Middleware im Backend, Paywall-Komponente im Frontend

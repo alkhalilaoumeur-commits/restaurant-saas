@@ -31,8 +31,10 @@ import Gaeste from './pages/Gaeste';
 import Bewertungen from './pages/Bewertungen';
 import Bewertung from './pages/Bewertung';
 import Inventur from './pages/Inventur';
-import KassensystemEinstellungen from './pages/KassensystemEinstellungen';
 import Warteliste from './pages/Warteliste';
+import Erlebnisse from './pages/Erlebnisse';
+import ErlebnisDetail from './pages/ErlebnisDetail';
+import ErlebnisBestaetigung from './pages/ErlebnisBestaetigung';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -82,6 +84,8 @@ export default function App() {
       <Route path="/reservierung/:token/stornieren" element={<ReservierungStornieren />} />
       <Route path="/reservierung/:token/aendern" element={<ReservierungUmbuchen />} />
       <Route path="/bewertung/:token" element={<Bewertung />} />
+      <Route path="/erlebnis/:restaurantId/:erlebnisId" element={<ErlebnisDetail />} />
+      <Route path="/erlebnis-bestaetigung/:token" element={<ErlebnisBestaetigung />} />
 
       {/* Geschützter Admin-Bereich */}
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
@@ -96,9 +100,9 @@ export default function App() {
         <Route path="/bewertungen"     element={<Bewertungen />} />
         <Route path="/inventur"        element={<Inventur />} />
         <Route path="/warteliste"      element={<Warteliste />} />
+        <Route path="/erlebnisse"      element={<Erlebnisse />} />
         <Route path="/statistiken"    element={<Statistiken />} />
         <Route path="/einstellungen"  element={<Einstellungen />} />
-        <Route path="/einstellungen/kassensystem" element={<KassensystemEinstellungen />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

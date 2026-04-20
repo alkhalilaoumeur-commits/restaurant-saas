@@ -9,6 +9,8 @@ import { usePersonalbedarf } from '../hooks/usePersonalbedarf';
 import { useSchichtTemplates } from '../hooks/useSchichtTemplates';
 import { useAuthStore } from '../store/auth';
 import { Schicht, Schichttausch, MitarbeiterDetail, SchichtTemplate } from '../types';
+import { usePlan } from '../hooks/usePlan';
+import PaywallKarte from '../components/PaywallKarte';
 
 // ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
@@ -1201,6 +1203,8 @@ function ExcelImportModal({ onSchliessen, onImportiert }: ExcelImportModalProps)
 // ─── Hauptkomponente ──────────────────────────────────────────────────────────
 
 export default function Dienstplan() {
+  const { hatZugang, laden: planLaden } = usePlan();
+
   // ── Ansichts-Modus ─────────────────────────────────────────────────────────
   const [ansicht, setAnsicht] = useState<'woche' | 'monat'>('woche');
   const [monatReferenz, setMonatReferenz] = useState(() => new Date());
@@ -1453,6 +1457,10 @@ export default function Dienstplan() {
   const fremdeOffeneTausche = offeneTausche.filter(t => t.anbieter_id !== ichId);
 
   // ── Render ────────────────────────────────────────────────────────────────
+  if (!planLaden && !hatZugang('dienstplan')) {
+    return <PaywallKarte feature="Dienstplan" benoetigterPlan="standard" beschreibung="Schichtplanung, Tauschbörse und automatische Personalbedarf-Planung." />;
+  }
+
   return (
     <div className="animate-fade-in-up">
       <Topbar

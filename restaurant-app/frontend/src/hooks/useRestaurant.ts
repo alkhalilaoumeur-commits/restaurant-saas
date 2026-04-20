@@ -64,6 +64,7 @@ const DEMO_RESTAURANT: Restaurant = {
   lizenz_code: 'REST-DEMO',
   max_mitarbeiter: 5,
   abo_status: 'trial',
+  abo_plan: 'pro',
   buchungsintervall_min: 15,
   tisch_dauer_min: 90,
   max_gleichzeitige_reservierungen: null,

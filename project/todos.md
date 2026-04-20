@@ -106,11 +106,11 @@
 - [x] Google Reserve Integration (Option A aktiv + Option B Infrastruktur bereit) ✅ erledigt 2026-04-11
 
 ### Phase C: Differenzierung
-- [ ] Warteliste (Walk-in + Online, automatisches Nachruecken bei Stornierung, SMS-Benachrichtigung)
+- [x] Warteliste (Walk-in + Online, automatisches Nachruecken per Email) ✅ erledigt 2026-04-18
 - [x] Walk-in-Management (Laufkundschaft digital erfassen, Wartezeit-Schaetzung) ✅ erledigt 2026-04-09
-- [ ] Reservierungs-basierte Personalplanung (Alleinstellungsmerkmal! Reservierungen → Personalbedarf)
+- [x] Reservierungs-basierte Personalplanung (Reservierungen → Personalbedarf-Empfehlung) ✅ erledigt 2026-04-09 (Phase 7)
 - [x] Bewertungsmanagement (Feedback intern → bei positiv → Google-Bewertung vorschlagen) ✅ erledigt 2026-04-15
-- [ ] Erlebnis-Buchung (Menue + Tisch als Prepaid-Paket, eliminiert No-Shows)
+- [x] Erlebnis-Buchung (Erlebnis-Pakete + 3-Schritt-Buchung + Stripe-Prepayment) ✅ erledigt 2026-04-19
 
 ## Extras/Modifier-System ✅ (erledigt 2026-04-08)
 - [x] DB-Schema: extras_gruppen + extras + bestellposition_extras Tabellen ✅
@@ -190,7 +190,74 @@
 - [x] Bestellvorschläge (Artikel unter Mindestbestand — rotes Banner im Dashboard) ✅
 - [x] Inventur-Auswertung (Verbrauch + Kosten pro 7/14/30/90 Tage) ✅
 
+## Phase 10 – Abo-Pläne (Basis / Standard / Pro) ✅ erledigt 2026-04-18
+- [x] DB-Migration: `abo_plan` Spalte auf `restaurants` + `plan` auf `zahlungen` ✅
+- [x] Backend: `/api/abo/checkout` — Plan als Parameter, Preis aus PLAN_PREISE (29€/59€/99€) ✅
+- [x] Backend: `/api/abo/status` gibt `abo_plan` + `plan_preise` zurück ✅
+- [x] Backend: `zahlungAbschliessen` setzt `abo_plan` beim Restaurant ✅
+- [x] Frontend: `usePlan()` Hook — `hatZugang(feature)` prüft Plan-Rang ✅
+- [x] Frontend: `PaywallKarte` Komponente — gesperrtes Feature + Upgrade-Hinweis ✅
+- [x] Frontend: Einstellungen Abo-Tab — 3 Plan-Karten (Basis/Standard/Pro) mit Features ✅
+- [x] Frontend: Guards auf Inventur (Pro), Erlebnisse (Pro), Gäste-CRM (Standard), Dienstplan (Standard) ✅
+- [ ] Stripe: 3 Produkte + Preise anlegen (29€, 59€, 99€) im Stripe-Dashboard (manuell)
+- [ ] Backend: Mitarbeiter-Limit pro Plan API-seitig durchsetzen (Basis: 3, Standard: 10)
+
+## Phase 11 – Kassensystem-Integration ⏸️ ZURÜCKGESTELLT (2026-04-20)
+
+> Code wurde aus der App entfernt. Grund: ready2order nutzt OAuth-Flow (kein einfacher API-Key), orderbird hat keine öffentliche API. Erst echte Partner-Zugänge holen, dann korrekt implementieren.
+> DB-Tabellen (`kss_konfiguration`, `kss_log`) bleiben in der DB — kein Datenverlust.
+
+### Vorarbeit erledigt (Konzept + erster Code-Entwurf)
+- [x] Architektur definiert: Generic Webhook + Adapter-Pattern + AES-256 Verschlüsselung + 3x Retry + Alert-Email
+- [x] Adapter-Entwürfe: orderbird, ready2order, Generic Webhook
+
+### Nächste Schritte wenn wir es angehen
+- [ ] **Voraussetzung:** Developer Token bei ready2order beantragen (ready2order.com/en/api/)
+- [ ] **Voraussetzung:** ISV-Partner-Antrag bei orderbird stellen (orderbird.com/en/isv-partner-request) + Email an development@orderbird.com
+- [ ] **Voraussetzung:** Lightspeed Developer Portal registrieren (developers.lightspeedhq.com)
+- [ ] OAuth-Flow für ready2order implementieren (3-Stufen: Developer Token → Grant Token → Account Token)
+- [ ] Adapter korrekt nach echten API-Docs bauen (orderbird, ready2order, Lightspeed)
+- [ ] Rückrichtung: Zahlungen von Kasse → ServeFlow Status auf 'bezahlt' setzen (Webhooks)
+- [ ] Menü-Sync: Speisekarte aus KSS importieren
+- [ ] Custom-Integration als Paid Service (299€ einmalig für andere Systeme mit API)
+- [ ] Persistent Retry-Queue (DB-basiert, überlebt Server-Neustart)
+
 ## Irgendwann
 - [ ] Mobile App (falls gewünscht)
 - [ ] Kundenbewertungen
 - [ ] Wartezeit-Schätzung
+
+## ServeFlow 2.0 – Ideen (noch besprechen, nicht umsetzen!)
+
+> ⚠️ Diese Punkte sind NICHT priorisiert. Vor Umsetzung: mit echten Restaurants validieren und gemeinsam entscheiden. Gedacht als ServeFlow 2.0 nach erstem stabilen Release.
+
+### 💰 Umsatz-Features
+- [ ] Trinkgeld-System — Gäste können bei Zahlung digital Trinkgeld geben (%, feste Beträge)
+- [ ] Split-Bill — Rechnung auf mehrere Personen aufteilen
+- [ ] Prepayment bei Reservierung — Anzahlung für große Gruppen (ab 6 Personen) direkt bei Buchung
+- [ ] Bon-Drucker-Anbindung — ESC/POS-Protokoll für Küchenbons (Star, Epson)
+- [ ] Tagesangebote / Happy Hour — zeitgesteuerte Rabatte auf der Bestellseite
+
+### 📊 Daten & Insights
+- [ ] Kassenbuch-Export — Tagesabschluss als PDF/CSV für Steuerberater
+- [ ] Personalkosten vs. Umsatz Ratio — live im Dashboard (Ziel: unter 30%)
+- [ ] Gerichtanalyse — welche Gerichte werden zusammen bestellt (Cross-Sell-Hinweise)
+- [ ] Auslastungs-Heatmap — wann ist das Restaurant voll (nach Wochentag/Stunde)
+
+### 📱 Gäste-Erlebnis
+- [ ] Digitale Speisekarte ohne Bestellfunktion — reiner Anzeige-Modus
+- [ ] Allergen-Filter auf Bestellseite — Gäste filtern nach Laktose/Gluten etc.
+- [ ] Geburtstagsautomatisierung — Email/SMS am Geburtstag mit Rabattcode
+- [ ] Loyalty-Punkte — digitale Stempelkarte (10 Besuche → 1 gratis)
+- [ ] Gast-Feedback nach Besuch — automatische Email 2h nach Abreise
+
+### 🔧 Operations
+- [ ] Küchen-Display-System (KDS) — separater Bildschirm für Küche statt Bon-Drucker
+- [ ] Inventur-Warnschwellen — Push wenn Bestand unter X fällt (Echtzeit)
+- [ ] Tischstatus-Timeline — wann bestellt, wann geliefert, wann bezahlt
+- [ ] Öffnungszeiten-Ausnahmen — Feiertage, Betriebsurlaub automatisch sperren
+
+### 🤝 Integrationen
+- [ ] DATEV-Export — Buchhaltungsdaten für deutschen Steuerberater
+- [ ] Meta/Google Ads Conversion-Tracking — Reservierungen als Events
+- [ ] Zapier/Make-Webhook — für externe Automatisierungen

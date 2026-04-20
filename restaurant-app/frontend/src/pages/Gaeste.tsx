@@ -5,6 +5,8 @@ import Modal from '../components/layout/Modal';
 import { useGaeste } from '../hooks/useGaeste';
 import { useAuthStore } from '../store/auth';
 import { Gast, GastMitReservierungen, GAST_TAGS } from '../types';
+import { usePlan } from '../hooks/usePlan';
+import PaywallKarte from '../components/PaywallKarte';
 
 // ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
@@ -385,6 +387,7 @@ function GastKarte({ gast, onClick }: { gast: Gast; onClick: () => void }) {
 // ─── Hauptseite ───────────────────────────────────────────────────────────────
 
 export default function Gaeste() {
+  const { hatZugang, laden: planLaden } = usePlan();
   const { gaeste, laden, erstellen, aktualisieren, loeschen, profil } = useGaeste();
   const location = useLocation();
   const token = useAuthStore((s) => s.token);
@@ -495,6 +498,10 @@ export default function Gaeste() {
   const stammgaeste = gaeste.filter((g) => g.besuche >= 3).length;
   const vips = gaeste.filter((g) => g.tags.includes('VIP')).length;
   const noShows = gaeste.filter((g) => g.tags.includes('No-Show')).length;
+
+  if (!planLaden && !hatZugang('gaeste_crm')) {
+    return <PaywallKarte feature="Gäste-CRM" benoetigterPlan="standard" beschreibung="Gästeprofil, Besuchshistorie, Tags und automatische Wiederkehrerkennung." />;
+  }
 
   return (
     <div className="animate-fade-in-up">

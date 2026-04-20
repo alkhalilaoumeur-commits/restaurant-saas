@@ -5,7 +5,7 @@ import { useThemeStore } from '../store/theme';
 import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
 import { Oeffnungszeit, Ausnahmetag } from '../types';
-import { useAbo, useRabattcodes, type RabattcodeInfo, type Rabattcode } from '../hooks/useAbo';
+import { useAbo, type RabattcodeInfo } from '../hooks/useAbo';
 
 
 function IconLizenz() {
@@ -67,37 +67,60 @@ function IconDarkMode() {
 
 // ─── Abo-Karte ────────────────────────────────────────────────────────────────
 
+const PLAN_FEATURES: Record<string, string[]> = {
+  basis: [
+    'QR-Code Bestellseite',
+    'Speisekarte verwalten',
+    'Tischplan & Reservierungen',
+    'Bestellungen live',
+    'Bis zu 3 Mitarbeiter',
+  ],
+  standard: [
+    'Alles aus Basis',
+    'Bis zu 10 Mitarbeiter',
+    'Dienstplan & Schichtplanung',
+    'Gäste-CRM',
+    'Floor Plan Editor',
+  ],
+  pro: [
+    'Alles aus Standard',
+    'Unbegrenzte Mitarbeiter',
+    'Inventur & Lager',
+    'Erlebnis-Buchungen (Stripe)',
+  ],
+};
+
 function AboKarte() {
-  const { aboStatus, laeuftBis, preisCent, zahlungen, laden, checkout, codePruefen, neu } = useAbo();
-  const { codes: rabattcodes, erstellen, toggle, loeschen } = useRabattcodes();
+  const { aboStatus, aboPlan, laeuftBis, planPreise, zahlungen, laden, checkout, codePruefen, neu } = useAbo();
+  const [gewaehlterPlan, setGewaehlterPlan] = useState<string>('');
+  const [codeInput, setCodeInput]           = useState('');
+  const [codeInfo, setCodeInfo]             = useState<RabattcodeInfo | null>(null);
+  const [codeFehler, setCodeFehler]         = useState('');
+  const [checkoutLaden, setCheckoutLaden]   = useState(false);
 
-  const [codeInput, setCodeInput]       = useState('');
-  const [codeInfo, setCodeInfo]         = useState<RabattcodeInfo | null>(null);
-  const [codeFehler, setCodeFehler]     = useState('');
-  const [checkoutLaden, setCheckoutLaden] = useState(false);
-
-  // Neuer Rabattcode-Formular (Admin)
-  const [neuerCode, setNeuerCode]           = useState('');
-  const [neuerRabatt, setNeuerRabatt]       = useState(50);
-  const [neueMonate, setNeueMonate]         = useState(1);
-  const [neueMaxNutzungen, setNeueMaxNutzungen] = useState('');
-  const [codeErstellenLaden, setCodeErstellenLaden] = useState(false);
-
-  // URL-Param auswerten (Mollie Redirect)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('abo') === 'success') {
       neu();
       window.history.replaceState({}, '', window.location.pathname);
     }
+    // Tab-Param auswerten
+    if (params.get('tab') === 'abo') {
+      window.history.replaceState({}, '', window.location.pathname + '?tab=abo');
+    }
   }, [neu]);
+
+  // Wenn Plan noch nicht gewählt → aktuellen Plan vorauswählen
+  useEffect(() => {
+    if (!gewaehlterPlan && aboPlan) setGewaehlterPlan(aboPlan);
+  }, [aboPlan, gewaehlterPlan]);
 
   const codeAnwenden = async () => {
     setCodeFehler('');
     setCodeInfo(null);
     if (!codeInput.trim()) return;
     try {
-      const info = await codePruefen(codeInput.trim());
+      const info = await codePruefen(codeInput.trim(), gewaehlterPlan);
       setCodeInfo(info);
     } catch {
       setCodeFehler('Ungültiger oder abgelaufener Code');
@@ -105,31 +128,14 @@ function AboKarte() {
   };
 
   const handleCheckout = async () => {
+    if (!gewaehlterPlan) return;
     setCheckoutLaden(true);
     try {
-      await checkout(codeInfo?.code);
+      await checkout(codeInfo?.code, gewaehlterPlan);
     } catch (e: unknown) {
       alert((e as Error).message || 'Fehler beim Checkout');
     } finally {
       setCheckoutLaden(false);
-    }
-  };
-
-  const handleCodeErstellen = async () => {
-    if (!neuerCode.trim()) return;
-    setCodeErstellenLaden(true);
-    try {
-      await erstellen({
-        code: neuerCode.trim().toUpperCase(),
-        rabatt_prozent: neuerRabatt,
-        monate: neueMonate,
-        max_nutzungen: neueMaxNutzungen ? parseInt(neueMaxNutzungen) : null,
-      });
-      setNeuerCode(''); setNeuerRabatt(50); setNeueMonate(1); setNeueMaxNutzungen('');
-    } catch (e: unknown) {
-      alert((e as Error).message || 'Fehler beim Erstellen');
-    } finally {
-      setCodeErstellenLaden(false);
     }
   };
 
@@ -139,12 +145,13 @@ function AboKarte() {
 
   const statusLabel = aboStatus === 'active' ? 'Aktiv' : aboStatus === 'trial' ? 'Testphase' : 'Abgelaufen';
 
-  const endpreisCent = codeInfo ? codeInfo.endpreis_cent : preisCent;
+  const planPreisCent = gewaehlterPlan ? (planPreise[gewaehlterPlan]?.cent ?? 2900) : 2900;
+  const endpreisCent  = codeInfo ? codeInfo.endpreis_cent : planPreisCent;
   const monateMitCode = codeInfo ? codeInfo.monate : 1;
 
   if (laden) {
     return (
-      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm animate-pulse">
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm animate-pulse lg:col-span-2">
         <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-1/3 mb-4" />
         <div className="h-3 bg-gray-100 dark:bg-white/5 rounded w-2/3" />
       </div>
@@ -154,75 +161,114 @@ function AboKarte() {
   return (
     <div className="space-y-4 lg:col-span-2">
 
-      {/* Abo-Status-Karte */}
+      {/* Status-Header */}
       <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center text-violet-600 dark:text-violet-400">
             <IconLizenz />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Abo & Lizenz</p>
-            <p className="text-xs text-gray-400 dark:text-slate-500">Dein ServeFlow-Plan</p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+              ServeFlow {aboPlan ? aboPlan.charAt(0).toUpperCase() + aboPlan.slice(1) : ''}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">Dein aktueller Plan</p>
           </div>
           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusFarbe}`}>
             {statusLabel}
           </span>
         </div>
-
-        <div className="space-y-3">
-          {laeuftBis && (
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-slate-400">Läuft ab am</span>
-              <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
-                {new Date(laeuftBis).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-              </span>
-            </div>
-          )}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-slate-400">Monatspreis</span>
-            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
-              {(preisCent / 100).toFixed(2).replace('.', ',')} €
+        {laeuftBis && (
+          <p className="text-xs text-gray-500 dark:text-slate-400">
+            Läuft ab am <span className="font-semibold text-gray-700 dark:text-slate-300">
+              {new Date(laeuftBis).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
+          </p>
+        )}
+      </div>
+
+      {/* Plan-Auswahl */}
+      <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 px-1">Plan wählen</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {(['basis', 'standard', 'pro'] as const).map((plan) => {
+          const preis = planPreise[plan];
+          const aktiv = gewaehlterPlan === plan;
+          const istAktuell = aboPlan === plan;
+          return (
+            <button
+              key={plan}
+              onClick={() => { setGewaehlterPlan(plan); setCodeInfo(null); }}
+              className={`text-left rounded-2xl p-4 border-2 transition-all ${
+                aktiv
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                  : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:border-gray-300 dark:hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">{plan}</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                    {(preis.cent / 100).toFixed(0)} €
+                    <span className="text-xs font-normal text-gray-400 dark:text-slate-500 ml-1">/Monat</span>
+                  </p>
+                </div>
+                {istAktuell && (
+                  <span className="text-xs bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full font-medium">
+                    Aktuell
+                  </span>
+                )}
+              </div>
+              <ul className="space-y-1">
+                {PLAN_FEATURES[plan].map((f) => (
+                  <li key={f} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-slate-400">
+                    <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Checkout-Bereich */}
+      {gewaehlterPlan && (
+        <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">
+            {aboStatus === 'active' ? 'Plan wechseln / verlängern' : 'Abo aktivieren'}
+          </p>
+
+          {/* Rabattcode-Eingabe */}
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              value={codeInput}
+              onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeInfo(null); setCodeFehler(''); }}
+              onKeyDown={e => e.key === 'Enter' && codeAnwenden()}
+              placeholder="Rabattcode (optional)"
+              className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
+            <button
+              onClick={codeAnwenden}
+              className="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+            >
+              Prüfen
+            </button>
           </div>
-        </div>
 
-        {/* Checkout-Bereich */}
-        {aboStatus !== 'active' && (
-          <div className="mt-5 pt-5 border-t border-gray-100 dark:border-white/[0.06]">
-            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-3">Abo aktivieren</p>
+          {codeFehler && <p className="text-xs text-red-500 mb-3">{codeFehler}</p>}
 
-            {/* Rabattcode-Eingabe */}
-            <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={codeInput}
-                onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeInfo(null); setCodeFehler(''); }}
-                onKeyDown={e => e.key === 'Enter' && codeAnwenden()}
-                placeholder="Rabattcode (optional)"
-                className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              />
-              <button
-                onClick={codeAnwenden}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
-              >
-                Prüfen
-              </button>
-            </div>
-
-            {codeFehler && <p className="text-xs text-red-500 mb-3">{codeFehler}</p>}
-
-            {/* Code-Info */}
-            {codeInfo && (
-              <div className="mb-3 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-sm">
-                <p className="font-semibold text-green-700 dark:text-green-400">
-                  ✓ Code <span className="font-mono">{codeInfo.code}</span> — {codeInfo.rabatt_prozent}% Rabatt
-                </p>
-                <p className="text-green-600 dark:text-green-500 text-xs mt-1">
-                  {codeInfo.monate} Monat{codeInfo.monate > 1 ? 'e' : ''} ·{' '}
-                  {codeInfo.endpreis_cent === 0
-                    ? 'Komplett gratis'
-                    : `${(codeInfo.endpreis_cent / 100).toFixed(2).replace('.', ',')} € statt ${(codeInfo.original_cent / 100).toFixed(2).replace('.', ',')} €`}
-                </p>
+          {/* Code-Info */}
+          {codeInfo && (
+            <div className="mb-3 p-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 text-sm">
+              <p className="font-semibold text-green-700 dark:text-green-400">
+                ✓ Code <span className="font-mono">{codeInfo.code}</span> — {codeInfo.rabatt_prozent}% Rabatt
+              </p>
+              <p className="text-green-600 dark:text-green-500 text-xs mt-1">
+                {codeInfo.monate} Monat{codeInfo.monate > 1 ? 'e' : ''} ·{' '}
+                {codeInfo.endpreis_cent === 0
+                  ? 'Komplett gratis'
+                  : `${(codeInfo.endpreis_cent / 100).toFixed(2).replace('.', ',')} € statt ${(codeInfo.original_cent / 100).toFixed(2).replace('.', ',')} €`}
+              </p>
               </div>
             )}
 
@@ -245,19 +291,6 @@ function AboKarte() {
             </div>
           </div>
         )}
-
-        {/* Abo verlängern (wenn aktiv) */}
-        {aboStatus === 'active' && (
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/[0.06]">
-            <button
-              onClick={() => checkout()}
-              className="w-full py-2.5 rounded-xl border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-            >
-              Abo verlängern (+1 Monat)
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Zahlungshistorie */}
       {zahlungen.length > 0 && (
@@ -294,78 +327,6 @@ function AboKarte() {
         </div>
       )}
 
-      {/* Rabattcode-Verwaltung */}
-      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
-        <p className="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-4">Rabattcodes verwalten</p>
-
-        {/* Neuen Code erstellen */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <input
-            type="text"
-            value={neuerCode}
-            onChange={e => setNeuerCode(e.target.value)}
-            placeholder="CODE (z.B. SOMMER25)"
-            className="col-span-2 px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-          />
-          <div>
-            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Rabatt %</label>
-            <input type="number" min={0} max={100} value={neuerRabatt} onChange={e => setNeuerRabatt(Number(e.target.value))}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Monate</label>
-            <input type="number" min={1} value={neueMonate} onChange={e => setNeueMonate(Number(e.target.value))}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
-          </div>
-          <div className="col-span-2">
-            <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Max. Nutzungen (leer = unbegrenzt)</label>
-            <input type="number" min={1} value={neueMaxNutzungen} onChange={e => setNeueMaxNutzungen(e.target.value)} placeholder="–"
-              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
-          </div>
-        </div>
-        <button
-          onClick={handleCodeErstellen}
-          disabled={codeErstellenLaden || !neuerCode.trim()}
-          className="w-full py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-4"
-        >
-          {codeErstellenLaden ? 'Erstellt...' : '+ Code erstellen'}
-        </button>
-
-        {/* Bestehende Codes */}
-        {rabattcodes.length > 0 && (
-          <div className="space-y-2">
-            {rabattcodes.map((rc: Rabattcode) => (
-              <div key={rc.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.05]">
-                <div>
-                  <span className="text-sm font-mono font-bold text-gray-800 dark:text-slate-200">{rc.code}</span>
-                  <span className="ml-2 text-xs text-gray-500 dark:text-slate-400">
-                    {rc.rabatt_prozent}% · {rc.monate} Mo.
-                    {rc.max_nutzungen ? ` · ${rc.nutzungen}/${rc.max_nutzungen}x` : ` · ${rc.nutzungen}x genutzt`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggle(rc.id, !rc.aktiv)}
-                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                      rc.aktiv
-                        ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400 hover:bg-red-100 hover:text-red-600'
-                        : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-slate-400 hover:bg-green-100 hover:text-green-600'
-                    }`}
-                  >
-                    {rc.aktiv ? 'Aktiv' : 'Inaktiv'}
-                  </button>
-                  <button
-                    onClick={() => { if (confirm(`Code "${rc.code}" löschen?`)) loeschen(rc.id); }}
-                    className="text-xs text-red-400 hover:text-red-600 transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -387,6 +348,7 @@ export default function Einstellungen() {
   const [telefonFehler, setTelefonFehler] = useState('');
   const logoInputRef = useRef<HTMLInputElement>(null);
   const profilInputRef = useRef<HTMLInputElement>(null);
+  const [aktivTab, setAktivTab] = useState<string>('allgemein');
 
   async function telefonSpeichern() {
     setTelefonFehler('');
@@ -490,31 +452,32 @@ export default function Einstellungen() {
     <div className="animate-fade-in-up">
       <Topbar titel="Einstellungen" untertitel="Restaurant & Lizenz verwalten" />
 
+      {/* Tab Navigation */}
+      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-white/[0.04] dark:border dark:border-white/[0.06] rounded-2xl mb-5 overflow-x-auto">
+        {([
+          { id: 'allgemein',      label: 'Allgemein' },
+          { id: 'profil',         label: 'Mein Profil' },
+          { id: 'bestellseite',   label: 'Bestellseite' },
+          { id: 'reservierungen', label: 'Reservierungen' },
+          { id: 'abo',            label: 'Abo & Kasse' },
+        ] as const).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setAktivTab(tab.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              aktivTab === tab.id
+                ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* Kassensystem-Karte */}
-        <a
-          href="/einstellungen/kassensystem"
-          className="block bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm hover:dark:border-white/20 transition-colors group"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-100 dark:bg-cyan-500/15 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3M9 7V5a2 2 0 012-2h2m1 0h2a2 2 0 012 2v2M9 7h8" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Kassensystem</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500">orderbird, ready2order, Webhook</p>
-            </div>
-            <svg className="w-4 h-4 text-slate-400 group-hover:text-slate-200 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-          <p className="text-xs text-gray-400 dark:text-slate-500 leading-relaxed">
-            Bestellungen automatisch ans Kassensystem übertragen — kein manuelles Eintippen mehr.
-          </p>
-        </a>
+        {aktivTab === 'abo' && <>
 
         {/* Abo-Karte */}
         <AboKarte />
@@ -560,6 +523,10 @@ export default function Einstellungen() {
           </div>
         </div>
 
+        </>}
+
+        {aktivTab === 'allgemein' && <>
+
         {/* Dark Mode Toggle */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between">
@@ -591,6 +558,10 @@ export default function Einstellungen() {
             </button>
           </div>
         </div>
+
+        </>}
+
+        {aktivTab === 'bestellseite' && <>
 
         {/* Layout Bestellseite */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
@@ -1055,6 +1026,10 @@ export default function Einstellungen() {
           </div>
         </div>
 
+        </>}
+
+        {aktivTab === 'allgemein' && <>
+
         {/* Restaurant-Logo */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
           <div className="flex items-center gap-3 mb-4">
@@ -1117,6 +1092,10 @@ export default function Einstellungen() {
             </div>
           </div>
         </div>
+
+        </>}
+
+        {aktivTab === 'profil' && <>
 
         {/* Mein Profilbild */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
@@ -1221,6 +1200,10 @@ export default function Einstellungen() {
           {telefonFehler && <p className="text-xs text-red-500 mt-2">{telefonFehler}</p>}
         </div>
 
+        </>}
+
+        {aktivTab === 'reservierungen' && <>
+
         {/* Buchungswidget */}
         <BuchungsWidget restaurantId={restaurant.id} />
 
@@ -1238,6 +1221,10 @@ export default function Einstellungen() {
 
         {/* Reservierungseinstellungen */}
         <ReservierungsEinstellungen restaurant={restaurant} onSpeichern={aktualisieren} />
+
+        </>}
+
+        {aktivTab === 'allgemein' && <>
 
         {/* Restaurant-Daten */}
         <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm lg:col-span-2">
@@ -1261,6 +1248,9 @@ export default function Einstellungen() {
             <InfoZeile label="Öffnungszeiten" wert={restaurant.oeffnungszeiten} />
           </div>
         </div>
+
+        </>}
+
       </div>
     </div>
   );

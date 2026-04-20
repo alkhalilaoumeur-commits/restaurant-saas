@@ -7,13 +7,10 @@
  * Authentifizierte Routen (Admin):
  *   GET  /api/abo/status          — Abo-Status + Zahlungshistorie
  *   POST /api/abo/checkout        — Stripe Checkout Session erstellen
- *   POST /api/abo/rabattcode/pruefen — Code prüfen (gibt Preis zurück)
+ *   POST /api/abo/rabattcode/pruefen — Code prüfen via Stripe API (gibt Preis zurück)
  *
- * Admin-only (Rabattcode-Verwaltung):
- *   GET    /api/abo/rabattcodes        — alle Codes
- *   POST   /api/abo/rabattcodes        — neuen Code erstellen
- *   PATCH  /api/abo/rabattcodes/:id    — aktivieren/deaktivieren
- *   DELETE /api/abo/rabattcodes/:id    — löschen
+ * Rabattcodes werden direkt im Stripe Dashboard erstellt (Produkte → Gutscheine).
+ * Metadata-Feld "monate" am Coupon bestimmt die Abo-Laufzeit (Standard: 1).
  */
 
 import { Router, Request, Response } from 'express';
@@ -22,6 +19,7 @@ import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AboModel } from '../models/Abo';
 import { RestaurantModel } from '../models/Restaurant';
+import { ErlebnisModel } from '../models/ErlebnisModel';
 
 const router = Router();
 
@@ -35,8 +33,13 @@ function getStripe(): InstanceType<typeof Stripe> {
   return new Stripe(key, { apiVersion: '2026-03-25.dahlia' as never });
 }
 
-const FRONTEND_URL   = process.env.FRONTEND_URL   || 'http://localhost:5173';
-const ABO_PREIS_CENT = parseInt(process.env.ABO_PREIS_CENT || '4900', 10); // €49,00
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+const PLAN_PREISE: Record<string, { cent: number; label: string }> = {
+  basis:    { cent: 1900, label: 'Basis' },
+  standard: { cent: 3900, label: 'Standard' },
+  pro:      { cent: 6900, label: 'Pro' },
+};
 
 // ─── 1. Webhook (Stripe → Backend) ───────────────────────────────────────────
 // Stripe schickt POST mit JSON-Body + Header "stripe-signature".
@@ -72,7 +75,12 @@ router.post(
       const session = event.data.object as { id: string; payment_status: string };
 
       if (session.payment_status === 'paid') {
-        await AboModel.zahlungAbschliessen(session.id);
+        const meta = (session as unknown as { metadata?: Record<string, string> }).metadata ?? {};
+        if (meta.typ === 'erlebnis') {
+          await ErlebnisModel.buchungBezahlen(session.id);
+        } else {
+          await AboModel.zahlungAbschliessen(session.id);
+        }
       }
     }
 
@@ -93,38 +101,54 @@ router.get(
 
     res.json({
       abo_status:     restaurant.abo_status,
+      abo_plan:       restaurant.abo_plan,
       abo_laeuft_bis: (restaurant as unknown as Record<string, unknown>).abo_laeuft_bis ?? null,
-      preis_cent:     ABO_PREIS_CENT,
+      plan_preise:    PLAN_PREISE,
       zahlungen,
     });
   }),
 );
 
-// ─── 3. Rabattcode prüfen ────────────────────────────────────────────────────
+// ─── 3. Rabattcode prüfen (via Stripe API) ───────────────────────────────────
+// Stripe Promotion Code lookup: code → promotion_code → coupon → percent_off + metadata.monate
 router.post(
   '/rabattcode/pruefen',
   requireAuth,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { code } = req.body as { code: string };
+    const { code, plan: planInput } = req.body as { code: string; plan?: string };
     if (!code) { res.status(400).json({ fehler: 'Code fehlt' }); return; }
 
-    const rabattcode = await AboModel.rabattcodePruefen(code);
-    if (!rabattcode) {
+    const plan = (planInput && PLAN_PREISE[planInput]) ? planInput : 'basis';
+    const planPreis = PLAN_PREISE[plan].cent;
+
+    const stripe = getStripe();
+    const promoCodes = await stripe.promotionCodes.list({
+      code: code.trim().toUpperCase(),
+      active: true,
+      limit: 1,
+    });
+
+    type PromoEntry = { id: string; code: string; coupon: { valid: boolean; percent_off: number | null; metadata: Record<string, string> } };
+    const promoEntry = promoCodes.data[0] as unknown as PromoEntry | undefined;
+
+    if (!promoEntry || !promoEntry.coupon.valid) {
       res.status(404).json({ fehler: 'Ungültiger oder abgelaufener Code' });
       return;
     }
 
-    const rabattBetrag = Math.floor(ABO_PREIS_CENT * (rabattcode.rabatt_prozent / 100));
-    const endpreisCent = ABO_PREIS_CENT - rabattBetrag;
+    const coupon = promoEntry.coupon;
+    const rabattProzent = coupon.percent_off ?? 0;
+    const monate = coupon.metadata?.monate ? parseInt(coupon.metadata.monate) : 1;
+    const rabattBetrag = Math.floor(planPreis * (rabattProzent / 100));
 
     res.json({
       gueltig:        true,
-      code:           rabattcode.code,
-      rabatt_prozent: rabattcode.rabatt_prozent,
-      monate:         rabattcode.monate,
-      original_cent:  ABO_PREIS_CENT,
+      code:           promoEntry.code,
+      rabatt_prozent: rabattProzent,
+      monate,
+      original_cent:  planPreis,
       rabatt_cent:    rabattBetrag,
-      endpreis_cent:  endpreisCent,
+      endpreis_cent:  planPreis - rabattBetrag,
     });
   }),
 );
@@ -141,45 +165,59 @@ router.post(
     const restaurant = await RestaurantModel.nachId(req.auth!.restaurantId);
     if (!restaurant) { res.status(404).json({ fehler: 'Restaurant nicht gefunden' }); return; }
 
-    const { rabattcode: codeInput } = req.body as { rabattcode?: string };
+    const { rabattcode: codeInput, plan: planInput } = req.body as { rabattcode?: string; plan?: string };
+    const plan = (planInput && PLAN_PREISE[planInput]) ? planInput : 'basis';
+    const planPreis = PLAN_PREISE[plan].cent;
 
-    let endpreisCent = ABO_PREIS_CENT;
+    let endpreisCent = planPreis;
     let monate = 1;
     let verwendeterCode: string | null = null;
+    let promoCodeId: string | null = null;
 
-    // Rabattcode anwenden
+    // Rabattcode via Stripe API prüfen
     if (codeInput) {
-      const rabattcode = await AboModel.rabattcodePruefen(codeInput);
-      if (!rabattcode) {
+      const stripe = getStripe();
+      const promoCodes = await stripe.promotionCodes.list({
+        code: codeInput.trim().toUpperCase(),
+        active: true,
+        limit: 1,
+      });
+
+      type PromoEntry2 = { id: string; code: string; coupon: { valid: boolean; percent_off: number | null; metadata: Record<string, string> } };
+      const promoCode = promoCodes.data[0] as unknown as PromoEntry2 | undefined;
+
+      if (!promoCode || !promoCode.coupon.valid) {
         res.status(400).json({ fehler: 'Ungültiger oder abgelaufener Rabattcode' });
         return;
       }
-      const rabattBetrag = Math.floor(ABO_PREIS_CENT * (rabattcode.rabatt_prozent / 100));
-      endpreisCent    = ABO_PREIS_CENT - rabattBetrag;
-      monate          = rabattcode.monate;
-      verwendeterCode = rabattcode.code;
+
+      const coupon = promoCode.coupon;
+      const rabattProzent = coupon.percent_off ?? 0;
+      monate          = coupon.metadata?.monate ? parseInt(coupon.metadata.monate) : 1;
+      const rabattBetrag = Math.floor(planPreis * (rabattProzent / 100));
+      endpreisCent    = planPreis - rabattBetrag;
+      verwendeterCode = promoCode.code;
+      promoCodeId     = promoCode.id;
     }
 
     // 100% Rabatt → kein Stripe nötig, direkt aktivieren
     if (endpreisCent === 0) {
-      if (verwendeterCode) await AboModel.rabattcodeNutzen(verwendeterCode);
-
       const fakeId = `gratis_${Date.now()}`;
       await AboModel.zahlungAnlegen({
         restaurant_id:     req.auth!.restaurantId,
         stripe_session_id: fakeId,
         betrag_cent:       0,
         monate,
+        plan,
         rabattcode:        verwendeterCode,
       });
       await AboModel.zahlungAbschliessen(fakeId);
-
       res.json({ gratis: true, redirect_url: `${FRONTEND_URL}/einstellungen?abo=success` });
       return;
     }
 
     // Stripe Checkout Session erstellen
-    // metadata wird im Webhook zurückgegeben → wir wissen welches Restaurant bezahlt hat
+    // discounts übergibt Stripe die Promotion Code ID → Stripe wendet Rabatt nativ an
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -187,10 +225,10 @@ router.post(
         {
           price_data: {
             currency: 'eur',
-            unit_amount: endpreisCent, // Stripe erwartet Cent (z.B. 4900 = €49,00)
+            unit_amount: planPreis,
             product_data: {
-              name: `ServeFlow Abo – ${restaurant.name}`,
-              description: `${monate} Monat${monate > 1 ? 'e' : ''} Zugang zu ServeFlow`,
+              name: `ServeFlow ${PLAN_PREISE[plan].label} – ${restaurant.name}`,
+              description: `${monate} Monat${monate > 1 ? 'e' : ''} ServeFlow ${PLAN_PREISE[plan].label}`,
             },
           },
           quantity: 1,
@@ -199,94 +237,24 @@ router.post(
       success_url: `${FRONTEND_URL}/einstellungen?abo=success`,
       cancel_url:  `${FRONTEND_URL}/einstellungen?abo=cancelled`,
       metadata: {
-        restaurant_id:  req.auth!.restaurantId,
-        monate:         String(monate),
-        rabattcode:     verwendeterCode ?? '',
+        restaurant_id: req.auth!.restaurantId,
+        monate:        String(monate),
+        plan,
+        rabattcode:    verwendeterCode ?? '',
       },
-      // Stripe zeigt E-Mail-Feld an — optional, aber gut für den Kunden
-      customer_email: undefined,
-    });
+      ...(promoCodeId ? { discounts: [{ promotion_code: promoCodeId }] } : {}),
+    } as Parameters<typeof stripe.checkout.sessions.create>[0]);
 
-    // Zahlung in DB vormerken (Status: open) — wird nach Webhook auf paid gesetzt
     await AboModel.zahlungAnlegen({
       restaurant_id:     req.auth!.restaurantId,
       stripe_session_id: session.id,
       betrag_cent:       endpreisCent,
       monate,
+      plan,
       rabattcode:        verwendeterCode,
     });
 
-    // Rabattcode-Nutzungszähler erhöhen
-    if (verwendeterCode) await AboModel.rabattcodeNutzen(verwendeterCode);
-
     res.json({ redirect_url: session.url });
-  }),
-);
-
-// ─── 5. Rabattcode-Verwaltung (Admin) ────────────────────────────────────────
-
-router.get(
-  '/rabattcodes',
-  requireAuth,
-  requireRolle('admin'),
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const codes = await AboModel.alleRabattcodes();
-    res.json(codes);
-  }),
-);
-
-router.post(
-  '/rabattcodes',
-  requireAuth,
-  requireRolle('admin'),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { code, rabatt_prozent, monate, max_nutzungen, gueltig_bis } = req.body as {
-      code: string;
-      rabatt_prozent: number;
-      monate: number;
-      max_nutzungen?: number | null;
-      gueltig_bis?: string | null;
-    };
-
-    if (!code || typeof rabatt_prozent !== 'number' || rabatt_prozent < 0 || rabatt_prozent > 100) {
-      res.status(400).json({ fehler: 'Ungültige Eingabe: Code + Rabatt 0–100 erforderlich' });
-      return;
-    }
-    if (!monate || monate < 1) {
-      res.status(400).json({ fehler: 'Monate muss mindestens 1 sein' });
-      return;
-    }
-
-    const neuerCode = await AboModel.rabattcodeErstellen({
-      code,
-      rabatt_prozent,
-      monate,
-      max_nutzungen: max_nutzungen ?? null,
-      gueltig_bis:   gueltig_bis ?? null,
-    });
-
-    res.status(201).json(neuerCode);
-  }),
-);
-
-router.patch(
-  '/rabattcodes/:id',
-  requireAuth,
-  requireRolle('admin'),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { aktiv } = req.body as { aktiv: boolean };
-    await AboModel.rabattcodeToggle(req.params.id, aktiv);
-    res.json({ ok: true });
-  }),
-);
-
-router.delete(
-  '/rabattcodes/:id',
-  requireAuth,
-  requireRolle('admin'),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    await AboModel.rabattcodeLoeschen(req.params.id);
-    res.json({ ok: true });
   }),
 );
 
