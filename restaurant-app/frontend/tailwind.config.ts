@@ -75,6 +75,8 @@ export default {
         '.mt-safe': { marginTop: 'env(safe-area-inset-top)' },
         '.mb-safe': { marginBottom: 'env(safe-area-inset-bottom)' },
         '.h-safe-bottom': { height: 'env(safe-area-inset-bottom)' },
+        '.scrollbar-hide': { '-ms-overflow-style': 'none', 'scrollbar-width': 'none' },
+        '.scrollbar-hide::-webkit-scrollbar': { display: 'none' },
       });
     },
   ],

@@ -188,21 +188,25 @@ const SEKTIONEN: NavSection[] = [
       { to: '/bestellungen',   label: 'Bestellungen',   icon: IconBestellungen,   rollen: ['admin', 'kellner', 'kueche'] },
       { to: '/tischplan',      label: 'Tischplan',      icon: IconTischplan,      rollen: ['admin', 'kellner'] },
       { to: '/reservierungen', label: 'Reservierungen', icon: IconReservierungen, rollen: ['admin', 'kellner'] },
-      { to: '/warteliste',    label: 'Warteliste',    icon: IconWarteliste,    rollen: ['admin', 'kellner'] },
-      { to: '/dienstplan',    label: 'Dienstplan',    icon: IconDienstplan,    rollen: ['admin', 'kellner', 'kueche'] },
+      { to: '/warteliste',     label: 'Warteliste',     icon: IconWarteliste,     rollen: ['admin', 'kellner'] },
+      { to: '/dienstplan',     label: 'Dienstplan',     icon: IconDienstplan,     rollen: ['admin', 'kellner', 'kueche'] },
     ],
   },
   {
     titel: 'Verwaltung',
     items: [
-      { to: '/speisekarte',  label: 'Speisekarte',  icon: IconSpeisekarte,  rollen: ['admin'] },
-      { to: '/mitarbeiter',  label: 'Mitarbeiter',  icon: IconMitarbeiter,  rollen: ['admin'] },
-      { to: '/gaeste',         label: 'Gäste',          icon: IconGaeste,         rollen: ['admin'] },
-      { to: '/erlebnisse',     label: 'Erlebnisse',     icon: IconErlebnisse,     rollen: ['admin'] },
-      { to: '/bewertungen',    label: 'Bewertungen',    icon: IconBewertungen,    rollen: ['admin'] },
-      { to: '/inventur',       label: 'Inventur',       icon: IconInventur,       rollen: ['admin'] },
-      { to: '/statistiken',    label: 'Statistiken',    icon: IconStatistiken,    rollen: ['admin'] },
-      { to: '/einstellungen',  label: 'Einstellungen',  icon: IconEinstellungen,  rollen: ['admin'] },
+      { to: '/speisekarte', label: 'Speisekarte', icon: IconSpeisekarte, rollen: ['admin'] },
+      { to: '/mitarbeiter', label: 'Mitarbeiter', icon: IconMitarbeiter, rollen: ['admin'] },
+      { to: '/gaeste',      label: 'Gäste',       icon: IconGaeste,      rollen: ['admin'] },
+      { to: '/erlebnisse',  label: 'Erlebnisse',  icon: IconErlebnisse,  rollen: ['admin'] },
+      { to: '/bewertungen', label: 'Bewertungen', icon: IconBewertungen, rollen: ['admin'] },
+      { to: '/inventur',    label: 'Inventur',    icon: IconInventur,    rollen: ['admin'] },
+    ],
+  },
+  {
+    titel: 'Analyse',
+    items: [
+      { to: '/statistiken', label: 'Statistiken', icon: IconStatistiken, rollen: ['admin'] },
     ],
   },
 ];
@@ -230,7 +234,7 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
   const location = useLocation();
 
   return (
-    <aside className="w-[260px] bg-[#1e293b] dark:bg-[#0F1724] flex flex-col shrink-0 select-none">
+    <aside className="w-[260px] bg-[#0F1724] flex flex-col shrink-0 select-none border-r border-white/[0.06]">
 
       {/* ── Logo & App-Name ──────────────────────────────────────── */}
       <div className="px-5 pt-5 pb-4 bg-gradient-to-b from-white/[0.04] to-transparent">
@@ -249,7 +253,7 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
 
           return (
             <div key={sektion.titel}>
-              <p className="px-3 mb-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="px-3 mb-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {sektion.titel}
               </p>
               <div className="space-y-0.5">
@@ -261,18 +265,17 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
                       to={to}
                       onClick={onSchliessen}
                       className={`
-                        group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-200
+                        group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150
                         ${aktiv
-                          ? 'bg-white/10 text-white shadow-sm shadow-black/10'
-                          : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                          ? 'bg-blue-500/15 text-white'
+                          : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
                         }
                       `}
                     >
-                      {/* Aktive Indikator-Linie */}
                       {aktiv && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-400" />
                       )}
-                      <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${aktiv ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                      <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-150 ${aktiv ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                       <span>{label}</span>
                     </NavLink>
                   );
@@ -284,37 +287,50 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
       </nav>
 
       {/* ── Benutzer-Bereich (unten) ────────────────────────────── */}
-      <div className="border-t border-white/10">
-        <div className="px-4 py-4">
-          {/* Benutzer-Info */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden ring-1 ring-white/10">
-              {mitarbeiter?.foto_url ? (
-                <img src={mitarbeiter.foto_url} alt={mitarbeiter.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200">
-                  {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-medium text-slate-200 truncate">{mitarbeiter?.name}</p>
-              {mitarbeiter?.rolle && (
-                <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${ROLLEN_FARBE[mitarbeiter.rolle]}`}>
-                  {ROLLEN_LABEL[mitarbeiter.rolle]}
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="border-t border-white/[0.06]">
+        <div className="px-3 py-3 space-y-0.5">
+          {/* Einstellungen */}
+          <NavLink
+            to="/einstellungen"
+            onClick={onSchliessen}
+            className={({ isActive }) => `
+              group flex items-center gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium transition-all duration-150
+              ${isActive ? 'bg-blue-500/15 text-white' : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'}
+            `}
+          >
+            <IconEinstellungen className="w-[18px] h-[18px] shrink-0 text-slate-500 group-hover:text-slate-300" />
+            <span>Einstellungen</span>
+          </NavLink>
 
           {/* Abmelden */}
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:text-red-400 hover:bg-white/5 transition-all duration-150 cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13.5px] font-medium text-slate-300 hover:text-red-400 hover:bg-white/[0.06] transition-all duration-150 cursor-pointer"
           >
-            <IconAbmelden className="w-4 h-4" />
+            <IconAbmelden className="w-[18px] h-[18px] shrink-0 text-slate-500" />
             <span>Abmelden</span>
           </button>
+        </div>
+
+        {/* Benutzer-Info */}
+        <div className="px-4 pt-1 pb-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden ring-1 ring-white/10">
+            {mitarbeiter?.foto_url ? (
+              <img src={mitarbeiter.foto_url} alt={mitarbeiter.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200">
+                {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-medium text-slate-200 truncate">{mitarbeiter?.name}</p>
+            {mitarbeiter?.rolle && (
+              <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${ROLLEN_FARBE[mitarbeiter.rolle]}`}>
+                {ROLLEN_LABEL[mitarbeiter.rolle]}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </aside>
