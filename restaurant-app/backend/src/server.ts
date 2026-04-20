@@ -38,6 +38,7 @@ import { starteAboCron } from './services/abo-cron';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Traefik/nginx Reverse Proxy
 const httpServer = createServer(app);
 
 const socketOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(Boolean) as string[];
