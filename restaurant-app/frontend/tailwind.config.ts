@@ -61,6 +61,12 @@ export default {
       borderWidth: {
         'theme-card': 'var(--t-card-border, 0px)',
       },
+      keyframes: {
+        'slide-up': { from: { transform: 'translateY(100%)' }, to: { transform: 'translateY(0)' } },
+      },
+      animation: {
+        'slide-up': 'slide-up 0.25s cubic-bezier(0.32, 0.72, 0, 1)',
+      },
     },
   },
   plugins: [
@@ -75,6 +81,8 @@ export default {
         '.mt-safe': { marginTop: 'env(safe-area-inset-top)' },
         '.mb-safe': { marginBottom: 'env(safe-area-inset-bottom)' },
         '.h-safe-bottom': { height: 'env(safe-area-inset-bottom)' },
+        '.scrollbar-hide': { '-ms-overflow-style': 'none', 'scrollbar-width': 'none' },
+        '.scrollbar-hide::-webkit-scrollbar': { display: 'none' },
       });
     },
   ],
