@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useArtikel, useLieferanten, useBewegungen, useInventurAuswertung, useVorschlaege, bestellanfrageSenden } from '../hooks/useInventur';
 import type { InventarArtikel, Lieferant, LagerBewegungTyp } from '../types';
+import { usePlan } from '../hooks/usePlan';
+import PaywallKarte from '../components/PaywallKarte';
 
 // ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
@@ -496,6 +498,7 @@ function BestellanfrageModal({
 type Tab = 'artikel' | 'lieferanten' | 'bewegungen' | 'auswertung';
 
 export default function Inventur() {
+  const { hatZugang, laden: planLaden } = usePlan();
   const [aktuellerTab, setAktuellerTab] = useState<Tab>('artikel');
   const [auswertungTage, setAuswertungTage] = useState(30);
 
@@ -530,6 +533,10 @@ export default function Inventur() {
     { id: 'bewegungen',  label: 'Bewegungen',   count: bewegungen.length },
     { id: 'auswertung',  label: 'Auswertung' },
   ];
+
+  if (!planLaden && !hatZugang('inventur')) {
+    return <PaywallKarte feature="Inventur" benoetigterPlan="pro" beschreibung="Lagerbestand, Lieferanten und automatische Bestellvorschläge." />;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -581,20 +588,20 @@ export default function Inventur() {
       )}
 
       {/* ── Tabs ──────────────────────────────────────── */}
-      <div className="flex gap-1 bg-white/5 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-white/8 rounded-xl p-1 w-fit border border-white/10">
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setAktuellerTab(tab.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               aktuellerTab === tab.id
-                ? 'bg-white/10 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span className="ml-1.5 text-xs opacity-60">({tab.count})</span>
+              <span className="ml-1.5 text-xs opacity-70">({tab.count})</span>
             )}
           </button>
         ))}
@@ -629,16 +636,17 @@ export default function Inventur() {
               {artikel.length === 0 ? 'Noch keine Artikel angelegt.' : 'Keine Artikel gefunden.'}
             </div>
           ) : (
-            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5">
+            <div className="overflow-x-auto">
+            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5 min-w-[600px]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Artikel</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Kategorie</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Bestand</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Minimum</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Einkauf</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Lieferant</th>
+                  <tr className="border-b border-white/10 bg-white/[0.03]">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Artikel</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Kategorie</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Bestand</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Minimum</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Einkauf</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Lieferant</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -654,18 +662,18 @@ export default function Inventur() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 text-xs">{a.kategorie}</span>
+                        <span className="px-2 py-0.5 rounded-lg bg-white/10 text-slate-200 text-xs font-medium">{a.kategorie}</span>
                       </td>
-                      <td className={`px-4 py-3 text-right font-medium ${a.unter_mindestbestand ? 'text-red-400' : 'text-white'}`}>
+                      <td className={`px-4 py-3 text-right font-semibold ${a.unter_mindestbestand ? 'text-red-400' : 'text-white'}`}>
                         {formatMenge(a.aktueller_bestand, a.einheit)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-400">
+                      <td className="px-4 py-3 text-right text-slate-300">
                         {formatMenge(a.mindestbestand, a.einheit)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-400">
+                      <td className="px-4 py-3 text-right text-slate-300">
                         {formatPreis(a.einkaufspreis)}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-400 text-xs">
+                      <td className="px-4 py-3 text-right text-slate-300 text-xs">
                         {a.lieferant_name ?? '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -694,6 +702,7 @@ export default function Inventur() {
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>
@@ -755,21 +764,22 @@ export default function Inventur() {
           ) : bewegungen.length === 0 ? (
             <div className="text-center py-12 text-slate-500">Noch keine Bewegungen erfasst.</div>
           ) : (
-            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5">
+            <div className="overflow-x-auto">
+            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5 min-w-[500px]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Datum</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Artikel</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Typ</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Menge</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Notiz</th>
+                  <tr className="border-b border-white/10 bg-white/[0.03]">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Datum</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Artikel</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Typ</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Menge</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Notiz</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {bewegungen.map(b => (
                     <tr key={b.id} className="hover:bg-white/[0.02]">
-                      <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-slate-300 text-xs whitespace-nowrap">
                         {new Date(b.erstellt_am).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="px-4 py-3 font-medium text-white">{b.artikel_name}</td>
@@ -781,11 +791,12 @@ export default function Inventur() {
                       <td className={`px-4 py-3 text-right font-medium ${b.delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {b.delta > 0 ? '+' : ''}{Number(b.delta).toLocaleString('de-DE', { maximumFractionDigits: 3 })} {b.einheit}
                       </td>
-                      <td className="px-4 py-3 text-slate-400 text-xs">{b.notiz ?? '—'}</td>
+                      <td className="px-4 py-3 text-slate-300 text-xs">{b.notiz ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>
@@ -828,14 +839,15 @@ export default function Inventur() {
           ) : auswertung.length === 0 ? (
             <div className="text-center py-12 text-slate-500">Keine Daten für diesen Zeitraum.</div>
           ) : (
-            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5">
+            <div className="overflow-x-auto">
+            <div className="bg-[#1e293b] rounded-xl overflow-hidden border border-white/5 min-w-[400px]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Artikel</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Eingang</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Abgang</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">Kosten</th>
+                  <tr className="border-b border-white/10 bg-white/[0.03]">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-200 uppercase tracking-wider">Artikel</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Eingang</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Abgang</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold text-slate-200 uppercase tracking-wider">Kosten</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -855,6 +867,7 @@ export default function Inventur() {
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </div>

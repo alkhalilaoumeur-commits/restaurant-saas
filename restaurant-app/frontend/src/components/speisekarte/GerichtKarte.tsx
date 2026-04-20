@@ -33,7 +33,7 @@ export default function GerichtKarte({ gericht, onToggle, onBearbeiten, onLoesch
           </div>
           <p className="text-sm font-bold text-orange-600 dark:text-orange-400 shrink-0 bg-orange-50 dark:bg-orange-500/10 px-2 py-0.5 rounded-lg">{formatPreis(gericht.preis)}</p>
         </div>
-        <div className="flex gap-1.5 mt-3">
+        <div className="flex flex-wrap gap-1.5 mt-3">
           <button
             onClick={() => onToggle(gericht.id, !gericht.verfuegbar)}
             className={`text-xs px-2.5 py-1.5 rounded-lg transition-all duration-200 font-medium ${
