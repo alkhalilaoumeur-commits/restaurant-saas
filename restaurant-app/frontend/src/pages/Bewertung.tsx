@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { BewertungPublic } from '../types';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const BACKEND_URL = '';
 
 // ─── Stern-Auswahl ────────────────────────────────────────────────────────────
 
