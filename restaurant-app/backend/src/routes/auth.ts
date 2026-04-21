@@ -89,7 +89,7 @@ function verifTokenErstellen(empfaenger: string): string {
   return jwt.sign(
     { empfaenger: empfaenger.toLowerCase(), typ: 'verif' },
     process.env.JWT_SECRET!,
-    { expiresIn: '30m' }
+    { expiresIn: '2h' }
   );
 }
 
@@ -344,7 +344,8 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
     return;
   }
 
-  if (!verifTokenPruefen(telefon_verifizierung_token, telefon)) {
+  // SMS-Verifikation ist optional — wenn Token vorhanden, muss er gültig sein
+  if (telefon_verifizierung_token && !verifTokenPruefen(telefon_verifizierung_token, telefon)) {
     res.status(400).json({ fehler: 'Telefonnummer nicht verifiziert. Bitte zuerst den Code bestätigen.' });
     return;
   }

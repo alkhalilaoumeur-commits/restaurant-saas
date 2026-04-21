@@ -190,6 +190,7 @@ async function senden(optionen: EmailOptionen): Promise<void> {
     subject: optionen.betreff,
     html: optionen.html,
   });
+  console.log(`[Email] Gesendet an ${optionen.an} — ${optionen.betreff}`);
 }
 
 // ────────────────────────────────────────────────
