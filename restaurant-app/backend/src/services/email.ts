@@ -228,6 +228,24 @@ export async function emailVerifizierungSenden(
   });
 }
 
+/** 1b. Restaurant-Business-Email-Verifikation */
+export async function restaurantEmailVerifizierungSenden(
+  email: string, restaurantName: string, token: string
+): Promise<void> {
+  const link = `${FRONTEND_URL}/restaurant-email-bestaetigen/${token}`;
+  await senden({
+    an: email,
+    betreff: `✉️ Bitte bestätige die E-Mail-Adresse von ${restaurantName} – ServeFlow`,
+    html: emailTemplate(`
+      ${heading('Restaurant-E-Mail bestätigen')}
+      ${text(`Bitte bestätige die offizielle E-Mail-Adresse für <strong>${restaurantName}</strong> auf ServeFlow.`)}
+      ${primaryButton('E-Mail-Adresse bestätigen', link)}
+      ${divider()}
+      ${hinweis('Der Link ist <strong>24 Stunden</strong> gültig. Falls du diese Anfrage nicht ausgelöst hast, kannst du diese E-Mail ignorieren.')}
+    `),
+  });
+}
+
 /** 2. 6-stelliger Verifizierungscode */
 export async function verifizierungsCodeEmailSenden(
   email: string, code: string,

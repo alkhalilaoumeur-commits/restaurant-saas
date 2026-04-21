@@ -12,6 +12,7 @@ import PasswortVergessen from './pages/PasswortVergessen';
 import PasswortZuruecksetzen from './pages/PasswortZuruecksetzen';
 import Einladung from './pages/Einladung';
 import EmailVerifizieren from './pages/EmailVerifizieren';
+import RestaurantEmailBestaetigen from './pages/RestaurantEmailBestaetigen';
 import Dashboard from './pages/Dashboard';
 import Bestellungen from './pages/Bestellungen';
 import Speisekarte from './pages/Speisekarte';
@@ -76,6 +77,7 @@ export default function App() {
       <Route path="/passwort-zuruecksetzen/:token" element={<PasswortZuruecksetzen />} />
       <Route path="/einladung/:token" element={<Einladung />} />
       <Route path="/email-verifizieren/:token" element={<EmailVerifizieren />} />
+      <Route path="/restaurant-email-bestaetigen/:token" element={<RestaurantEmailBestaetigen />} />
       <Route path="/bestellen/:restaurantId/:tischId" element={<BestellenRouter />} />
       <Route path="/bestellen-pro/:restaurantId/:tischId" element={<BestellenRouter />} />
       <Route path="/bestellen-qr/:restaurantId/:tischId"  element={<BestellenQR />} />

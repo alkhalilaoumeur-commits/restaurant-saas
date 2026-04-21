@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { q1, transaction } from '../models/db';
 import { RestaurantModel } from '../models/Restaurant';
-import { emailVerifizierungSenden, verifizierungsCodeEmailSenden, willkommensEmailSenden, passwortResetSenden } from '../services/email';
+import { emailVerifizierungSenden, verifizierungsCodeEmailSenden, willkommensEmailSenden, passwortResetSenden, restaurantEmailVerifizierungSenden } from '../services/email';
 import { smsSenden, smsTextVerifizierung } from '../services/sms';
 
 const router = Router();
@@ -119,10 +119,11 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Max 3 Registrierungen pro IP in 1 Stunde
+// Max 10 Registrierungen pro IP in 1 Stunde — erfolgreiche zählen nicht gegen das Limit
 const registrierungLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 3,
+  max: 10,
+  skipSuccessfulRequests: true,
   message: { fehler: 'Zu viele Registrierungsversuche. Bitte in einer Stunde erneut versuchen.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -305,7 +306,7 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
     res.status(400).json({ fehler: 'Name, Email und Passwort sind erforderlich' });
     return;
   }
-  if (!restaurant_name || !strasse || !plz || !stadt || !telefon || !restaurant_email) {
+  if (!restaurant_name || !strasse || !plz || !stadt || !telefon) {
     res.status(400).json({ fehler: 'Alle Restaurant-Daten sind erforderlich' });
     return;
   }
@@ -315,7 +316,7 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
     res.status(400).json({ fehler: 'Ungültiges E-Mail-Format' });
     return;
   }
-  if (!istGueltigeEmail(restaurant_email)) {
+  if (restaurant_email && !istGueltigeEmail(restaurant_email)) {
     res.status(400).json({ fehler: 'Ungültiges E-Mail-Format für das Restaurant' });
     return;
   }
@@ -415,6 +416,17 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
     ).catch((err) =>
       console.error('[Willkommens-Email] Fehler beim Senden:', err)
     );
+
+    // 5b. Restaurant-Email-Verifikation — nur wenn angegeben und nicht identisch mit Admin-Email
+    if (restaurant_email && restaurant_email.toLowerCase() !== admin_email.toLowerCase()) {
+      const restaurantEmailToken = jwt.sign(
+        { restaurant_id: result.restaurant.id, email: restaurant_email.toLowerCase(), typ: 'restaurant_email_verif' },
+        process.env.JWT_SECRET!,
+        { expiresIn: '24h' }
+      );
+      restaurantEmailVerifizierungSenden(restaurant_email, restaurant_name, restaurantEmailToken)
+        .catch((err) => console.error('[Restaurant-Email-Verif] Fehler:', err));
+    }
 
     // 6. JWT generieren
     const token = jwtErstellen(result.mitarbeiter);
@@ -692,6 +704,34 @@ router.get('/einladung/:token', async (req: Request, res: Response): Promise<voi
     rolle: mitarbeiter.rolle,
     restaurantName: restaurant?.name || 'Unbekannt',
   });
+});
+
+// ─── GET /api/auth/restaurant-email-bestaetigen/:token ──────────────────────
+// Verifiziert die Restaurant-Business-Email nach Klick auf den Link in der Email
+router.get('/restaurant-email-bestaetigen/:token', async (req: Request, res: Response): Promise<void> => {
+  const { token } = req.params;
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as {
+      restaurant_id: string;
+      email: string;
+      typ: string;
+    };
+    if (payload.typ !== 'restaurant_email_verif') {
+      res.status(400).json({ fehler: 'Ungültiger Token-Typ' });
+      return;
+    }
+    const result = await q1<{ id: string }>(
+      'UPDATE restaurants SET email_verifiziert = true WHERE id = $1 AND lower(email) = lower($2) RETURNING id',
+      [payload.restaurant_id, payload.email]
+    );
+    if (!result) {
+      res.status(404).json({ fehler: 'Restaurant nicht gefunden oder E-Mail stimmt nicht überein' });
+      return;
+    }
+    res.json({ nachricht: 'Restaurant-E-Mail erfolgreich bestätigt' });
+  } catch {
+    res.status(400).json({ fehler: 'Token ungültig oder abgelaufen' });
+  }
 });
 
 export default router;

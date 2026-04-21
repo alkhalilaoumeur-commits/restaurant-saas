@@ -104,8 +104,9 @@ export default function Registrieren() {
     if (!telefon.trim()) { setFehler('Bitte gib die Telefonnummer ein'); return false; }
     const bereinigt = telefon.replace(/[\s\-()\/]/g, '');
     if (!/^(\+|0)[0-9]{7,15}$/.test(bereinigt)) { setFehler('Ungültiges Telefonnummer-Format. Erlaubt: +49..., 030-..., etc.'); return false; }
-    if (!restaurantEmail.trim()) { setFehler('Bitte gib die Restaurant-E-Mail ein'); return false; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(restaurantEmail)) { setFehler('Ungültiges E-Mail-Format für das Restaurant'); return false; }
+    if (restaurantEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(restaurantEmail)) {
+      setFehler('Ungültiges E-Mail-Format für das Restaurant'); return false;
+    }
     return true;
   }
 
@@ -292,7 +293,7 @@ export default function Registrieren() {
 
           {/* ── Schritt 6: Erfolg ── */}
           {schritt === 6 && (
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-5">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30">
                 <svg className="w-8 h-8 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
@@ -306,19 +307,29 @@ export default function Registrieren() {
               </div>
               <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg">
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  E-Mail und Telefon wurden erfolgreich verifiziert. Du kannst sofort loslegen!
+                  Registrierung erfolgreich! E-Mail wurde verifiziert.
                 </p>
               </div>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Tipp: Lade dein Restaurant-Logo in den Einstellungen hoch — es wird auf der Bestellseite und im Dashboard angezeigt.
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg text-left">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Nächster Schritt: Plan auswählen</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Wähle einen Plan um alle Funktionen freizuschalten. Du startest kostenlos mit dem Basis-Plan.
                 </p>
               </div>
               <button
-                onClick={() => navigate('/dashboard')}
-                className="w-full h-11 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity inline-flex items-center justify-center"
+                onClick={() => navigate('/einstellungen?tab=abo')}
+                className="w-full h-11 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
               >
-                Zum Dashboard
+                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Plan auswählen
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full h-10 rounded-lg border border-gray-200 dark:border-white/10 text-sm text-gray-500 dark:text-slate-400 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors inline-flex items-center justify-center"
+              >
+                Später — Zum Dashboard
               </button>
             </div>
           )}
@@ -467,8 +478,13 @@ export default function Registrieren() {
               </div>
 
               <div>
-                <label htmlFor="restaurantEmail" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">Restaurant E-Mail</label>
-                <input id="restaurantEmail" type="email" required value={restaurantEmail} onChange={(e) => setRestaurantEmail(e.target.value)} placeholder="info@restaurant.de" className={inputClass} />
+                <label htmlFor="restaurantEmail" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+                  Restaurant E-Mail <span className="text-gray-400 dark:text-slate-500 font-normal text-xs">(optional)</span>
+                </label>
+                <input id="restaurantEmail" type="email" value={restaurantEmail} onChange={(e) => setRestaurantEmail(e.target.value)} placeholder="info@restaurant.de" className={inputClass} />
+                {restaurantEmail.trim() && (
+                  <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Du erhältst eine Bestätigungs-E-Mail an diese Adresse.</p>
+                )}
               </div>
 
               <div>
