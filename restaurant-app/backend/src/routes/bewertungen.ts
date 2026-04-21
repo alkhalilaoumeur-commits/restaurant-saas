@@ -6,11 +6,17 @@ import { bewertungsAnfrageSenden } from '../services/email';
 
 const router = Router();
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // ────────────────────────────────────────────────
 // GET /api/bewertungen/public/:token
 // Öffentlich: Bewertungsseite laden (Restaurant-Name, ob schon bewertet)
 // ────────────────────────────────────────────────
 router.get('/public/:token', asyncHandler(async (req: Request, res: Response) => {
+  if (!UUID_REGEX.test(req.params.token)) {
+    res.status(404).json({ fehler: 'Bewertungslink nicht gefunden' });
+    return;
+  }
   const bewertung = await BewertungModel.nachToken(req.params.token);
 
   if (!bewertung) {
@@ -35,6 +41,10 @@ router.get('/public/:token', asyncHandler(async (req: Request, res: Response) =>
 // Öffentlich: Bewertung abgeben (einmalig, token wird danach als 'abgeschlossen' markiert)
 // ────────────────────────────────────────────────
 router.post('/public/:token', asyncHandler(async (req: Request, res: Response) => {
+  if (!UUID_REGEX.test(req.params.token)) {
+    res.status(404).json({ fehler: 'Bewertungslink nicht gefunden' });
+    return;
+  }
   const { stern, kommentar, dsgvo_einwilligung } = req.body;
 
   if (!stern || typeof stern !== 'number' || stern < 1 || stern > 5) {

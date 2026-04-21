@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
@@ -103,10 +104,12 @@ app.use(errorHandler);
 // Der Catch-All (*) sorgt dafür, dass React Router funktioniert —
 // egal welche URL der Nutzer aufruft, es wird immer index.html geladen.
 const frontendBuild = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(frontendBuild));
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(frontendBuild, 'index.html'));
-});
+if (fs.existsSync(frontendBuild)) {
+  app.use(express.static(frontendBuild));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendBuild, 'index.html'));
+  });
+}
 
 // Socket.io: Token optional dekodieren (Mitarbeiter haben Token, Gäste nicht)
 io.use((socket, next) => {
