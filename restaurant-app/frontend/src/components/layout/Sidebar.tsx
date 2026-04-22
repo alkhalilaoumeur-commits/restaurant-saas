@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth';
+import { useAboStore } from '../../store/abo';
+import { planHatZugriff, PLAN_ROUTEN, Plan } from '../../lib/plan-config';
 import { Rolle } from '../../types';
 import ServeFlowLogo from '../brand/ServeFlowLogo';
 
@@ -173,6 +175,7 @@ interface NavItem {
   label: string;
   icon: React.FC<{ className?: string }>;
   rollen: Rolle[];
+  plan?: Plan;
 }
 
 interface NavSection {
@@ -184,25 +187,25 @@ const SEKTIONEN: NavSection[] = [
   {
     titel: 'Betrieb',
     items: [
-      { to: '/dashboard',      label: 'Dashboard',      icon: IconDashboard,      rollen: ['admin', 'kellner', 'kueche'] },
-      { to: '/bestellungen',   label: 'Bestellungen',   icon: IconBestellungen,   rollen: ['admin', 'kellner', 'kueche'] },
-      { to: '/tischplan',      label: 'Tischplan',      icon: IconTischplan,      rollen: ['admin', 'kellner'] },
-      { to: '/reservierungen', label: 'Reservierungen', icon: IconReservierungen, rollen: ['admin', 'kellner'] },
-      { to: '/warteliste',    label: 'Warteliste',    icon: IconWarteliste,    rollen: ['admin', 'kellner'] },
-      { to: '/dienstplan',    label: 'Dienstplan',    icon: IconDienstplan,    rollen: ['admin', 'kellner', 'kueche'] },
+      { to: '/dashboard',      label: 'Dashboard',      icon: IconDashboard,      rollen: ['admin', 'kellner', 'kueche'], plan: 'basis' },
+      { to: '/bestellungen',   label: 'Bestellungen',   icon: IconBestellungen,   rollen: ['admin', 'kellner', 'kueche'], plan: 'basis' },
+      { to: '/tischplan',      label: 'Tischplan',      icon: IconTischplan,      rollen: ['admin', 'kellner'],           plan: 'basis' },
+      { to: '/reservierungen', label: 'Reservierungen', icon: IconReservierungen, rollen: ['admin', 'kellner'],           plan: 'basis' },
+      { to: '/warteliste',     label: 'Warteliste',     icon: IconWarteliste,     rollen: ['admin', 'kellner'],           plan: 'standard' },
+      { to: '/dienstplan',     label: 'Dienstplan',     icon: IconDienstplan,     rollen: ['admin', 'kellner', 'kueche'], plan: 'standard' },
     ],
   },
   {
     titel: 'Verwaltung',
     items: [
-      { to: '/speisekarte',  label: 'Speisekarte',  icon: IconSpeisekarte,  rollen: ['admin'] },
-      { to: '/mitarbeiter',  label: 'Mitarbeiter',  icon: IconMitarbeiter,  rollen: ['admin'] },
-      { to: '/gaeste',         label: 'Gäste',          icon: IconGaeste,         rollen: ['admin'] },
-      { to: '/erlebnisse',     label: 'Erlebnisse',     icon: IconErlebnisse,     rollen: ['admin'] },
-      { to: '/bewertungen',    label: 'Bewertungen',    icon: IconBewertungen,    rollen: ['admin'] },
-      { to: '/inventur',       label: 'Inventur',       icon: IconInventur,       rollen: ['admin'] },
-      { to: '/statistiken',    label: 'Statistiken',    icon: IconStatistiken,    rollen: ['admin'] },
-      { to: '/einstellungen',  label: 'Einstellungen',  icon: IconEinstellungen,  rollen: ['admin'] },
+      { to: '/speisekarte',   label: 'Speisekarte',   icon: IconSpeisekarte,   rollen: ['admin'], plan: 'basis' },
+      { to: '/mitarbeiter',   label: 'Mitarbeiter',   icon: IconMitarbeiter,   rollen: ['admin'], plan: 'standard' },
+      { to: '/gaeste',        label: 'Gäste',         icon: IconGaeste,        rollen: ['admin'], plan: 'standard' },
+      { to: '/bewertungen',   label: 'Bewertungen',   icon: IconBewertungen,   rollen: ['admin'], plan: 'standard' },
+      { to: '/erlebnisse',    label: 'Erlebnisse',    icon: IconErlebnisse,    rollen: ['admin'], plan: 'pro' },
+      { to: '/inventur',      label: 'Inventur',      icon: IconInventur,      rollen: ['admin'], plan: 'pro' },
+      { to: '/statistiken',   label: 'Statistiken',   icon: IconStatistiken,   rollen: ['admin'], plan: 'pro' },
+      { to: '/einstellungen', label: 'Einstellungen', icon: IconEinstellungen, rollen: ['admin'], plan: 'basis' },
     ],
   },
 ];
@@ -227,6 +230,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onSchliessen }: SidebarProps) {
   const { mitarbeiter, logout } = useAuthStore();
+  const { plan } = useAboStore();
   const location = useLocation();
 
   return (
@@ -242,9 +246,12 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
       {/* ── Navigation ──────────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
         {SEKTIONEN.map((sektion) => {
-          const sichtbar = sektion.items.filter((item) =>
-            mitarbeiter ? item.rollen.includes(mitarbeiter.rolle) : false
-          );
+          const sichtbar = sektion.items.filter((item) => {
+            if (!mitarbeiter || !item.rollen.includes(mitarbeiter.rolle)) return false;
+            const benoetigterPlan = item.plan ?? PLAN_ROUTEN[item.to];
+            if (!benoetigterPlan) return true;
+            return planHatZugriff(plan, benoetigterPlan);
+          });
           if (sichtbar.length === 0) return null;
 
           return (

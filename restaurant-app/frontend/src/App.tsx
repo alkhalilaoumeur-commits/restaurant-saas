@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
 import { useThemeStore } from './store/theme';
+import { useAboStore } from './store/abo';
 import { useRestaurantDesign } from './hooks/useRestaurantDesign';
 import { getLayout } from './lib/layouts';
 
@@ -36,16 +37,34 @@ import Warteliste from './pages/Warteliste';
 import Erlebnisse from './pages/Erlebnisse';
 import ErlebnisDetail from './pages/ErlebnisDetail';
 import ErlebnisBestaetigung from './pages/ErlebnisBestaetigung';
+import PlanAuswaehlen from './pages/PlanAuswaehlen';
 
+// ─── Login-Guard: nur für eingeloggte User ───────────────────────────────────
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   return token ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
-/**
- * Lädt das Restaurant-Design und entscheidet welche Bestellseite gerendert wird.
- * Kein Hooks-Problem: BestellenPro und BestellenQR sind komplett getrennte Komponenten.
- */
+// ─── Plan-Guard: Admin ohne aktiven Plan → Plan-Auswahl ──────────────────────
+// Kellner und Küche sind nicht betroffen — die zahlen nicht.
+function PlanGuard({ children }: { children: React.ReactNode }) {
+  const mitarbeiter = useAuthStore((s) => s.mitarbeiter);
+  const { status, geladen } = useAboStore();
+
+  // Nicht-Admins immer durchlassen
+  if (!mitarbeiter || mitarbeiter.rolle !== 'admin') return <>{children}</>;
+
+  // Noch nicht geladen → kurz warten (vermeidet Flackern)
+  if (!geladen) return null;
+
+  // Kein aktiver Plan → zur Plan-Auswahl
+  if (status !== 'active' && status !== 'trial') {
+    return <Navigate to="/plan-auswaehlen" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function BestellenRouter() {
   const { restaurantId } = useParams<{ restaurantId: string; tischId: string }>();
   const design = useRestaurantDesign(restaurantId);
@@ -58,8 +77,11 @@ function BestellenRouter() {
 }
 
 export default function App() {
-  // Theme beim Start aus localStorage laden und auf <html> anwenden
   const theme = useThemeStore((s) => s.theme);
+  const token = useAuthStore((s) => s.token);
+  const { laden, reset } = useAboStore();
+
+  // Theme beim Start anwenden
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -67,6 +89,15 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  // Abo-Status laden wenn eingeloggt, zurücksetzen wenn ausgeloggt
+  useEffect(() => {
+    if (token) {
+      laden();
+    } else {
+      reset();
+    }
+  }, [token, laden, reset]);
 
   return (
     <Routes>
@@ -89,20 +120,23 @@ export default function App() {
       <Route path="/erlebnis/:restaurantId/:erlebnisId" element={<ErlebnisDetail />} />
       <Route path="/erlebnis-bestaetigung/:token" element={<ErlebnisBestaetigung />} />
 
-      {/* Geschützter Admin-Bereich */}
-      <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+      {/* Plan-Auswahl (nach Registrierung, ohne Layout) */}
+      <Route path="/plan-auswaehlen" element={<PrivateRoute><PlanAuswaehlen /></PrivateRoute>} />
+
+      {/* Geschützter Admin-Bereich — Plan-Guard prüft ob Abo aktiv */}
+      <Route element={<PrivateRoute><PlanGuard><Layout /></PlanGuard></PrivateRoute>}>
         <Route path="/dashboard"      element={<Dashboard />} />
         <Route path="/bestellungen"   element={<Bestellungen />} />
         <Route path="/speisekarte"    element={<Speisekarte />} />
         <Route path="/reservierungen" element={<Reservierungen />} />
         <Route path="/tischplan"      element={<Tischplan />} />
-        <Route path="/dienstplan"      element={<Dienstplan />} />
-        <Route path="/mitarbeiter"     element={<Mitarbeiter />} />
-        <Route path="/gaeste"          element={<Gaeste />} />
-        <Route path="/bewertungen"     element={<Bewertungen />} />
-        <Route path="/inventur"        element={<Inventur />} />
-        <Route path="/warteliste"      element={<Warteliste />} />
-        <Route path="/erlebnisse"      element={<Erlebnisse />} />
+        <Route path="/dienstplan"     element={<Dienstplan />} />
+        <Route path="/mitarbeiter"    element={<Mitarbeiter />} />
+        <Route path="/gaeste"         element={<Gaeste />} />
+        <Route path="/bewertungen"    element={<Bewertungen />} />
+        <Route path="/inventur"       element={<Inventur />} />
+        <Route path="/warteliste"     element={<Warteliste />} />
+        <Route path="/erlebnisse"     element={<Erlebnisse />} />
         <Route path="/statistiken"    element={<Statistiken />} />
         <Route path="/einstellungen"  element={<Einstellungen />} />
       </Route>

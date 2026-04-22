@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../lib/api';
+import { useAboStore } from '../store/abo';
 
 export interface Zahlung {
   id: string;
@@ -47,17 +48,21 @@ export function useAbo() {
   const [status, setStatus] = useState<AboStatus | null>(null);
   const [laden, setLaden] = useState(true);
   const [fehler, setFehler] = useState<string | null>(null);
+  const aboStore = useAboStore();
 
   const laden_ = useCallback(async () => {
     try {
       setLaden(true);
       const data = await api.get<AboStatus>('/abo/status');
       setStatus(data);
+      // Globalen Store synchron halten
+      aboStore.laden();
     } catch {
       setFehler('Abo-Status konnte nicht geladen werden');
     } finally {
       setLaden(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { laden_(); }, [laden_]);
