@@ -139,10 +139,20 @@ io.on('connection', (socket) => {
 });
 
 async function startServer() {
-  // Stripe-Migrations: neue Spalten falls noch nicht vorhanden
+  // Stripe-Spalten
   await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`, []);
   await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT`, []);
   await q(`CREATE INDEX IF NOT EXISTS idx_restaurants_stripe_subscription ON restaurants (stripe_subscription_id) WHERE stripe_subscription_id IS NOT NULL`, []);
+
+  // abo_status: 'trial' abschaffen — alle auf 'inactive' setzen, Constraint aktualisieren
+  await q(`ALTER TABLE restaurants DROP CONSTRAINT IF EXISTS restaurants_abo_status_check`, []);
+  await q(`UPDATE restaurants SET abo_status = 'inactive' WHERE abo_status = 'trial'`, []);
+  await q(`ALTER TABLE restaurants ALTER COLUMN abo_status SET DEFAULT 'inactive'`, []);
+  await q(
+    `ALTER TABLE restaurants ADD CONSTRAINT restaurants_abo_status_check
+     CHECK (abo_status IN ('inactive', 'active', 'expired', 'cancelled', 'payment_failed'))`,
+    [],
+  );
 
   const PORT = process.env.PORT || 3001;
   httpServer.listen(PORT, () => {

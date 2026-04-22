@@ -57,8 +57,8 @@ function PlanGuard({ children }: { children: React.ReactNode }) {
   // Noch nicht geladen → kurz warten (vermeidet Flackern)
   if (!geladen) return null;
 
-  // Kein aktiver Plan → zur Plan-Auswahl
-  if (status !== 'active' && status !== 'trial') {
+  // Nur 'active' gibt Zugang — alles andere → Plan-Auswahl
+  if (status !== 'active') {
     return <Navigate to="/plan-auswaehlen" replace />;
   }
 

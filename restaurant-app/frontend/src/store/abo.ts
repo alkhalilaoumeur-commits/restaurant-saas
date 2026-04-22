@@ -4,7 +4,7 @@ import { Plan } from '../lib/plan-config';
 
 interface AboState {
   plan: Plan | null;
-  status: 'trial' | 'active' | 'expired' | 'cancelled' | 'payment_failed' | null;
+  status: 'inactive' | 'active' | 'expired' | 'cancelled' | 'payment_failed' | null;
   geladen: boolean;
   laden: () => Promise<void>;
   reset: () => void;

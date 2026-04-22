@@ -37,7 +37,7 @@ export interface RabattcodeInfo {
 }
 
 interface AboStatus {
-  abo_status: 'trial' | 'active' | 'expired' | 'cancelled' | 'payment_failed';
+  abo_status: 'inactive' | 'active' | 'expired' | 'cancelled' | 'payment_failed';
   abo_plan: 'basis' | 'standard' | 'pro';
   abo_laeuft_bis: string | null;
   plan_preise: Record<string, { cent: number; label: string }>;

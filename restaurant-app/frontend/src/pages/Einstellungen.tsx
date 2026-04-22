@@ -140,16 +140,15 @@ function AboKarte() {
   };
 
   const statusFarbe = aboStatus === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
-    : aboStatus === 'trial' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
     : aboStatus === 'payment_failed' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400'
     : aboStatus === 'cancelled' ? 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-slate-400'
     : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400';
 
   const statusLabel = aboStatus === 'active' ? 'Aktiv'
-    : aboStatus === 'trial' ? 'Testphase'
     : aboStatus === 'payment_failed' ? 'Zahlung fehlgeschlagen'
     : aboStatus === 'cancelled' ? 'Gekündigt'
-    : 'Abgelaufen';
+    : aboStatus === 'expired' ? 'Abgelaufen'
+    : 'Kein aktiver Plan';
 
   const planPreisCent = gewaehlterPlan ? (planPreise[gewaehlterPlan]?.cent ?? 2900) : 2900;
   const endpreisCent  = codeInfo ? codeInfo.endpreis_cent : planPreisCent;
