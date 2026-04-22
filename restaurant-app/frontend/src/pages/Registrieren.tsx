@@ -76,10 +76,10 @@ export default function Registrieren() {
   const navigate = useNavigate();
 
   // ── Fortschrittsbalken: 3 Haupt-Segmente ──
-  // Schritte 1-2 → Segment 1, Schritt 3 → Segment 2, Schritt 5 → Segment 3
+  // Schritte 1-2 → Segment 1, Schritte 3-4 → Segment 2, Schritt 5 → Segment 3
   function hauptSchritt(): number {
     if (schritt <= 2) return 1;
-    if (schritt === 3) return 2;
+    if (schritt <= 4) return 2;
     return 3;
   }
 
@@ -111,6 +111,21 @@ export default function Registrieren() {
   }
 
   // ── Code senden ──
+
+  async function telefonCodeSenden() {
+    setFehler('');
+    setLaden(true);
+    try {
+      await api.post('/auth/code-senden', { typ: 'sms', empfaenger: telefon });
+      setVerifCode('');
+      setSchritt(4);
+      setTimeout(() => codeInputRef.current?.focus(), 100);
+    } catch (err) {
+      setFehler((err as Error).message);
+    } finally {
+      setLaden(false);
+    }
+  }
 
   async function emailCodeSenden() {
     setFehler('');
@@ -180,7 +195,7 @@ export default function Registrieren() {
     if (schritt === 1 && schritt1Validieren()) {
       await emailCodeSenden();
     } else if (schritt === 3 && schritt3Validieren()) {
-      setSchritt(5);
+      await telefonCodeSenden();
     }
   }
 
@@ -192,6 +207,7 @@ export default function Registrieren() {
     setVerifCode('');
     if (schritt === 2) { setSchritt(1); setEmailVerifToken(''); }
     else if (schritt === 3) setSchritt(1);
+    else if (schritt === 4) { setSchritt(3); setTelefonVerifToken(''); }
     else if (schritt === 5) setSchritt(3);
   }
 
@@ -254,7 +270,7 @@ export default function Registrieren() {
             <ServeFlowLogo variante="icon" groesse="lg" />
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-50 tracking-tight">
-            {schritt === 6 ? 'Registrierung erfolgreich!' : schritt === 2 ? 'E-Mail bestätigen' : 'Restaurant registrieren'}
+            {schritt === 6 ? 'Registrierung erfolgreich!' : schritt === 2 ? 'E-Mail bestätigen' : schritt === 4 ? 'Telefon bestätigen' : 'Restaurant registrieren'}
           </h1>
           {schritt < 6 && schritt !== 2 && schritt !== 4 && (
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1.5">
@@ -495,6 +511,23 @@ export default function Registrieren() {
                 </button>
               </div>
             </form>
+          )}
+
+          {/* ── Schritt 4: Telefon-Code ── */}
+          {schritt === 4 && (
+            <CodeVerifizierung
+              typ="sms"
+              empfaenger={telefon}
+              code={verifCode}
+              setCode={setVerifCode}
+              codeInputRef={codeInputRef}
+              fehler={fehler}
+              laden={laden}
+              codeErneutGesendet={codeErneutGesendet}
+              onPruefen={() => codePruefen('sms')}
+              onErneutSenden={() => codeErneutSenden('sms')}
+              onZurueck={zurueck}
+            />
           )}
 
           {/* ── Schritt 5: Details ── */}
