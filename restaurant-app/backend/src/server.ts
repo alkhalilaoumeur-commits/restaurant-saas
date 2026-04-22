@@ -35,6 +35,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
 import { starteNoShowCron } from './services/no-show';
 import { starteAboCron } from './services/abo-cron';
+import { q } from './models/db';
 
 dotenv.config();
 
@@ -137,10 +138,22 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-  console.log(`Server läuft auf http://localhost:${PORT}`);
-  starteErinnerungen();
-  starteNoShowCron();
-  starteAboCron();
+async function startServer() {
+  // Stripe-Migrations: neue Spalten falls noch nicht vorhanden
+  await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`, []);
+  await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT`, []);
+  await q(`CREATE INDEX IF NOT EXISTS idx_restaurants_stripe_subscription ON restaurants (stripe_subscription_id) WHERE stripe_subscription_id IS NOT NULL`, []);
+
+  const PORT = process.env.PORT || 3001;
+  httpServer.listen(PORT, () => {
+    console.log(`Server läuft auf http://localhost:${PORT}`);
+    starteErinnerungen();
+    starteNoShowCron();
+    starteAboCron();
+  });
+}
+
+startServer().catch(err => {
+  console.error('Server-Start fehlgeschlagen:', err);
+  process.exit(1);
 });
