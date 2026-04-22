@@ -36,7 +36,7 @@ export interface RabattcodeInfo {
 }
 
 interface AboStatus {
-  abo_status: 'trial' | 'active' | 'expired';
+  abo_status: 'trial' | 'active' | 'expired' | 'cancelled' | 'payment_failed';
   abo_plan: 'basis' | 'standard' | 'pro';
   abo_laeuft_bis: string | null;
   plan_preise: Record<string, { cent: number; label: string }>;
@@ -78,6 +78,11 @@ export function useAbo() {
     return api.post<RabattcodeInfo>('/abo/rabattcode/pruefen', { code, plan });
   }, []);
 
+  const kuendigen = useCallback(async (): Promise<void> => {
+    await api.post('/abo/kuendigen', {});
+    await laden_();
+  }, [laden_]);
+
   return {
     aboStatus:   status?.abo_status ?? null,
     aboPlan:     status?.abo_plan ?? 'basis',
@@ -88,6 +93,7 @@ export function useAbo() {
     fehler,
     checkout,
     codePruefen,
+    kuendigen,
     neu: laden_,
   };
 }

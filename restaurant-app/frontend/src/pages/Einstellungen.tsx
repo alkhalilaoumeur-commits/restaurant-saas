@@ -91,7 +91,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
 };
 
 function AboKarte() {
-  const { aboStatus, aboPlan, laeuftBis, planPreise, zahlungen, laden, checkout, codePruefen, neu } = useAbo();
+  const { aboStatus, aboPlan, laeuftBis, planPreise, zahlungen, laden, checkout, codePruefen, kuendigen, neu } = useAbo();
   const [gewaehlterPlan, setGewaehlterPlan] = useState<string>('');
   const [codeInput, setCodeInput]           = useState('');
   const [codeInfo, setCodeInfo]             = useState<RabattcodeInfo | null>(null);
@@ -141,9 +141,15 @@ function AboKarte() {
 
   const statusFarbe = aboStatus === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
     : aboStatus === 'trial' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400'
+    : aboStatus === 'payment_failed' ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400'
+    : aboStatus === 'cancelled' ? 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-slate-400'
     : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400';
 
-  const statusLabel = aboStatus === 'active' ? 'Aktiv' : aboStatus === 'trial' ? 'Testphase' : 'Abgelaufen';
+  const statusLabel = aboStatus === 'active' ? 'Aktiv'
+    : aboStatus === 'trial' ? 'Testphase'
+    : aboStatus === 'payment_failed' ? 'Zahlung fehlgeschlagen'
+    : aboStatus === 'cancelled' ? 'Gekündigt'
+    : 'Abgelaufen';
 
   const planPreisCent = gewaehlterPlan ? (planPreise[gewaehlterPlan]?.cent ?? 2900) : 2900;
   const endpreisCent  = codeInfo ? codeInfo.endpreis_cent : planPreisCent;
@@ -183,6 +189,22 @@ function AboKarte() {
               {new Date(laeuftBis).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
           </p>
+        )}
+        {aboStatus === 'payment_failed' && (
+          <p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
+            Zahlung fehlgeschlagen — bitte Zahlungsmethode in Stripe aktualisieren oder ein neues Abo starten.
+          </p>
+        )}
+        {aboStatus === 'active' && (
+          <button
+            onClick={async () => {
+              if (!confirm('Abo wirklich zum Ende der Periode kündigen?')) return;
+              try { await kuendigen(); } catch { alert('Kündigung fehlgeschlagen. Bitte erneut versuchen.'); }
+            }}
+            className="mt-3 text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 underline"
+          >
+            Abo kündigen
+          </button>
         )}
       </div>
 

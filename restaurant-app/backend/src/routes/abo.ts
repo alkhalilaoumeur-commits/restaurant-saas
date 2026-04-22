@@ -1,5 +1,5 @@
 /**
- * /api/abo — Abo-Verwaltung + Stripe-Zahlungen + Rabattcodes
+ * /api/abo — Abo-Verwaltung + Stripe-Subscriptions + Rabattcodes
  *
  * Öffentliche Routen:
  *   POST /api/abo/webhook         — Stripe ruft das nach jeder Zahlung auf
@@ -7,10 +7,8 @@
  * Authentifizierte Routen (Admin):
  *   GET  /api/abo/status          — Abo-Status + Zahlungshistorie
  *   POST /api/abo/checkout        — Stripe Checkout Session erstellen
- *   POST /api/abo/rabattcode/pruefen — Code prüfen via Stripe API (gibt Preis zurück)
- *
- * Rabattcodes werden direkt im Stripe Dashboard erstellt (Produkte → Gutscheine).
- * Metadata-Feld "monate" am Coupon bestimmt die Abo-Laufzeit (Standard: 1).
+ *   POST /api/abo/rabattcode/pruefen — Code prüfen via Stripe API
+ *   POST /api/abo/kuendigen        — Abo zum Periodenende kündigen
  */
 
 import { Router, Request, Response } from 'express';
@@ -19,12 +17,10 @@ import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AboModel } from '../models/Abo';
 import { RestaurantModel } from '../models/Restaurant';
-import { ErlebnisModel } from '../models/ErlebnisModel';
+import { q } from '../models/db';
 
 const router = Router();
 
-// Stripe wird erst beim ersten echten API-Call initialisiert (lazy).
-// So startet der Backend auch ohne STRIPE_SECRET_KEY in der .env.
 function getStripe(): InstanceType<typeof Stripe> {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key || key.startsWith('sk_test_HIER')) {
@@ -35,30 +31,48 @@ function getStripe(): InstanceType<typeof Stripe> {
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// Price IDs aus .env — werden im Stripe Dashboard verwaltet
+const PLAN_PRICE_IDS: Record<string, string> = {
+  basis:    process.env.STRIPE_PRICE_BASIS    ?? '',
+  standard: process.env.STRIPE_PRICE_STANDARD ?? '',
+  pro:      process.env.STRIPE_PRICE_PRO      ?? '',
+};
+
 const PLAN_PREISE: Record<string, { cent: number; label: string }> = {
   basis:    { cent: 1900, label: 'Basis' },
   standard: { cent: 3900, label: 'Standard' },
   pro:      { cent: 6900, label: 'Pro' },
 };
 
+// ─── Hilfsfunktion: Abo per Subscription-ID aktualisieren ────────────────────
+async function aboPerSubscriptionAktualisieren(
+  subscriptionId: string,
+  status: 'active' | 'cancelled' | 'expired',
+  plan?: string,
+): Promise<void> {
+  await q(
+    `UPDATE restaurants
+     SET abo_status = $1,
+         abo_plan   = COALESCE($2, abo_plan),
+         abo_laeuft_bis = CASE
+           WHEN $1 = 'active' THEN NOW() + INTERVAL '32 days'
+           ELSE abo_laeuft_bis
+         END
+     WHERE stripe_subscription_id = $3`,
+    [status, plan ?? null, subscriptionId],
+  );
+}
+
 // ─── 1. Webhook (Stripe → Backend) ───────────────────────────────────────────
-// Stripe schickt POST mit JSON-Body + Header "stripe-signature".
-// Der Body kommt als raw Buffer an (weil in server.ts express.raw() davor steht).
-// Wir verifizieren die Signatur — ohne das könnte jeder fake Webhooks schicken.
 router.post(
   '/webhook',
   asyncHandler(async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'];
-
-    if (!sig) {
-      res.status(400).send('Fehlende Stripe-Signatur');
-      return;
-    }
+    if (!sig) { res.status(400).send('Fehlende Stripe-Signatur'); return; }
 
     const stripe = getStripe();
     let event: ReturnType<typeof stripe.webhooks.constructEvent>;
     try {
-      // constructEvent prüft: Inhalt + Signatur + Timestamp (verhindert Replay-Angriffe)
       event = stripe.webhooks.constructEvent(
         req.body as Buffer,
         sig,
@@ -70,21 +84,98 @@ router.post(
       return;
     }
 
-    // Nur checkout.session.completed interessiert uns — das bedeutet: Zahlung erfolgreich
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as { id: string; payment_status: string };
+    switch (event.type) {
+      // Checkout erfolgreich abgeschlossen → Abo in DB aktivieren
+      case 'checkout.session.completed': {
+        const session = event.data.object as unknown as { id: string; mode: string; subscription: string | { id: string } | null; customer: string | null; amount_total: number | null; metadata: Record<string, string> };
+        if (session.mode === 'subscription' && session.subscription) {
+          const subscriptionId = typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription.id;
+          const meta = session.metadata ?? {};
+          const plan = meta.plan ?? 'basis';
 
-      if (session.payment_status === 'paid') {
-        const meta = (session as unknown as { metadata?: Record<string, string> }).metadata ?? {};
-        if (meta.typ === 'erlebnis') {
-          await ErlebnisModel.buchungBezahlen(session.id);
-        } else {
+          // subscription_id + customer_id am Restaurant speichern
+          await q(
+            `UPDATE restaurants
+             SET stripe_subscription_id = $1,
+                 stripe_customer_id     = $2,
+                 abo_status             = 'active',
+                 abo_plan               = $3,
+                 abo_laeuft_bis         = NOW() + INTERVAL '32 days'
+             WHERE id = $4`,
+            [subscriptionId, session.customer, plan, meta.restaurant_id],
+          );
+
+          await AboModel.zahlungAnlegen({
+            restaurant_id:     meta.restaurant_id,
+            stripe_session_id: session.id,
+            betrag_cent:       session.amount_total ?? PLAN_PREISE[plan]?.cent ?? 0,
+            monate:            1,
+            plan,
+            rabattcode:        meta.rabattcode || null,
+          });
           await AboModel.zahlungAbschliessen(session.id);
         }
+        break;
+      }
+
+      // Monatliche Zahlung erfolgreich → Laufzeit verlängern
+      case 'invoice.paid': {
+        const invoice = event.data.object as unknown as { subscription: string | { id: string } | null };
+        const subId = typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : (invoice.subscription as { id: string } | null)?.id;
+        if (subId) {
+          await q(
+            `UPDATE restaurants
+             SET abo_status      = 'active',
+                 abo_laeuft_bis  = NOW() + INTERVAL '32 days'
+             WHERE stripe_subscription_id = $1`,
+            [subId],
+          );
+        }
+        break;
+      }
+
+      // Zahlung fehlgeschlagen → Status auf 'payment_failed' setzen
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as unknown as { subscription: string | { id: string } | null };
+        const subId = typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : (invoice.subscription as { id: string } | null)?.id;
+        if (subId) {
+          await q(
+            `UPDATE restaurants SET abo_status = 'payment_failed'
+             WHERE stripe_subscription_id = $1`,
+            [subId],
+          );
+        }
+        break;
+      }
+
+      // Abo gekündigt (sofort oder zum Periodenende abgelaufen)
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as unknown as { id: string };
+        await aboPerSubscriptionAktualisieren(sub.id, 'cancelled');
+        break;
+      }
+
+      // Plan-Wechsel (Upgrade/Downgrade)
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as unknown as { id: string; items?: { data?: Array<{ price?: { id?: string } }> } };
+        const priceId = sub.items?.data?.[0]?.price?.id;
+        const neuerPlan = Object.entries(PLAN_PRICE_IDS).find(([, id]) => id === priceId)?.[0];
+        if (neuerPlan) {
+          await q(
+            `UPDATE restaurants SET abo_plan = $1 WHERE stripe_subscription_id = $2`,
+            [neuerPlan, sub.id],
+          );
+        }
+        break;
       }
     }
 
-    // Stripe erwartet immer 200 — sonst versucht Stripe es stundenlang erneut
     res.json({ received: true });
   }),
 );
@@ -109,8 +200,7 @@ router.get(
   }),
 );
 
-// ─── 3. Rabattcode prüfen (via Stripe API) ───────────────────────────────────
-// Stripe Promotion Code lookup: code → promotion_code → coupon → percent_off + metadata.monate
+// ─── 3. Rabattcode prüfen ────────────────────────────────────────────────────
 router.post(
   '/rabattcode/pruefen',
   requireAuth,
@@ -153,10 +243,7 @@ router.post(
   }),
 );
 
-// ─── 4. Checkout — Stripe Checkout Session erstellen ─────────────────────────
-// Stripe Checkout: Wir erstellen eine Session, bekommen eine URL zurück,
-// und leiten den User dorthin weiter. Stripe hostet die Zahlungsseite.
-// Nach Zahlung redirectet Stripe zurück zu success_url.
+// ─── 4. Checkout — Stripe Subscription erstellen ─────────────────────────────
 router.post(
   '/checkout',
   requireAuth,
@@ -166,15 +253,17 @@ router.post(
     if (!restaurant) { res.status(404).json({ fehler: 'Restaurant nicht gefunden' }); return; }
 
     const { rabattcode: codeInput, plan: planInput } = req.body as { rabattcode?: string; plan?: string };
-    const plan = (planInput && PLAN_PREISE[planInput]) ? planInput : 'basis';
-    const planPreis = PLAN_PREISE[plan].cent;
+    const plan = (planInput && PLAN_PRICE_IDS[planInput]) ? planInput : 'basis';
+    const priceId = PLAN_PRICE_IDS[plan];
 
-    let endpreisCent = planPreis;
-    let monate = 1;
-    let verwendeterCode: string | null = null;
+    if (!priceId) {
+      res.status(500).json({ fehler: `Kein Price ID für Plan "${plan}" konfiguriert` });
+      return;
+    }
+
     let promoCodeId: string | null = null;
+    let verwendeterCode: string | null = null;
 
-    // Rabattcode via Stripe API prüfen
     if (codeInput) {
       const stripe = getStripe();
       const promoCodes = await stripe.promotionCodes.list({
@@ -183,7 +272,7 @@ router.post(
         limit: 1,
       });
 
-      type PromoEntry2 = { id: string; code: string; coupon: { valid: boolean; percent_off: number | null; metadata: Record<string, string> } };
+      type PromoEntry2 = { id: string; code: string; coupon: { valid: boolean } };
       const promoCode = promoCodes.data[0] as unknown as PromoEntry2 | undefined;
 
       if (!promoCode || !promoCode.coupon.valid) {
@@ -191,70 +280,56 @@ router.post(
         return;
       }
 
-      const coupon = promoCode.coupon;
-      const rabattProzent = coupon.percent_off ?? 0;
-      monate          = coupon.metadata?.monate ? parseInt(coupon.metadata.monate) : 1;
-      const rabattBetrag = Math.floor(planPreis * (rabattProzent / 100));
-      endpreisCent    = planPreis - rabattBetrag;
-      verwendeterCode = promoCode.code;
       promoCodeId     = promoCode.id;
+      verwendeterCode = promoCode.code;
     }
 
-    // 100% Rabatt → kein Stripe nötig, direkt aktivieren
-    if (endpreisCent === 0) {
-      const fakeId = `gratis_${Date.now()}`;
-      await AboModel.zahlungAnlegen({
-        restaurant_id:     req.auth!.restaurantId,
-        stripe_session_id: fakeId,
-        betrag_cent:       0,
-        monate,
-        plan,
-        rabattcode:        verwendeterCode,
-      });
-      await AboModel.zahlungAbschliessen(fakeId);
-      res.json({ gratis: true, redirect_url: `${FRONTEND_URL}/einstellungen?abo=success` });
-      return;
-    }
-
-    // Stripe Checkout Session erstellen
-    // discounts übergibt Stripe die Promotion Code ID → Stripe wendet Rabatt nativ an
     const stripe = getStripe();
+
+    // Bestehenden Stripe Customer wiederverwenden (falls vorhanden)
+    const restaurantRaw = restaurant as unknown as Record<string, unknown>;
+    const existingCustomerId = restaurantRaw.stripe_customer_id as string | undefined;
+
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            unit_amount: planPreis,
-            product_data: {
-              name: `ServeFlow ${PLAN_PREISE[plan].label} – ${restaurant.name}`,
-              description: `${monate} Monat${monate > 1 ? 'e' : ''} ServeFlow ${PLAN_PREISE[plan].label}`,
-            },
-          },
-          quantity: 1,
-        },
-      ],
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${FRONTEND_URL}/einstellungen?abo=success`,
       cancel_url:  `${FRONTEND_URL}/einstellungen?abo=cancelled`,
+      ...(existingCustomerId ? { customer: existingCustomerId } : {}),
       metadata: {
         restaurant_id: req.auth!.restaurantId,
-        monate:        String(monate),
         plan,
         rabattcode:    verwendeterCode ?? '',
       },
       ...(promoCodeId ? { discounts: [{ promotion_code: promoCodeId }] } : {}),
     } as Parameters<typeof stripe.checkout.sessions.create>[0]);
 
-    await AboModel.zahlungAnlegen({
-      restaurant_id:     req.auth!.restaurantId,
-      stripe_session_id: session.id,
-      betrag_cent:       endpreisCent,
-      monate,
-      plan,
-      rabattcode:        verwendeterCode,
-    });
-
     res.json({ redirect_url: session.url });
+  }),
+);
+
+// ─── 5. Abo kündigen ─────────────────────────────────────────────────────────
+router.post(
+  '/kuendigen',
+  requireAuth,
+  requireRolle('admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const restaurant = await RestaurantModel.nachId(req.auth!.restaurantId);
+    if (!restaurant) { res.status(404).json({ fehler: 'Restaurant nicht gefunden' }); return; }
+
+    const restaurantRaw = restaurant as unknown as Record<string, unknown>;
+    const subscriptionId = restaurantRaw.stripe_subscription_id as string | undefined;
+
+    if (!subscriptionId) {
+      res.status(400).json({ fehler: 'Kein aktives Abo gefunden' });
+      return;
+    }
+
+    const stripe = getStripe();
+    // cancel_at_period_end: true = Abo läuft bis Periodenende, dann Kündigung
+    await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
+
+    res.json({ erfolg: true, nachricht: 'Abo wird zum Ende der aktuellen Periode gekündigt.' });
   }),
 );
 
