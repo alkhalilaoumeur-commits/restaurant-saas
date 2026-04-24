@@ -49,10 +49,14 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 // Kellner und Küche sind nicht betroffen — die zahlen nicht.
 function PlanGuard({ children }: { children: React.ReactNode }) {
   const mitarbeiter = useAuthStore((s) => s.mitarbeiter);
+  const demo = useAuthStore((s) => s.demo);
   const { status, geladen } = useAboStore();
 
   // Nicht-Admins immer durchlassen
   if (!mitarbeiter || mitarbeiter.rolle !== 'admin') return <>{children}</>;
+
+  // Demo-Modus immer durchlassen — kein echtes Abo nötig
+  if (demo) return <>{children}</>;
 
   // Noch nicht geladen → kurz warten (vermeidet Flackern)
   if (!geladen) return null;
