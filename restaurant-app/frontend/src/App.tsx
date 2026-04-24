@@ -148,7 +148,7 @@ export default function App() {
         <Route path="/einstellungen"  element={<Einstellungen />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
