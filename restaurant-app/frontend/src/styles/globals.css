@@ -115,16 +115,29 @@
 }
 
 @layer components {
-  /* Karten-Hover-Effekt: lift + shadow */
+  /* Karten-Hover-Effekt: lift + shadow + sanfter scale */
   .card-hover {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-[transform,box-shadow,border-color] duration-300 ease-out;
+    will-change: transform;
   }
   .card-hover:hover {
-    box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
-    transform: translateY(-2px);
+    box-shadow:
+      0 14px 48px -14px rgba(15, 23, 42, 0.12),
+      0 4px 12px -4px rgba(15, 23, 42, 0.05),
+      0 1px 3px rgba(15, 23, 42, 0.04);
+    transform: translateY(-3px);
   }
   .dark .card-hover:hover {
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px -2px rgba(59, 130, 246, 0.1);
+    box-shadow:
+      0 16px 48px -12px rgba(0, 0, 0, 0.7),
+      0 4px 12px -2px rgba(59, 130, 246, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* Press-Effekt für klickbare Karten/Buttons */
+  .card-press:active {
+    transform: translateY(-1px) scale(0.99);
+    transition-duration: 100ms;
   }
 
   /* Subtiler Glow-Effekt für aktive Elemente */
@@ -185,8 +198,10 @@
 
   /* Premium Button — für CTAs die wirklich hervorstechen */
   .btn-premium {
-    @apply relative inline-flex items-center justify-center font-medium rounded-xl px-5 h-11 text-sm text-white transition-all duration-200;
-    background-image: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+    @apply relative inline-flex items-center justify-center font-medium rounded-xl px-5 h-11 text-sm text-white transition-all duration-200 overflow-hidden;
+    background-image: linear-gradient(135deg, #3B82F6 0%, #06B6D4 50%, #3B82F6 100%);
+    background-size: 200% 100%;
+    background-position: 0% 0;
     box-shadow:
       0 1px 2px rgba(6, 182, 212, 0.1),
       0 4px 12px -2px rgba(59, 130, 246, 0.35),
@@ -194,13 +209,33 @@
   }
   .btn-premium:hover {
     transform: translateY(-1px);
+    background-position: 100% 0;
     box-shadow:
       0 1px 2px rgba(6, 182, 212, 0.15),
-      0 8px 20px -2px rgba(59, 130, 246, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      0 10px 24px -2px rgba(59, 130, 246, 0.5),
+      0 4px 12px -2px rgba(6, 182, 212, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
   .btn-premium:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
+  }
+  /* Subtiler Shimmer-Sweep beim Hover */
+  .btn-premium::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.18) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.7s ease-out;
+    pointer-events: none;
+  }
+  .btn-premium:hover::after {
+    transform: translateX(100%);
   }
   .btn-premium:disabled {
     opacity: 0.5;

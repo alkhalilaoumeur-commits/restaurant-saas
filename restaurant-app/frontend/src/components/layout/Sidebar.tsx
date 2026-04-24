@@ -236,23 +236,19 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
   return (
     <aside className="relative w-[260px] bg-[#1e293b] dark:bg-[#0F1724] flex flex-col shrink-0 select-none overflow-hidden">
 
-      {/* Subtiler Gradient-Glow */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[260px] h-[260px] rounded-full bg-gradient-to-br from-blue-500/10 to-cyan-500/8 blur-3xl pointer-events-none" aria-hidden />
+      {/* Dekorativer Gradient-Glow oben — subtil */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[220px] h-[220px] rounded-full bg-gradient-to-br from-blue-500/15 to-cyan-500/10 blur-3xl pointer-events-none" aria-hidden />
 
-      {/* ── Editorial Header ─────────────────────────────────────── */}
+      {/* ── Logo & App-Name ──────────────────────────────────────── */}
       <div className="relative px-5 pt-6 pb-5">
         <ServeFlowLogo variante="voll" groesse="md" />
-        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500 mt-2.5">
-          Operating System
-        </p>
       </div>
 
-      {/* Hairline */}
-      <div className="h-px bg-white/[0.08] mx-5" />
+      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-4" />
 
-      {/* ── Navigation — Editorial Sections ──────────────────────── */}
-      <nav className="relative flex-1 overflow-y-auto py-6 px-4 space-y-7">
-        {SEKTIONEN.map((sektion, sektionIdx) => {
+      {/* ── Navigation ──────────────────────────────────────────── */}
+      <nav className="relative flex-1 overflow-y-auto py-5 px-3 space-y-6">
+        {SEKTIONEN.map((sektion) => {
           const sichtbar = sektion.items.filter((item) => {
             if (!mitarbeiter || !item.rollen.includes(mitarbeiter.rolle)) return false;
             const benoetigterPlan = item.plan ?? PLAN_ROUTEN[item.to];
@@ -263,18 +259,10 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
 
           return (
             <div key={sektion.titel}>
-              {/* Section-Header mit Editorial-Nummer + Hairline */}
-              <div className="px-2 mb-3 flex items-center gap-2.5">
-                <span className="font-mono text-[10px] tracking-[0.15em] text-slate-600">
-                  0{sektionIdx + 1}
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                  {sektion.titel}
-                </span>
-                <span className="flex-1 h-px bg-white/[0.06]" />
-              </div>
-
-              <div className="space-y-px">
+              <p className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em]">
+                {sektion.titel}
+              </p>
+              <div className="space-y-0.5">
                 {sichtbar.map(({ to, label, icon: Icon }) => {
                   const aktiv = location.pathname === to;
                   return (
@@ -283,32 +271,23 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
                       to={to}
                       onClick={onSchliessen}
                       className={`
-                        group relative flex items-center gap-3 px-3 h-10 text-[13.5px] transition-all duration-150
+                        group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-200
                         ${aktiv
                           ? 'text-white'
-                          : 'text-slate-400 hover:text-white'
+                          : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
                         }
                       `}
                     >
+                      {/* Aktiver Background mit Gradient + Glow */}
                       {aktiv && (
                         <>
-                          <span className="absolute inset-y-0 left-0 right-0 bg-gradient-to-r from-blue-500/15 via-blue-500/5 to-transparent" aria-hidden />
-                          <span className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-blue-400 via-cyan-400 to-transparent shadow-[0_0_12px_rgba(34,211,238,0.6)]" aria-hidden />
+                          <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/10 to-transparent" />
+                          <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-blue-400 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
                         </>
                       )}
-
-                      {!aktiv && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-0 bg-white/30 group-hover:h-4 transition-all duration-200" aria-hidden />
-                      )}
-
-                      <Icon className={`relative w-[16px] h-[16px] shrink-0 transition-colors ${aktiv ? 'text-cyan-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                      <span className="relative font-medium">{label}</span>
-
-                      {aktiv && (
-                        <span className="relative ml-auto font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-400/70">
-                          ●
-                        </span>
-                      )}
+                      <Icon className={`relative w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${aktiv ? 'text-cyan-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                      <span className="relative">{label}</span>
                     </NavLink>
                   );
                 })}
@@ -318,39 +297,37 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
         })}
       </nav>
 
-      {/* ── User-Footer — Magazine Masthead Style ───────────────── */}
-      <div className="relative border-t border-white/[0.08]">
-        <div className="px-5 pt-5 pb-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-600 mb-3">
-            Eingeloggt als
-          </p>
-
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 shrink-0 overflow-hidden ring-1 ring-white/10 rounded-md">
+      {/* ── Benutzer-Bereich (unten) ────────────────────────────── */}
+      <div className="border-t border-white/10">
+        <div className="px-4 py-4">
+          {/* Benutzer-Info */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg shrink-0 overflow-hidden ring-1 ring-white/10">
               {mitarbeiter?.foto_url ? (
                 <img src={mitarbeiter.foto_url} alt={mitarbeiter.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center font-display text-[15px] text-white">
+                <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-[13px] font-semibold text-slate-200">
                   {mitarbeiter?.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-display text-[15px] text-white leading-tight tracking-tight truncate">{mitarbeiter?.name}</p>
+              <p className="text-[13px] font-medium text-slate-200 truncate">{mitarbeiter?.name}</p>
               {mitarbeiter?.rolle && (
-                <p className={`font-mono text-[10px] uppercase tracking-[0.15em] mt-1 ${ROLLEN_FARBE[mitarbeiter.rolle].split(' ')[1]}`}>
+                <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${ROLLEN_FARBE[mitarbeiter.rolle]}`}>
                   {ROLLEN_LABEL[mitarbeiter.rolle]}
-                </p>
+                </span>
               )}
             </div>
           </div>
 
+          {/* Abmelden */}
           <button
             onClick={logout}
-            className="group w-full flex items-center justify-between px-3 h-9 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500 hover:text-red-400 transition-colors border border-white/[0.06] hover:border-red-400/30 cursor-pointer"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-slate-500 hover:text-red-400 hover:bg-white/5 transition-all duration-150 cursor-pointer"
           >
+            <IconAbmelden className="w-4 h-4" />
             <span>Abmelden</span>
-            <IconAbmelden className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
           </button>
         </div>
       </div>
