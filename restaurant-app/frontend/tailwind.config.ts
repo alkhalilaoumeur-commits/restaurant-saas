@@ -8,6 +8,9 @@ export default {
       fontFamily: {
         heading: ['"Playfair Display SC"', 'serif'],
         body: ['Karla', 'sans-serif'],
+        display: ['Fraunces', '"Playfair Display SC"', 'serif'],
+        sans:    ['Inter', 'Karla', 'system-ui', 'sans-serif'],
+        mono:    ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
         'theme-heading': ['var(--t-font-heading)'],
         'theme-body': ['var(--t-font-body)'],
       },
