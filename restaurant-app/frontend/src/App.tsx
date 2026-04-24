@@ -83,6 +83,7 @@ function BestellenRouter() {
 export default function App() {
   const theme = useThemeStore((s) => s.theme);
   const token = useAuthStore((s) => s.token);
+  const demo = useAuthStore((s) => s.demo);
   const { laden, reset } = useAboStore();
 
   // Theme beim Start anwenden
@@ -94,14 +95,14 @@ export default function App() {
     }
   }, [theme]);
 
-  // Abo-Status laden wenn eingeloggt, zurücksetzen wenn ausgeloggt
+  // Abo-Status laden wenn eingeloggt (nicht im Demo-Modus), zurücksetzen wenn ausgeloggt
   useEffect(() => {
-    if (token) {
-      laden();
-    } else {
+    if (!token) {
       reset();
+    } else if (!demo) {
+      laden();
     }
-  }, [token, laden, reset]);
+  }, [token, demo, laden, reset]);
 
   return (
     <Routes>

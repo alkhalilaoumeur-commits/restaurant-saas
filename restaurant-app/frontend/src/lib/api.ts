@@ -31,8 +31,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (res.status === 401) {
-    localStorage.removeItem('restaurant-auth');
-    window.location.href = '/login';
+    const token = getToken();
+    if (token !== 'demo') {
+      localStorage.removeItem('restaurant-auth');
+      window.location.href = '/login';
+    }
     throw new Error('Sitzung abgelaufen');
   }
 
