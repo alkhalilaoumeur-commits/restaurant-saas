@@ -52,11 +52,13 @@ export const io = new Server(httpServer, {
 const allowedOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(Boolean) as string[];
 app.use(cors({
   origin: (origin, callback) => {
-    // Kein Origin (z.B. Server-zu-Server oder gleicher Origin) → erlauben
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+    if (!origin) { callback(null, true); return; }
+    if (allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
+      callback(null, true); // Dev: alle Origins erlauben
     } else {
-      callback(null, true); // Im Dev alles erlauben — in Produktion einschränken
+      callback(new Error(`CORS: Origin ${origin} nicht erlaubt`));
     }
   },
 }));
@@ -138,10 +140,44 @@ io.on('connection', (socket) => {
   });
 });
 
+async function runAllMigrations() {
+  const dbDir = path.join(__dirname, '../../database');
+  if (!fs.existsSync(dbDir)) return;
+
+  const files = fs.readdirSync(dbDir)
+    .filter(f => f.startsWith('migration-') && f.endsWith('.sql'))
+    .sort(); // alphabetisch → konsistente Reihenfolge
+
+  for (const file of files) {
+    const sql = fs.readFileSync(path.join(dbDir, file), 'utf8');
+    const statements = sql
+      .split(/;\s*$/m)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+    for (const stmt of statements) {
+      try {
+        await q(stmt, []);
+      } catch (err: any) {
+        // Spalte/Index existiert schon → ignorieren
+        if (!['42701', '42P07', '42710', '23505', '42P16'].includes(err.code)) {
+          console.warn(`[Migration] ${file}: ${err.message}`);
+        }
+      }
+    }
+  }
+  console.log(`[Migration] ${files.length} Migrations ausgeführt`);
+}
+
 async function startServer() {
-  // Stripe-Spalten
+  // Alle migration-*.sql Dateien automatisch ausführen (idempotent dank IF NOT EXISTS)
+  await runAllMigrations();
+
+  // Zusätzliche inline Fixes (für Constraints die IF NOT EXISTS nicht unterstützen)
   await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`, []);
   await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT`, []);
+  await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS abo_plan VARCHAR(20) NOT NULL DEFAULT 'basis'`, []);
+  await q(`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS abo_laeuft_bis TIMESTAMPTZ`, []);
+  await q(`ALTER TABLE zahlungen ADD COLUMN IF NOT EXISTS plan VARCHAR(20)`, []);
   await q(`CREATE INDEX IF NOT EXISTS idx_restaurants_stripe_subscription ON restaurants (stripe_subscription_id) WHERE stripe_subscription_id IS NOT NULL`, []);
 
   // abo_status: 'trial' abschaffen — alle auf 'inactive' setzen, Constraint aktualisieren
