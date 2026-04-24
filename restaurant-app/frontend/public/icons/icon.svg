@@ -1,12 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#0A0F1A"/>
-  <rect x="40" y="40" width="432" height="432" rx="60" fill="#0F1724"/>
-  <!-- SF Letters -->
-  <text x="256" y="320" font-family="Arial Black, sans-serif" font-size="240" font-weight="900" fill="url(#grad)" text-anchor="middle">SF</text>
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#3B82F6"/>
       <stop offset="100%" style="stop-color:#06B6D4"/>
     </linearGradient>
   </defs>
+
+  <!-- Hintergrund mit Brand-Gradient -->
+  <rect width="512" height="512" rx="120" fill="url(#bg-grad)"/>
+
+  <!-- ServeFlow Cloche (Servierglocke) — zentriert -->
+  <g transform="translate(256, 256)" stroke="white" stroke-linecap="round" fill="none">
+
+    <!-- Griff oben (Knopf) -->
+    <circle cx="0" cy="-115" r="22" stroke-width="20"/>
+
+    <!-- Glocken-Kuppel -->
+    <path d="M -120 30 C -120 -55, -65 -100, 0 -100 C 65 -100, 120 -55, 120 30" stroke-width="22"/>
+
+    <!-- Teller-Linie -->
+    <line x1="-150" y1="30" x2="150" y2="30" stroke-width="22"/>
+
+    <!-- Flow-Kurve (Bewegung/Dampf) -->
+    <path d="M -65 -25 Q -25 -65, 15 -25 Q 55 15, 95 -25" stroke-width="16" opacity="0.75"/>
+
+    <!-- Fuß / Basis -->
+    <path d="M -85 65 Q -85 95, -50 95 L 50 95 Q 85 95, 85 65" stroke-width="16" opacity="0.55"/>
+
+  </g>
 </svg>
