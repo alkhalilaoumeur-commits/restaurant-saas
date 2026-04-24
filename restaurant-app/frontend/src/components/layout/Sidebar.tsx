@@ -234,17 +234,20 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
   const location = useLocation();
 
   return (
-    <aside className="w-[260px] bg-[#1e293b] dark:bg-[#0F1724] flex flex-col shrink-0 select-none">
+    <aside className="relative w-[260px] bg-[#1e293b] dark:bg-[#0F1724] flex flex-col shrink-0 select-none overflow-hidden">
+
+      {/* Dekorativer Gradient-Glow oben — subtil */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[220px] h-[220px] rounded-full bg-gradient-to-br from-blue-500/15 to-cyan-500/10 blur-3xl pointer-events-none" aria-hidden />
 
       {/* ── Logo & App-Name ──────────────────────────────────────── */}
-      <div className="px-5 pt-5 pb-4 bg-gradient-to-b from-white/[0.04] to-transparent">
+      <div className="relative px-5 pt-6 pb-5">
         <ServeFlowLogo variante="voll" groesse="md" />
       </div>
 
-      <div className="h-px bg-white/10 mx-4" />
+      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-4" />
 
       {/* ── Navigation ──────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+      <nav className="relative flex-1 overflow-y-auto py-5 px-3 space-y-6">
         {SEKTIONEN.map((sektion) => {
           const sichtbar = sektion.items.filter((item) => {
             if (!mitarbeiter || !item.rollen.includes(mitarbeiter.rolle)) return false;
@@ -256,7 +259,7 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
 
           return (
             <div key={sektion.titel}>
-              <p className="px-3 mb-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <p className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em]">
                 {sektion.titel}
               </p>
               <div className="space-y-0.5">
@@ -270,17 +273,21 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
                       className={`
                         group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all duration-200
                         ${aktiv
-                          ? 'bg-white/10 text-white shadow-sm shadow-black/10'
-                          : 'text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
                         }
                       `}
                     >
-                      {/* Aktive Indikator-Linie */}
+                      {/* Aktiver Background mit Gradient + Glow */}
                       {aktiv && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                        <>
+                          <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/10 to-transparent" />
+                          <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full bg-gradient-to-b from-blue-400 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
+                        </>
                       )}
-                      <Icon className={`w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${aktiv ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                      <span>{label}</span>
+                      <Icon className={`relative w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${aktiv ? 'text-cyan-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                      <span className="relative">{label}</span>
                     </NavLink>
                   );
                 })}

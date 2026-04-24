@@ -63,29 +63,52 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-gray-50 via-blue-50/30 to-cyan-50/20 dark:from-[#0A0F1A] dark:via-[#0A0F1A] dark:to-[#0F1724] flex items-center justify-center p-4 font-body relative overflow-hidden">
-      {/* Dekorative Blur-Kreise */}
-      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-blue-200/20 dark:bg-blue-900/20 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-200/15 dark:bg-cyan-900/10 blur-3xl pointer-events-none" />
-      <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] rounded-full bg-blue-200/10 dark:bg-blue-900/10 blur-3xl pointer-events-none" />
+    <div className="min-h-dvh bg-gradient-to-br from-slate-50 via-blue-50/40 to-cyan-50/30 dark:from-[#070B14] dark:via-[#0A0F1A] dark:to-[#0F1724] flex items-center justify-center p-4 font-body relative overflow-hidden">
+      {/* Animierte Aurora-Blur-Kreise im Hintergrund */}
+      <div
+        className="absolute top-[-15%] right-[-10%] w-[560px] h-[560px] rounded-full bg-gradient-to-br from-blue-300/30 via-cyan-200/20 to-transparent dark:from-blue-600/20 dark:via-cyan-500/10 dark:to-transparent blur-3xl pointer-events-none animate-aurora"
+        aria-hidden
+      />
+      <div
+        className="absolute bottom-[-20%] left-[-15%] w-[640px] h-[640px] rounded-full bg-gradient-to-tr from-cyan-300/25 via-blue-200/15 to-transparent dark:from-cyan-600/15 dark:via-blue-500/10 dark:to-transparent blur-3xl pointer-events-none animate-aurora"
+        style={{ animationDelay: '-9s' }}
+        aria-hidden
+      />
+      <div
+        className="absolute top-[40%] left-[55%] w-[360px] h-[360px] rounded-full bg-blue-200/15 dark:bg-blue-900/15 blur-3xl pointer-events-none"
+        aria-hidden
+      />
+
+      {/* Subtile Grid-Pattern Overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.015] dark:opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+        aria-hidden
+      />
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
 
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex mb-4">
-            <ServeFlowLogo variante="icon" groesse="lg" />
+          <div className="inline-flex mb-5 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 blur-2xl animate-float" aria-hidden />
+            <div className="relative">
+              <ServeFlowLogo variante="icon" groesse="lg" />
+            </div>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-slate-50 tracking-tight">
+          <h1 className="text-[28px] font-heading font-semibold text-gray-900 dark:text-slate-50 tracking-[-0.02em]">
             Willkommen zurück
           </h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1.5">
-            Melde dich in deinem Konto an
+          <p className="text-[14px] text-gray-500 dark:text-slate-400 mt-2">
+            Melde dich in deinem ServeFlow-Konto an
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/80 dark:bg-white/[0.04] backdrop-blur-sm rounded-2xl shadow-lg shadow-black/5 border border-white/50 dark:border-white/[0.07] p-6">
+        {/* Premium Glass-Card */}
+        <div className="glass-surface rounded-2xl shadow-premium p-6">
           <form onSubmit={submit} className="space-y-4" noValidate>
 
             {/* Email */}
@@ -193,16 +216,11 @@ export default function Login() {
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit — Premium Gradient Button */}
             <button
               type="submit"
               disabled={laden}
-              className="w-full h-11 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer
-                hover:opacity-90 active:opacity-80
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-opacity
-                inline-flex items-center justify-center"
+              className="btn-premium w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A0F1A]"
             >
               {laden ? (
                 <>
@@ -245,15 +263,19 @@ export default function Login() {
         {/* Registrierung */}
         <p className="text-center text-sm text-gray-500 dark:text-slate-400 mt-6">
           Noch kein Konto?{' '}
-          <Link to="/registrieren" className="text-brand-primary font-medium hover:underline">
+          <Link to="/registrieren" className="text-brand-gradient font-semibold hover:opacity-80 transition-opacity">
             Jetzt registrieren
           </Link>
         </p>
 
         {/* Footer */}
-        <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-4">
-          Sicher verschlüsselt · ServeFlow
-        </p>
+        <div className="flex items-center justify-center gap-2 mt-5 text-[11px] text-gray-400 dark:text-slate-500">
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
+          <span>Sicher verschlüsselt · ServeFlow</span>
+        </div>
       </div>
     </div>
   );

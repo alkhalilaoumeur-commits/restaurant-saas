@@ -5,15 +5,25 @@
 @layer base {
   body {
     @apply font-body antialiased text-gray-900 dark:text-slate-100;
+    font-feature-settings: 'ss01', 'cv11', 'cv04';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
-  /* Custom Selection Color */
+  /* Selection — DRVN Blue/Cyan Brand */
   ::selection {
-    @apply bg-red-100 text-red-900;
+    background: rgba(59, 130, 246, 0.18);
+    color: #1e3a8a;
   }
   .dark ::selection {
-    background: rgba(239, 68, 68, 0.25);
-    color: #fecaca;
+    background: rgba(59, 130, 246, 0.28);
+    color: #DBEAFE;
+  }
+
+  /* Smoother heading typography */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.015em;
   }
 
   /* Custom Scrollbar – dünn, elegant */
@@ -77,8 +87,8 @@
   .dark select:focus,
   .dark textarea:focus {
     background-color: rgba(255, 255, 255, 0.11) !important;
-    border-color: rgba(99, 102, 241, 0.6) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+    border-color: rgba(59, 130, 246, 0.7) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
     outline: none;
   }
   .dark label {
@@ -107,15 +117,101 @@
 @layer components {
   /* Karten-Hover-Effekt: lift + shadow */
   .card-hover {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-300 ease-out;
   }
   .card-hover:hover {
-    @apply shadow-md -translate-y-0.5;
+    box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+    transform: translateY(-2px);
+  }
+  .dark .card-hover:hover {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 2px 8px -2px rgba(59, 130, 246, 0.1);
   }
 
   /* Subtiler Glow-Effekt für aktive Elemente */
   .glow-sm {
     box-shadow: 0 0 12px -3px currentColor;
+  }
+
+  /* Premium Shadow — tiefer, weicher, mit Farb-Hauch */
+  .shadow-premium {
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 4px 12px rgba(15, 23, 42, 0.04),
+      0 16px 32px -12px rgba(15, 23, 42, 0.08);
+  }
+  .dark .shadow-premium {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* Brand-Gradient — Blue → Cyan (DRVN Identity) */
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+  }
+  .text-brand-gradient {
+    background: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Noise-Texture Overlay für Premium Feel */
+  .texture-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+  }
+
+  /* Glass Surface — premium backdrop */
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  .dark .glass-surface {
+    background: rgba(15, 23, 36, 0.7);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Premium Button — für CTAs die wirklich hervorstechen */
+  .btn-premium {
+    @apply relative inline-flex items-center justify-center font-medium rounded-xl px-5 h-11 text-sm text-white transition-all duration-200;
+    background-image: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+    box-shadow:
+      0 1px 2px rgba(6, 182, 212, 0.1),
+      0 4px 12px -2px rgba(59, 130, 246, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  .btn-premium:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 2px rgba(6, 182, 212, 0.15),
+      0 8px 20px -2px rgba(59, 130, 246, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+  .btn-premium:active {
+    transform: translateY(0);
+  }
+  .btn-premium:disabled {
+    opacity: 0.5;
+    transform: none;
+    cursor: not-allowed;
+  }
+
+  /* Number display — tabular lining figures für Statistiken */
+  .nums {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum', 'lnum';
   }
 }
 
@@ -211,4 +307,69 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Aurora-Gradient — langsam animiert, für Premium-Hintergründe */
+@keyframes aurora {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.animate-aurora {
+  background-size: 200% 200%;
+  animation: aurora 18s ease infinite;
+}
+
+/* Shine — Lichtreflex-Animation, z.B. über Premium-Cards */
+@keyframes shine {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+.group:hover .shine-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: shine 0.9s ease-out;
+  pointer-events: none;
+}
+
+/* Gentle float — für hero-Elemente */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Count-Up — für Statistik-Zahlen beim Erscheinen */
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-count-up {
+  animation: count-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
