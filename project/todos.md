@@ -177,9 +177,17 @@
 
 ## Vor Release (Pflicht!)
 - [x] E-Mail-Vorlagen umgestalten — professionelles ServeFlow-Design mit Dark-Header, Blue/Cyan-Gradient, QR-Code, klaren CTAs ✅ erledigt 2026-04-16
-- [ ] Email-Benachrichtigung bei Abwesenheits-Konflikt (TODO in `routes/abwesenheiten.ts` Zeile ~76) — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind
+- [x] Email-Benachrichtigung bei Abwesenheits-Konflikt — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind ✅ erledigt 2026-04-23
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
 - [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)
+
+## Marketing-Website (serve-flow.org)
+- [x] Domain serve-flow.org gekauft + auf Coolify/Hetzner verbunden ✅
+- [ ] Landing Page bauen: Hero, Features, Preise (3 Pläne), CTA "Jetzt starten"
+- [ ] Impressum einbauen (Pflicht für Stripe-Verifizierung)
+- [ ] Datenschutzerklärung einbauen
+- [ ] AGB einbauen
+- [ ] "Jetzt starten" CTA → Registrierung in der App
 
 ## Phase 9 – Inventurmanagement ✅ (erledigt 2026-04-18)
 - [x] Inventar-Datenbank: Zutaten/Artikel mit Einheit, Mindestbestand, Kategorie ✅

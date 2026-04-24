@@ -13,7 +13,7 @@ const transporter = process.env.SMTP_HOST
     })
   : null;
 
-const ABSENDER = process.env.EMAIL_FROM || 'ServeFlow <noreply@serveflow.de>';
+const ABSENDER = process.env.EMAIL_FROM || 'ServeFlow <noreply@serve-flow.org>';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 interface EmailOptionen {
@@ -107,7 +107,7 @@ function emailTemplate(inhalt: string, restaurant?: RestaurantBranding, footer?:
                 ${restaurant ? `<strong style="color:#94A3B8;">${restaurant.name}</strong> nutzt ServeFlow` : 'ServeFlow — Digitale Lösungen für Restaurants'}
               </p>
               <p style="margin:0;font-size:12px;color:#475569;text-align:center;">
-                Fragen? <a href="mailto:support@serveflow.de" style="color:#3B82F6;text-decoration:none;">support@serveflow.de</a>
+                Fragen? <a href="mailto:support@serve-flow.org" style="color:#3B82F6;text-decoration:none;">support@serve-flow.org</a>
               </p>
               `}
             </td>
