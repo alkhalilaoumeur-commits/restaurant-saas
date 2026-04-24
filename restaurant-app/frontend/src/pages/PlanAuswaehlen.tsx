@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAboStore } from '../store/abo';
+import { useAuthStore } from '../store/auth';
 import ServeFlowLogo from '../components/brand/ServeFlowLogo';
 
 const PLAENE = [
@@ -52,9 +53,15 @@ const PLAENE = [
 export default function PlanAuswaehlen() {
   const navigate = useNavigate();
   const { laden } = useAboStore();
+  const logout = useAuthStore((s) => s.logout);
   const [gewaehlterPlan, setGewaehlterPlan] = useState<string>('standard');
   const [ladend, setLadend] = useState(false);
   const [fehler, setFehler] = useState('');
+
+  const handleAbmelden = () => {
+    logout();
+    navigate('/login');
+  };
 
   const handleWeiter = async () => {
     setLadend(true);
@@ -150,6 +157,13 @@ export default function PlanAuswaehlen() {
       <p className="mt-4 text-xs text-slate-600">
         Sicher bezahlen über Stripe · Jederzeit kündbar
       </p>
+
+      <button
+        onClick={handleAbmelden}
+        className="mt-8 text-xs text-slate-500 hover:text-slate-300 underline transition-colors"
+      >
+        Abmelden und zum Login
+      </button>
     </div>
   );
 }
