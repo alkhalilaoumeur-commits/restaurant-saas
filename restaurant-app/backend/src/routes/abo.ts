@@ -301,7 +301,9 @@ router.post(
         plan,
         rabattcode:    verwendeterCode ?? '',
       },
-      ...(promoCodeId ? { discounts: [{ promotion_code: promoCodeId }] } : {}),
+      ...(promoCodeId
+        ? { discounts: [{ promotion_code: promoCodeId }] }
+        : { allow_promotion_codes: true }),
     } as Parameters<typeof stripe.checkout.sessions.create>[0]);
 
     res.json({ redirect_url: session.url });
