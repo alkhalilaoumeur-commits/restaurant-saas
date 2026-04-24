@@ -84,7 +84,7 @@ export default function App() {
   const theme = useThemeStore((s) => s.theme);
   const token = useAuthStore((s) => s.token);
   const demo = useAuthStore((s) => s.demo);
-  const { laden, reset } = useAboStore();
+  const { laden, reset, setDemoPlan } = useAboStore();
 
   // Theme beim Start anwenden
   useEffect(() => {
@@ -95,14 +95,16 @@ export default function App() {
     }
   }, [theme]);
 
-  // Abo-Status laden wenn eingeloggt (nicht im Demo-Modus), zurücksetzen wenn ausgeloggt
+  // Abo-Status laden wenn eingeloggt, Demo → Pro-Plan setzen, ausgeloggt → zurücksetzen
   useEffect(() => {
     if (!token) {
       reset();
-    } else if (!demo) {
+    } else if (demo) {
+      setDemoPlan();
+    } else {
       laden();
     }
-  }, [token, demo, laden, reset]);
+  }, [token, demo, laden, reset, setDemoPlan]);
 
   return (
     <Routes>

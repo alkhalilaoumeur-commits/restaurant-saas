@@ -7,6 +7,7 @@ interface AboState {
   status: 'inactive' | 'active' | 'expired' | 'cancelled' | 'payment_failed' | null;
   geladen: boolean;
   laden: () => Promise<void>;
+  setDemoPlan: () => void;
   reset: () => void;
 }
 
@@ -23,6 +24,8 @@ export const useAboStore = create<AboState>((set) => ({
       set({ geladen: true });
     }
   },
+
+  setDemoPlan: () => set({ plan: 'pro', status: 'active', geladen: true }),
 
   reset: () => set({ plan: null, status: null, geladen: false }),
 }));

@@ -229,7 +229,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onSchliessen }: SidebarProps) {
-  const { mitarbeiter, logout, demo } = useAuthStore();
+  const { mitarbeiter, logout } = useAuthStore();
   const { plan } = useAboStore();
   const location = useLocation();
 
@@ -250,7 +250,6 @@ export default function Sidebar({ onSchliessen }: SidebarProps) {
             if (!mitarbeiter || !item.rollen.includes(mitarbeiter.rolle)) return false;
             const benoetigterPlan = item.plan ?? PLAN_ROUTEN[item.to];
             if (!benoetigterPlan) return true;
-            if (demo) return true;
             return planHatZugriff(plan, benoetigterPlan);
           });
           if (sichtbar.length === 0) return null;
