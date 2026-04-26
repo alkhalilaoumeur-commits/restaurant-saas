@@ -830,18 +830,18 @@
       <span class="feature-icon">📧</span>
       <span class="feature-num">23.</span>
       <span class="feature-title">SMTP auf Produktions-E-Mail-Server umstellen</span>
-      <span class="badge badge-red">Fehlt noch</span>
+      <span class="badge badge-green">Erledigt</span>
     </div>
     <div class="feature-body">
-      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Aktuell:</strong> Gmail App-Passwort — Limit ~500/Tag, kein professioneller Absender (kein @serve-flow.org), Spam-Risiko.</p>
+      <p style="color:#475569; margin-bottom:10px; font-size:12px;"><strong>Live seit 2026-04-25:</strong> Versand via Resend (smtp.resend.com, EU-Region, 3.000 Mails/Monat kostenlos). Empfang via Cloudflare Email Routing (kontakt@/support@ → DRVN-Inbox). Domain serve-flow.org bei Resend verifiziert (SPF + DKIM via Cloudflare DNS).</p>
       <ol class="steps">
-        <li><div class="step-num">1</div><div>E-Mail-Provider wählen: Resend (einfachste Integration, 3.000/Monat kostenlos), Postmark oder SendGrid</div></li>
-        <li><div class="step-num">2</div><div>Domain <code>serve-flow.org</code> verifizieren (SPF-Record + DKIM in DNS eintragen)</div></li>
-        <li><div class="step-num">3</div><div>SMTP-Credentials in <code>.env</code> aktualisieren: <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code></div></li>
-        <li><div class="step-num">4</div><div>Absender auf <code>noreply@serve-flow.org</code> setzen</div></li>
-        <li><div class="step-num">5</div><div>Test: Buchungsbestätigung auslösen → landet in echtem Postfach (nicht Spam)</div></li>
+        <li><div class="step-num">✅</div><div>E-Mail-Provider gewählt: Resend (3.000/Monat kostenlos)</div></li>
+        <li><div class="step-num">✅</div><div>Domain <code>serve-flow.org</code> verifiziert (SPF + DKIM in Cloudflare-DNS)</div></li>
+        <li><div class="step-num">✅</div><div>SMTP-Credentials in <code>.env</code> aktualisiert</div></li>
+        <li><div class="step-num">✅</div><div>Absender: <code>ServeFlow &lt;noreply@serve-flow.org&gt;</code></div></li>
+        <li><div class="step-num">✅</div><div>Test: alle 11 Templates erfolgreich versendet</div></li>
       </ol>
-      <div class="todo-box">Datei: <code>restaurant-app/backend/src/services/emailService.ts</code> — SMTP-Config anpassen</div>
+      <div class="todo-box">Datei: <code>restaurant-app/backend/src/services/email.ts</code> — Resend SMTP aktiv</div>
     </div>
   </div>
 

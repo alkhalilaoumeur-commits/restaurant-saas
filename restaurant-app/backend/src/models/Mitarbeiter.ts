@@ -62,7 +62,12 @@ export const MitarbeiterModel = {
     let idx = 1;
     if (felder.name !== undefined) { sets.push(`name = $${idx++}`); vals.push(felder.name); }
     if (felder.rolle !== undefined) { sets.push(`rolle = $${idx++}`); vals.push(felder.rolle); }
-    if (felder.aktiv !== undefined) { sets.push(`aktiv = $${idx++}`); vals.push(felder.aktiv); }
+    if (felder.aktiv !== undefined) {
+      sets.push(`aktiv = $${idx++}`); vals.push(felder.aktiv);
+      // DSGVO Art. 5 Abs. 1 lit. e: Bei Deaktivierung Passwort-Hash invalidieren —
+      // ein deaktivierter Account braucht keine Login-Möglichkeit mehr.
+      if (felder.aktiv === false) sets.push('passwort_hash = NULL');
+    }
     if (felder.stundenlohn !== undefined) { sets.push(`stundenlohn = $${idx++}`); vals.push(felder.stundenlohn); }
     if (felder.urlaubsanspruch_tage !== undefined) { sets.push(`urlaubsanspruch_tage = $${idx++}`); vals.push(felder.urlaubsanspruch_tage); }
     if (felder.foto_url !== undefined) { sets.push(`foto_url = $${idx++}`); vals.push(felder.foto_url); }

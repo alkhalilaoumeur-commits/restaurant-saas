@@ -462,6 +462,11 @@ const DEFAULT_DATA = {
     { id: "cl-15", text: "Google Reserve Webhook-Empfaenger (Infrastruktur bereit, Partnervertrag ausstehend)", date: "2026-04-15" },
     { id: "cl-16", text: "Theme-System (gastro-* Klassen, Kategorie-First, Custom-Builder vorbereitet)", date: "2026-04-16" },
     { id: "cl-17", text: "Bewertungssystem, Walk-Ins, Monatsansicht Reservierungen, Excel-Import", date: "2026-04-17" },
+    { id: "cl-18", text: "Stripe v2026 API-Bug gefixt + Promo-Code-Logik gesaeubert (PIZZASERVICE live getestet)", date: "2026-04-26" },
+    { id: "cl-19", text: "Erlebnis-Buchungen: Stripe entfernt (Vor-Ort-Zahlung statt Online-Prepayment)", date: "2026-04-26" },
+    { id: "cl-20", text: "Tischplan v2 Resmio-Style: Split-View, Live-Uhr, Diamond-Tische, Stuhl-Indikatoren, Live-Badges", date: "2026-04-26" },
+    { id: "cl-21", text: "Reservierungs-Tags + Dekorationen-System (Pflanze/Theke/Eingang/Servicestation/Wand/Tuer)", date: "2026-04-26" },
+    { id: "cl-22", text: "Tischplan: strikte Bereich-Trennung (jeder Bereich = eigener Floor Plan, kein 'Alle'-View)", date: "2026-04-26" },
   ]
 };
 
@@ -470,7 +475,7 @@ const DEFAULT_DATA = {
 // ============================================================
 
 const STORAGE_KEY = 'projekt-dashboard-restaurant-saas';
-const DATA_VERSION = 4; // Erhoehen bei jedem groesseren DEFAULT_DATA-Update
+const DATA_VERSION = 5; // Erhoehen bei jedem groesseren DEFAULT_DATA-Update
 
 function loadData() {
   try {

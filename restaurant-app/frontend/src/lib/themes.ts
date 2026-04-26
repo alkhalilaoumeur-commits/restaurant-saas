@@ -285,11 +285,12 @@ export function cardStilZuKlasse(stil: Theme['cardStil']): string {
   }
 }
 
-/** Erzeugt die Google Fonts URL für ein Theme (zum Laden im <head>) */
+/**
+ * @deprecated DSGVO-Verstoss (LG Muenchen 2022) — Google CDN ueberlaesst Gast-IPs an Google.
+ * Funktion bleibt fuer Rueckwaertskompatibilitaet, wird aber nicht mehr aufgerufen.
+ * Fuer custom Theme-Fonts: @fontsource per npm installieren und in main.tsx importieren.
+ */
 export function googleFontsUrl(theme: Theme): string {
-  const fonts = new Set([theme.fontHeading, theme.fontBody]);
-  const params = [...fonts]
-    .map((f) => `family=${encodeURIComponent(f)}:wght@400;500;600;700`)
-    .join('&');
-  return `https://fonts.googleapis.com/css2?${params}&display=swap`;
+  void theme;
+  return '';
 }

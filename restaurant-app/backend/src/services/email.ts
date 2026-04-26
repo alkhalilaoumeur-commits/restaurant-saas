@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
+import { widerspruchsLink } from './newsletter';
 
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({
@@ -15,6 +16,38 @@ const transporter = process.env.SMTP_HOST
 
 const ABSENDER = process.env.EMAIL_FROM || 'ServeFlow <noreply@serve-flow.org>';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const ANBIETER_KONTAKT = process.env.ANBIETER_KONTAKT_EMAIL || 'kontakt@serve-flow.org';
+
+/**
+ * UWG-konformer Footer fuer Werbe-Mails an Bestandskunden.
+ * § 7 Abs. 3 UWG verlangt in JEDER Werbe-Mail: Hinweis + funktionierender Widerspruchsweg.
+ * NICHT in transaktionalen Mails (Bestaetigungen, Verifikation, etc.) verwenden.
+ */
+export function werbeFooterHtml(restaurantId: string): string {
+  const link = widerspruchsLink(restaurantId, FRONTEND_URL);
+  return `
+    <p style="margin:0 0 6px;font-size:12px;color:#94A3B8;text-align:center;">
+      Sie erhalten diese E-Mail, weil Sie ServeFlow als Restaurantbetreiber nutzen. Wir informieren Sie gelegentlich
+      ueber aehnliche eigene Produkte (§ 7 Abs. 3 UWG).
+    </p>
+    <p style="margin:0;font-size:12px;color:#475569;text-align:center;">
+      <a href="${link}" style="color:#3B82F6;text-decoration:underline;">Werbe-E-Mails abbestellen</a>
+    </p>
+  `;
+}
+
+/**
+ * Plain-Text-Email an die Anbieter-Kontaktadresse (z.B. für DSGVO-Anfragen,
+ * Datenpannen-Meldungen, Support-Tickets). Kein Branding, keine HTML-Formatierung —
+ * lesbar wie ein Ticket.
+ */
+export async function kontaktEmailSenden(opts: { betreff: string; text: string }): Promise<void> {
+  await senden({
+    an: ANBIETER_KONTAKT,
+    betreff: opts.betreff,
+    html: `<pre style="font-family:monospace;white-space:pre-wrap;">${opts.text.replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]!))}</pre>`,
+  });
+}
 
 interface EmailOptionen {
   an: string;

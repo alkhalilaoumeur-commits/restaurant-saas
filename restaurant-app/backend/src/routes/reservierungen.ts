@@ -185,6 +185,18 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json(reservierung);
 }));
 
+// PATCH /api/reservierungen/:id/tags  (Admin/Kellner)
+// Setzt Tags wie "Vegan", "Geburtstag", "Allergie" an einer Reservierung
+router.patch('/:id/tags', requireAuth, requireRolle('admin', 'kellner'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { tags } = req.body as { tags: string[] };
+    if (!Array.isArray(tags)) { res.status(400).json({ fehler: 'tags muss ein Array sein' }); return; }
+    const r = await ReservierungModel.tagsAendern(req.params.id, req.auth!.restaurantId, tags);
+    if (!r) { res.status(404).json({ fehler: 'Reservierung nicht gefunden' }); return; }
+    res.json(r);
+  })
+);
+
 // PATCH /api/reservierungen/:id/status  (Admin/Kellner)
 router.patch('/:id/status', requireAuth, requireRolle('admin', 'kellner'),
   asyncHandler(async (req: AuthRequest, res: Response) => {

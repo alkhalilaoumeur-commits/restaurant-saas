@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS restaurants (
   layout_id                 TEXT    NOT NULL DEFAULT 'modern',
   restaurant_code           TEXT    NOT NULL UNIQUE,
   lizenz_code               TEXT    UNIQUE,
-  max_mitarbeiter           INTEGER NOT NULL DEFAULT 5,
+  max_mitarbeiter           INTEGER NOT NULL DEFAULT 3,  -- Basis-Plan; wird beim Abo-Wechsel automatisch angepasst (services/plan-limits.ts)
+  newsletter_aktiv          BOOLEAN NOT NULL DEFAULT TRUE, -- § 7 Abs. 3 UWG / EuGH C-654/23: Bestandskundenwerbung ueber aehnliche Produkte (Opt-out)
+  newsletter_widerspruch_am TIMESTAMPTZ,                   -- Zeitpunkt des Widerspruchs (NULL solange aktiv)
   abo_status                TEXT    NOT NULL DEFAULT 'trial'
                             CHECK (abo_status IN ('trial', 'active', 'expired')),
   -- Reservierungs-Konfiguration

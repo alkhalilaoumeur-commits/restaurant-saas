@@ -664,10 +664,15 @@ export default function Buchen() {
                 <textarea
                   value={anmerkung}
                   onChange={(e) => setAnmerkung(e.target.value)}
-                  placeholder="Allergien, Kinderstuhl, Fensterplatz..."
+                  placeholder="Kinderstuhl, Fensterplatz, Hochzeitstag..."
                   rows={3}
                   className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:outline-none resize-none"
                 />
+                <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                  Hinweis nach Art. 9 DSGVO: Bitte geben Sie Allergien, Unverträglichkeiten oder andere Gesundheitsdaten
+                  nur an, wenn Sie der Verarbeitung dieser besonders schützenswerten Informationen ausdrücklich zustimmen.
+                  Mit dem Eintrag erklären Sie diese Einwilligung.
+                </p>
               </div>
 
               <label className="flex items-start gap-3 cursor-pointer">

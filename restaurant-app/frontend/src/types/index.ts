@@ -211,8 +211,49 @@ export interface Reservierung {
   dsgvo_einwilligung: boolean;
   erinnerung_gesendet: Record<string, boolean>;
   verweilzeit_min: number;
+  tags: string[];          // Ad-hoc Reservierungs-Tags (Vegan, Geburtstag, Allergie...)
+  erstellt_am: string;
+  // Aus Gäste-CRM (LEFT JOIN auf gaeste). null = kein verknüpfter Gast.
+  gast_besuche?: number | null;
+  gast_no_shows?: number | null;
+  gast_tags?: string[] | null;
+}
+
+// ─── Dekorationen (statische Floor-Plan Elemente) ────────────────────────────
+
+export type DekoTyp = 'pflanze' | 'theke' | 'eingang' | 'servicestation' | 'wand' | 'tuer';
+
+export interface Dekoration {
+  id: string;
+  restaurant_id: string;
+  bereich_id: string | null;
+  typ: DekoTyp;
+  pos_x: number;
+  pos_y: number;
+  breite: number;
+  hoehe: number;
+  rotation: number;
+  label: string | null;
   erstellt_am: string;
 }
+
+// Vordefinierte Reservierungs-Tags
+export const RESERVIERUNG_TAGS = [
+  'Vegan',
+  'Vegetarisch',
+  'Glutenfrei',
+  'Laktosefrei',
+  'Allergie',
+  'Geburtstag',
+  'Jubiläum',
+  'Geschäftsessen',
+  'Familienfeier',
+  'Romantisch',
+  'Fensterplatz',
+  'Ruhige Ecke',
+  'Hochstuhl',
+  'Rollstuhl',
+] as const;
 
 // ─── Walk-in ──────────────────────────────────────────────────────────────────
 

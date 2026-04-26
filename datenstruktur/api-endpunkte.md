@@ -66,11 +66,21 @@
 ## Reservierungen
 | Methode | Route | Beschreibung | Auth nötig |
 |---|---|---|---|
-| GET | /api/reservierungen | Alle Reservierungen (optional ?datum=YYYY-MM-DD) | Ja |
+| GET | /api/reservierungen | Alle Reservierungen (optional ?datum=YYYY-MM-DD) — JOIN auf gaeste liefert `gast_besuche`, `gast_no_shows`, `gast_tags` | Ja |
 | POST | /api/reservierungen | Neue Reservierung | Nein (öffentlich) |
 | PATCH | /api/reservierungen/:id/status | Status ändern (ausstehend/bestaetigt/storniert) | Ja (Admin/Kellner) |
 | PATCH | /api/reservierungen/:id/tisch | Tisch manuell zuweisen/entfernen (body: { tisch_id }) | Ja (Admin/Kellner) |
+| **PATCH** | **/api/reservierungen/:id/tags** | **(NEU 2026-04-26)** Tags setzen (body: { tags: string[] }) — max 10 Tags, max 50 Zeichen | Ja (Admin/Kellner) |
 | DELETE | /api/reservierungen/:id | Löschen | Ja (Admin) |
+
+## Dekorationen (NEU 2026-04-26)
+Statische Floor-Plan-Elemente — Pflanzen, Theke, Eingang, Servicestation, Wand, Tür.
+| Methode | Route | Beschreibung | Auth nötig |
+|---|---|---|---|
+| GET | /api/dekorationen | Alle Dekorationen des Restaurants | Ja (Admin/Kellner) |
+| POST | /api/dekorationen | Neue Deko (body: { typ, pos_x?, pos_y?, breite?, hoehe?, rotation?, label?, bereich_id? }) — typ ∈ pflanze/theke/eingang/servicestation/wand/tuer | Ja (Admin) |
+| PATCH | /api/dekorationen/:id | Position/Größe/Rotation/Label/Bereich aktualisieren | Ja (Admin) |
+| DELETE | /api/dekorationen/:id | Löschen | Ja (Admin) |
 
 ## Dienstplan
 | Methode | Route | Beschreibung | Auth nötig |

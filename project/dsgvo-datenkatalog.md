@@ -65,14 +65,17 @@
 
 ## 4. Restaurant-Daten
 
-| Feld | Personenbezogen | Zweck |
-|---|---|---|
-| `name` | Nein (Firmenname) | Identifikation |
-| `logo_url` | Nein | Branding |
-| `oeffnungszeiten` | Nein | Information |
-| `lizenz_code` | Nein | Lizenzierung |
+| Feld | Personenbezogen | Zweck | Rechtsgrundlage |
+|---|---|---|---|
+| `name` | Nein (Firmenname) | Identifikation | — |
+| `logo_url` | Nein | Branding | — |
+| `oeffnungszeiten` | Nein | Information | — |
+| `lizenz_code` | Nein | Lizenzierung | — |
+| `email` (Restaurant-Kontakt) | Ja (oft Inhaber-Mail) | Login, Vertragsabwicklung, Bestandskundenwerbung | Art. 6 Abs. 1 lit. b DSGVO + § 7 Abs. 3 UWG |
+| `newsletter_aktiv` | Nein (Boolean) | Steuerung Bestandskundenwerbung — TRUE bedeutet Werbung erlaubt, FALSE nach Widerspruch | § 7 Abs. 3 UWG / EuGH C-654/23 |
+| `newsletter_widerspruch_am` | Nein (Timestamp) | Nachweis des Widerspruchs (Beweispflicht) | Art. 5 Abs. 2 DSGVO (Rechenschaftspflicht) |
 
-**Keine personenbezogenen Daten** – kein DSGVO-Handlungsbedarf.
+**Hinweis Bestandskundenwerbung:** Werbe-Mails ueber aehnliche eigene Produkte sind ohne separate Einwilligung zulaessig (§ 7 Abs. 3 UWG). Hinweis erfolgt bei Datenerhebung (Registrierung) und in jeder Werbe-Mail (`werbeFooterHtml()` in email.ts). Widerspruchsweg: Token-Link `/newsletter-widerspruch/:token` oder Mail an kontakt@serve-flow.org. Transaktionale Mails (Bestaetigungen, Verifikation) sind hiervon nicht betroffen — sie laufen unter Vertragspflicht (Art. 6 Abs. 1 lit. b DSGVO).
 
 ---
 

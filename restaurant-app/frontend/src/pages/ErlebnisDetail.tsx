@@ -62,13 +62,13 @@ export default function ErlebnisDetail() {
     setBuchungFehler('');
     setBuchungLaedt(true);
     try {
-      const { checkout_url } = await api.post<{ checkout_url: string }>(`/erlebnisse/${erlebnis.id}/buchen`, {
+      const { buchung_token } = await api.post<{ buchung_token: string }>(`/erlebnisse/${erlebnis.id}/buchen`, {
         gast_name: gastName.trim(),
         gast_email: gastEmail.trim().toLowerCase(),
         gast_telefon: gastTelefon || null,
         datum, uhrzeit, personen: Number(personen), anmerkungen: anmerkungen || null,
       });
-      window.location.href = checkout_url;
+      window.location.href = `/erlebnis-bestaetigung/${buchung_token}`;
     } catch (err) {
       setBuchungFehler((err as Error).message || 'Buchung fehlgeschlagen');
       setBuchungLaedt(false);
@@ -292,15 +292,15 @@ export default function ErlebnisDetail() {
                   className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {buchungLaedt ? (
-                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Weiterleitung...</>
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Wird gebucht...</>
                   ) : (
-                    <>Jetzt buchen & bezahlen — {preisFormatieren(erlebnis.preis_cent)}</>
+                    <>Jetzt verbindlich buchen — {preisFormatieren(erlebnis.preis_cent)}</>
                   )}
                 </button>
               </div>
 
               <p className="text-xs text-gray-400 text-center">
-                Sichere Zahlung via Stripe · Du wirst auf die Stripe-Zahlungsseite weitergeleitet
+                Zahlung erfolgt vor Ort im Restaurant · Bargeld oder Karte
               </p>
             </div>
           )}

@@ -222,8 +222,8 @@ export default function PlanAuswaehlen() {
         )}
       </button>
 
-      <p className="mt-4 text-xs text-slate-600">
-        Sicher bezahlen über Stripe · Jederzeit kündbar
+      <p className="mt-4 text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+        Mit Klick auf <strong className="text-slate-200">"{PLAENE.find(p => p.id === gewaehlterPlan)?.name} wählen"</strong> schließen Sie ein kostenpflichtiges Abo ab. Die monatliche Gebühr wird automatisch von Ihrer Karte abgebucht. Jederzeit zum Monatsende kündbar — sicher bezahlt über Stripe. Rabattcode kann im nächsten Schritt eingegeben werden.
       </p>
 
       <button

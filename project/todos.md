@@ -1,5 +1,50 @@
 # Todo-Liste
 
+## ✅ Erledigt 2026-04-26 (Stripe + Tischplan v2)
+
+### Stripe-Cleanup
+- [x] Stripe-Bug v2026 API gefixt — `promotion.coupon` statt `coupon` direkt (`expand: ['data.promotion.coupon']` in pruefen + checkout)
+- [x] Promo-Code-Logik gesäubert — `coupon.duration` + `coupon.duration_in_months` direkt aus Stripe lesen statt Custom-Metadata
+- [x] Erlebnis-Buchung: Stripe entfernt (Option B) — Vor-Ort-Zahlung statt Online-Prepayment, kein Stripe Connect nötig
+- [x] Coupon `gratis-3-monate` (100% off, 3 Monate) + Promo-Code `PIZZASERVICE` in Stripe angelegt + live getestet
+
+### Tischplan v2 (Resmio-Style, DRVN-konform)
+- [x] DB-Migration `migration-floorplan-erweitert.sql` — `reservierungen.tags TEXT[]` + neue Tabelle `dekorationen`
+- [x] Backend: `PATCH /api/reservierungen/:id/tags` + komplette `/api/dekorationen` CRUD-Routes
+- [x] `ReservierungModel.alle` mit LEFT JOIN auf gaeste → Gast-Stats (Besuche, No-Shows, CRM-Tags) in jeder Reservierung
+- [x] Frontend: `ReservierungsTimeline`-Komponente (chronologische Liste mit "Jetzt"-Marker, Tags, Status-Icons)
+- [x] Frontend: `useDekorationen`-Hook + Demo-Deko (Eingang, Bar, Pflanzen, Service-Station)
+- [x] Tischplan: Split-View (Timeline links 340px + Floor Plan rechts) im Live-Modus
+- [x] Tischplan: Live-Uhr + "Auf jetzt wechseln" Button in Topbar (scrollt Timeline zu jetzt)
+- [x] Tischplan: Bereich-Tabs direkt am Canvas (Resmio-Style mit Cyan-Underline)
+- [x] Tischplan: Diamond-Tische mit Stuhl-Indikatoren (Kreise rund um Tisch je nach Form/Kapazität)
+- [x] Tischplan: Live-Zeit-Badges auf Tischen ("19:00", "5m"-Countdown, "JETZT"-Overdue)
+- [x] Tischplan: Deko-Layer auf Canvas + Edit-Sidebar mit 6 Deko-Vorlagen (Pflanze, Theke, Eingang, Service, Wand, Tür)
+- [x] Tischplan: DRVN Floor-Background (Punkt-Raster + Cyan-Vignette) im Live-Modus
+- [x] Tischplan: Tags-Bearbeiten Modal (14 vordefinierte Reservierungs-Tags + Custom-Eingabe)
+- [x] Tischplan: "Alle"-Tab entfernt — strikte Bereich-Trennung wie Resmio (jeder Bereich = eigener Floor Plan)
+- [x] Tischplan: Default-Bereich-Init (erster Bereich automatisch aktiv) + Empty States + Migrations-Banner für Legacy-Tische
+
+### Sonstige
+- [x] Memory-Idee gespeichert: ServeFlow Pro+ Plan mit DATEV-Export (4. Plan-Stufe ~99€, erst nach 5-10 Kunden)
+
+## 📌 Tischplan v2 — Folge-Aufgaben (offen)
+- [ ] **Migration auf Production-DB ausführen** (`migration-floorplan-erweitert.sql`) — läuft automatisch beim nächsten Deploy via `runAllMigrations`
+- [ ] **Stripe-Webhook im Live-Dashboard prüfen** — Endpoint URL muss auf Production-Backend zeigen, alle 4 Events abonniert
+- [ ] **Stripe-Audit Folgefixes** — Bug 2 (62-Tage-Doppel-Update) + Inkonsistenz 1 (Folge-Zahlungen in `zahlungen` loggen) noch offen
+- [ ] **Erlebnis-Stripe-Code aufräumen** — `ErlebnisModel.buchungBezahlen()` + `buchungStripeSessionSetzen()` sind tote Helfer, bleiben für Stripe Connect Phase C
+- [ ] **Reservierung-Quick-Actions in Timeline** — Inline-Buttons (Bestätigen / No-Show / Stornieren) bei ausgewählter Reservierung
+
+## 📌 Fuer morgen (aufgenommen 2026-04-25)
+- [ ] **seven.io Integration** — SMS-Versand umstellen (ersetzt Konsolen-Ausgabe im Dev-Modus, siehe "Vor Release"-Block)
+- [ ] **21.dev fuer Landingpage nutzen** — Marketing-Website serve-flow.org mit 21.dev bauen (Hero, Features, Preise)
+- [ ] **Designs anpassen Bestellseite** — Preset-Galerie + Theme-Feinschliff (haengt mit Phase 6 zusammen)
+- [ ] **Tischplan: Bild auf Handy bearbeiten** — mobile UX im Floor Plan Editor pruefen/fixen
+- [x] **Rechtlicher Feinschliff (Tag 1: App-Seiten)** — Impressum + Datenschutz + AGB als Frontend-Seiten + Cookie-Banner + AVV/TOM/Subunternehmer-Liste in `legal/` ✅ erledigt 2026-04-25 (offen: serve-flow.org Marketing-Site, Anwaltsreview)
+- [x] **Email umstellen auf Business-Mail** — Versand via Resend (3000/Monat gratis, smtp.resend.com), Empfang via Cloudflare Email Routing (kontakt@/support@ → DRVN-Inbox), alle 11 Templates getestet ✅ erledigt 2026-04-25
+- [ ] **Restaurant-Webseite bauen + mit App verknuepfen** — Pilot-Kunde: eigene Webseite + Reservierung/Bestellung ueber ServeFlow-Widget
+- [ ] **Testdaten der App durchtesten** — End-to-End mit realistischen Daten, alle kritischen Flows
+
 ## Jetzt dran
 - [x] Node.js installieren (via nvm, Version 20) ✅ erledigt 2026-04-04
 - [x] PostgreSQL installieren ✅ erledigt 2026-04-04
@@ -100,8 +145,9 @@
   - [x] Toolbar: Zoom, Tisch-Typen Seitenleiste, Bearbeiten/Live-Modus ✅
   - [x] Verbindung zu Reservierungen (Tisch per Klick zuweisen) ✅ erledigt 2026-04-09
 - [x] Automatische Tischzuweisung (kleinster passender Tisch, Kombinationen, Puffer, Zonen) ✅ erledigt 2026-04-09
-- [ ] Gaeste-CRM (Profile, Tags, Besuchshistorie, Allergien mit DSGVO-Einwilligung)
-- [ ] No-Show-Management (Kreditkartengarantie optional, No-Show-Tracking, Gaeste-Score)
+- [x] Gaeste-CRM (gaeste-Tabelle mit Tags + Notizen + Email + Telefon; gast_id-Verknüpfung auf reservierungen; Frontend Gaeste.tsx 695 Zeilen; Allergien via Anmerkungs-Feld Art. 9 DSGVO) ✅ erledigt 2026-04-09 (offen als Erweiterung: dediziertes Allergien-Feld, Besuchshistorie-Aggregation)
+- [x] No-Show-Tracking — `no-show.ts` Cronjob (alle 15 Min) setzt Reservierungen 30 Min nach Termin automatisch auf 'no_show' ✅ erledigt 2026-04-15
+- [ ] No-Show-Folgesystem (offen): Kreditkartengarantie (Stripe Auth-Hold) + Gaeste-Score (Anzahl No-Shows pro Gast → Risiko-Markierung)
 - [ ] SMS/WhatsApp-Erinnerungen (95% Oeffnungsrate vs. 20-30% bei E-Mail)
 - [x] Google Reserve Integration (Option A aktiv + Option B Infrastruktur bereit) ✅ erledigt 2026-04-11
 
@@ -179,15 +225,79 @@
 - [x] E-Mail-Vorlagen umgestalten — professionelles ServeFlow-Design mit Dark-Header, Blue/Cyan-Gradient, QR-Code, klaren CTAs ✅ erledigt 2026-04-16
 - [x] Email-Benachrichtigung bei Abwesenheits-Konflikt — Admin bekommt Email wenn MA Abwesenheit im laufenden Monat einträgt und Schichten betroffen sind ✅ erledigt 2026-04-23
 - [ ] SMS-Versand auf Twilio (oder alternativen Anbieter) umstellen — aktuell nur Konsolen-Ausgabe im Dev-Modus
-- [ ] SMTP auf Produktions-Email umstellen (aktuell: Gmail App-Passwort)
+- [x] SMTP auf Produktions-Email umstellen — Resend SMTP auf serve-flow.org, EU-Region, Domain verifiziert ✅ erledigt 2026-04-25
 
 ## Marketing-Website (serve-flow.org)
 - [x] Domain serve-flow.org gekauft + auf Coolify/Hetzner verbunden ✅
 - [ ] Landing Page bauen: Hero, Features, Preise (3 Pläne), CTA "Jetzt starten"
-- [ ] Impressum einbauen (Pflicht für Stripe-Verifizierung)
-- [ ] Datenschutzerklärung einbauen
-- [ ] AGB einbauen
+- [ ] Impressum auf serve-flow.org einbauen (Inhalt fertig in App: `pages/Impressum.tsx`)
+- [ ] Datenschutzerklärung auf serve-flow.org einbauen (Inhalt fertig in App: `pages/Datenschutz.tsx`)
+- [ ] AGB auf serve-flow.org einbauen (Inhalt fertig in App: `pages/AGB.tsx`)
 - [ ] "Jetzt starten" CTA → Registrierung in der App
+
+## Manuelle Aufgaben Tag 1 (kann nur Ilias erledigen — nicht Code)
+
+> Diese Punkte sind NICHT in Code abbildbar. Du musst sie selbst erledigen, bevor du den ersten zahlenden Kunden onboardest.
+
+- [ ] **Anwaltsreview einplanen** — Impressum + Datenschutz + AGB + AVV von einem deutschen IT-/Datenschutz-Anwalt prüfen lassen (Erstkosten ca. 300–800 € einmalig). Empfohlene Kanzleien: anwalt.de Suche „IT-Recht Stuttgart" oder eRecht24-Premium (günstigere Generator-Variante ~30 €/Jahr).
+- [ ] **Berufshaftpflicht abschliessen** — vor erstem zahlendem Kunden. Anbieter für Solo-IT/SaaS: Hiscox „CyberClear", exali „Software Profihaftpflicht", VHV „IT-Haftpflicht". Kosten ca. 25–60 €/Monat. Deckt Schäden durch Software-Fehler, Datenpannen, Vertragsverletzungen.
+- [x] **Empfang `kontakt@serve-flow.org` getestet** — Cloudflare Email Routing → Forward an a.aoumeur@drvnorganisations.com funktioniert. SPF + DKIM (Resend) im Cloudflare-DNS gesetzt ✅ erledigt 2026-04-25
+- [x] **Resend API-Key rotieren** — neuer Key in `.env` SMTP_PASS, Test-Script erneut grün (alle 11 Templates) ✅ erledigt 2026-04-25
+- [ ] **Stripe-Dashboard: Impressum-Link hinterlegen** — Stripe verlangt für deutsche Konten einen Link auf das Impressum (https://serve-flow.org/impressum nach Marketing-Site-Launch, ansonsten App-URL). Stripe Settings → Public business information.
+- [ ] **Stripe-Dashboard: Geschäftsdaten vervollständigen** — Anschrift, Kontakt-Email, Statement-Descriptor "SERVEFLOW", Support-URL.
+- [ ] **(Optional) Telefonnummer für Impressum** — nicht zwingend (Email reicht laut BGH 25.02.2016), aber gibt mehr Vertrauen. Wenn ja: Festnetz-Weiterleitung über Anbieter wie sipgate (~5 €/Monat) statt private Mobilnummer veröffentlichen.
+- [ ] **Steuer-Registrierung beim Finanzamt** — falls noch nicht erfolgt: Fragebogen zur steuerlichen Erfassung über ELSTER ausgefüllt? Steuernummer für Einzelunternehmen vorhanden?
+
+## Rechts-Set Tag 2 (Backend-Hardening — Claude erledigt) ✅ erledigt 2026-04-25
+- [x] `helmet.js` installiert + HSTS, X-Content-Type-Options, Referrer-Policy, COOP aktiv (CSP separat — siehe Tag 3) ✅
+- [x] Passwort-Hash auf NULL bei Mitarbeiter-Deaktivierung (in `MitarbeiterModel.aktualisieren`) ✅
+- [x] Allergie-Hinweis im Anmerkungs-Feld der Buchungsseite (Art. 9 DSGVO) ✅
+- [x] AVV/AGB-Akzeptanz bei Registrierung: Migration + Backend-Pflichtcheck + Frontend-Checkbox + Versions-Konstante ✅
+- [x] Account-Loeschung (Anfrage-Email) + JSON-Datenexport fuer Restaurant-Inhaber (Tab "Datenschutz" in Einstellungen) ✅
+- [x] Datenpannen-Runbook in `legal/datenpannen-runbook.md` ✅
+
+## Rechts-Set Tag 3 ✅ erledigt 2026-04-25
+- [x] **CSP konfigurieren** in Production aktiviert, im Dev aus (Vite-HMR-Kompat). Doku: `legal/csp-konfiguration.md` ✅
+- [x] Stornierte Reservierungen nach 7 Tagen automatisch anonymisieren (Trigger + Cleanup-Erweiterung) ✅
+- [x] AVV-Versions-Banner: 2 neue Endpunkte + `RechtsdokumenteBanner` in Layout, Bestandskunden sehen Banner bei Versions-Mismatch ✅
+- [x] Server-Logfile-Rotation Doku: `legal/logfile-rotation.md` (muss von dir einmalig in Coolify gesetzt werden) ✅
+
+## Manuelle Aufgaben Tag 3 (kann nur Ilias erledigen)
+- [ ] **Coolify Docker-Driver-Logging** konfigurieren (json-file, max-size=10m, max-file=14) — Schritt-fuer-Schritt in `legal/logfile-rotation.md`
+- [ ] **Hetzner Snapshot-Policy** auf 14 Tage Aufbewahrung pruefen
+- [ ] **CSP Test-Checkliste** beim ersten Production-Deploy abarbeiten — siehe `legal/csp-konfiguration.md` (Browser-Console auf Violations pruefen!)
+
+## DSGVO-Audit-Folge (aus Skill-v2-Check 2026-04-25)
+
+### Sofort gefixt ✅
+- [x] Google Fonts auf @fontsource lokal umgestellt (Karla + Playfair Display SC) ✅
+- [x] Dynamic Theme-Fonts via Google CDN deaktiviert (Fallback System-Fonts) ✅
+- [x] model-viewer Google CDN entfernt (Hinweis-Kommentar fuer npm-Bundling) ✅
+- [x] TTDSG → TDDDG in Datenschutz + CookieBanner ✅
+- [x] PII aus Backend-Logs entfernt (warteliste, sms-gast, sms) ✅
+- [x] Stripe DPF + SCCs explizit in Datenschutzerklaerung erwaehnt ✅
+
+### Folge-Aufgaben (🟡 mittlere Prioritaet)
+- [ ] **model-viewer per npm bundeln** wenn 3D-Showcase-Theme produktiv genutzt wird (`npm i @google/model-viewer` + dynamic import in Showcase-Layout)
+- [ ] **@fontsource fuer Theme-Fonts** (Cormorant Garamond, Playfair Display, Lato, Oswald, DM Sans, Space Grotesk, etc.) wenn Bestellseiten-Themes mit Custom-Schrift sinnvoll
+- [x] **EuGH C-654/23 Newsletter-Hinweis** — Migration `migration-newsletter.sql` (newsletter_aktiv + newsletter_widerspruch_am), `services/newsletter.ts` (HMAC-Token), Endpunkt `POST /api/restaurant/newsletter-widerspruch/:token`, `werbeFooterHtml()` in email.ts, Hinweistext in Registrieren.tsx, neue Sektion in Datenschutz.tsx, Widerspruchs-Seite `/newsletter-widerspruch/:token` ✅ erledigt 2026-04-26
+- [ ] **Cross-Tenant CI-Tests** schreiben — automatisierter Test dass Restaurant A nicht auf Daten von Restaurant B zugreifen kann
+- [ ] **DB-Encryption at rest auf App-Level** — pflichtgemaess ab 5+ Kunden (Hetzner-Volume reicht aktuell, App-Level reduziert Art. 34-Pflicht bei Datenpanne)
+- [ ] **DSFA fuer Mitarbeiter-Modul** vorbereiten — falls Performance-Tracking/Schichtbewertung eingefuehrt wird (EU AI Act Anhang III)
+
+### Skalierungs-Aufgaben (vor 5-20 Kunden)
+- [ ] DPA-Plattform evaluieren (heyData/DataGuard ~99-199 €/Monat)
+- [ ] Externer DSB freiwillig (~150 €/Monat) als Vertrauenssignal im Vertrieb
+
+### Skalierungs-Aufgaben (vor 20+ Kunden)
+- [ ] DSB verpflichtend (oder externer DSB) sobald 20+ MA bei Auftraggeber/Anbieter
+- [ ] BSI Grundschutz-Profil "Cloud" als Eigenauskunft
+- [ ] Penetration-Test (~5-8k €) vor Enterprise-Kunden
+
+## Rechts-Set Tag 4+ (offen — gross)
+- [ ] **Marketing-Site serve-flow.org** bauen (Hero, Features, Preise, CTA) — separates Projekt; Templates fuer Impressum/Datenschutz/AGB sind fertig in `restaurant-app/frontend/src/pages/`
+- [ ] **Anwaltsreview** der drei Frontend-Seiten + AVV + TOM + Datenpannen-Runbook (~300–800 €)
+- [ ] **Per-Route-CSP** (Verschaerfung): `frame-ancestors 'none'` fuer App-Routes, `*` nur fuer /buchen, /bestellen, /reservierung, /erlebnis, /bewertung — verhindert Click-Jacking auf Login
 
 ## Phase 9 – Inventurmanagement ✅ (erledigt 2026-04-18)
 - [x] Inventar-Datenbank: Zutaten/Artikel mit Einheit, Mindestbestand, Kategorie ✅
@@ -208,7 +318,7 @@
 - [x] Frontend: Einstellungen Abo-Tab — 3 Plan-Karten (Basis/Standard/Pro) mit Features ✅
 - [x] Frontend: Guards auf Inventur (Pro), Erlebnisse (Pro), Gäste-CRM (Standard), Dienstplan (Standard) ✅
 - [ ] Stripe: 3 Produkte + Preise anlegen (29€, 59€, 99€) im Stripe-Dashboard (manuell)
-- [ ] Backend: Mitarbeiter-Limit pro Plan API-seitig durchsetzen (Basis: 3, Standard: 10)
+- [x] Backend: Mitarbeiter-Limit pro Plan API-seitig durchsetzen (Basis: 3, Standard: 10, Pro: 999) — `services/plan-limits.ts` + Migration `migration-plan-limits.sql` + `max_mitarbeiter` wird automatisch beim Plan-Wechsel synchronisiert (3 Stellen in abo.ts/Abo.ts) ✅ erledigt 2026-04-26
 
 ## Phase 11 – Kassensystem-Integration ⏸️ ZURÜCKGESTELLT (2026-04-20)
 

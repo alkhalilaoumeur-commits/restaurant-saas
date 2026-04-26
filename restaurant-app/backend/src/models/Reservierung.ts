@@ -24,6 +24,7 @@ export interface Reservierung {
   dsgvo_einwilligung: boolean;
   erinnerung_gesendet: Record<string, boolean>;
   verweilzeit_min: number;
+  tags: string[];
   erstellt_am: string;
 }
 
@@ -33,18 +34,36 @@ export interface ReservierungMitRestaurant extends Reservierung {
   restaurant_adresse: string | null;
 }
 
+/** Reservierung mit Gast-Stats aus dem CRM (für Tischplan-Liste) */
+export interface ReservierungMitGast extends Reservierung {
+  gast_besuche: number | null;        // Anzahl bisheriger Besuche (nur wenn gast_id gesetzt)
+  gast_no_shows: number | null;       // Anzahl No-Shows (nur wenn gast_id gesetzt)
+  gast_tags: string[] | null;         // Tags wie VIP, Stammgast, Vegan, Allergie...
+}
+
 export const ReservierungModel = {
+  /**
+   * Alle Reservierungen mit optionalen Gast-Stats (Besuche, No-Shows, Tags).
+   * LEFT JOIN auf `gaeste` + Sub-Query für No-Show-Count.
+   * Wenn keine gast_id verknüpft ist → alle Stats sind null.
+   */
   alle(restaurantId: string, datum?: string) {
-    if (datum) {
-      return q<Reservierung>(
-        'SELECT * FROM reservierungen WHERE restaurant_id = $1 AND DATE(datum) = $2 ORDER BY datum',
-        [restaurantId, datum]
-      );
-    }
-    return q<Reservierung>(
-      'SELECT * FROM reservierungen WHERE restaurant_id = $1 ORDER BY datum',
-      [restaurantId]
-    );
+    const sql = `
+      SELECT
+        r.*,
+        g.besuche AS gast_besuche,
+        g.tags    AS gast_tags,
+        (
+          SELECT COUNT(*)::int FROM reservierungen rn
+          WHERE rn.gast_id = g.id AND rn.status = 'no_show'
+        ) AS gast_no_shows
+      FROM reservierungen r
+      LEFT JOIN gaeste g ON g.id = r.gast_id
+      WHERE r.restaurant_id = $1
+      ${datum ? 'AND DATE(r.datum) = $2' : ''}
+      ORDER BY r.datum
+    `;
+    return q<ReservierungMitGast>(sql, datum ? [restaurantId, datum] : [restaurantId]);
   },
 
   erstellen(data: {
@@ -69,6 +88,18 @@ export const ReservierungModel = {
 
   loeschen(id: string, restaurantId: string) {
     return q1('DELETE FROM reservierungen WHERE id = $1 AND restaurant_id = $2 RETURNING id', [id, restaurantId]);
+  },
+
+  /** Tags an einer Reservierung setzen (z.B. Vegan, Geburtstag, Allergie) */
+  tagsAendern(id: string, restaurantId: string, tags: string[]) {
+    // Tags säubern: trim, leere raus, duplikate raus, max 50 Zeichen pro Tag
+    const sauber = Array.from(new Set(
+      tags.map(t => t.trim()).filter(t => t.length > 0 && t.length <= 50)
+    )).slice(0, 10); // max 10 Tags pro Reservierung
+    return q1<Reservierung>(
+      'UPDATE reservierungen SET tags = $1 WHERE id = $2 AND restaurant_id = $3 RETURNING *',
+      [sauber, id, restaurantId]
+    );
   },
 
   /** Reservierung per Buchungs-Token finden (für Self-Service-Seiten) */
@@ -191,12 +222,24 @@ export const ReservierungModel = {
   },
 
   /** DSGVO: Personenbezogene Daten 30 Tage nach Reservierungsdatum löschen */
+  /**
+   * DSGVO-Cleanup (Art. 5 Abs. 1 lit. e — Speicherbegrenzung).
+   * Zwei Fristen, in einer Operation gebündelt:
+   *  1) ALLE Reservierungen → 30 Tage nach Reservierungsdatum anonymisieren
+   *  2) STORNIERTE Reservierungen → 7 Tage nach Stornierung anonymisieren
+   *
+   * Anonymisierung statt DELETE, damit Statistik-Aggregate (Anzahl Reservierungen,
+   * No-Show-Rate, Storno-Quote) erhalten bleiben — ohne Personenbezug.
+   */
   dsgvoAufraeumen() {
     return q(
       `UPDATE reservierungen
        SET gast_name = 'gelöscht', email = NULL, telefon = NULL, anmerkung = NULL
-       WHERE datum < NOW() - INTERVAL '30 days'
-         AND gast_name != 'gelöscht'`
+       WHERE gast_name != 'gelöscht'
+         AND (
+           datum < NOW() - INTERVAL '30 days'
+           OR (status = 'storniert' AND storniert_am < NOW() - INTERVAL '7 days')
+         )`
     );
   },
 };

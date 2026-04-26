@@ -4,6 +4,8 @@ import BottomNav from './BottomNav';
 import AppHeader from './AppHeader';
 import ReservierungToast from './ReservierungToast';
 import AbwesenheitToast from './AbwesenheitToast';
+import LegalLinks from '../LegalLinks';
+import RechtsdokumenteBanner from '../RechtsdokumenteBanner';
 
 export default function Layout() {
   return (
@@ -20,10 +22,17 @@ export default function Layout() {
         {/* Mobile: App-Header */}
         <AppHeader />
 
+        {/* AGB/AVV-Banner (nur Admin, nur wenn Versions-Mismatch) */}
+        <RechtsdokumenteBanner />
+
         {/* Scrollbarer Inhalt */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="w-full px-4 py-4 pb-24 lg:px-8 lg:py-8 lg:pb-8">
             <Outlet />
+          </div>
+          {/* Footer mit Rechts-Links — wird mit dem Inhalt mitgescrollt */}
+          <div className="px-4 pb-24 lg:px-8 lg:pb-6">
+            <LegalLinks />
           </div>
         </main>
       </div>

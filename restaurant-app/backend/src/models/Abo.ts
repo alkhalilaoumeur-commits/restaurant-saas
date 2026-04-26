@@ -1,4 +1,5 @@
 import { q, q1 } from './db';
+import { maxMitarbeiterFuerPlan } from '../services/plan-limits';
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
 
@@ -49,16 +50,18 @@ export const AboModel = {
     );
     if (!zahlung) return; // Bereits verarbeitet (Stripe schickt Webhooks manchmal doppelt)
 
-    // 2. Restaurant-Abo verlängern + Plan setzen
+    // 2. Restaurant-Abo verlängern + Plan + Mitarbeiter-Limit setzen
     //    Wenn bereits aktiv und noch nicht abgelaufen → vom aktuellen Datum weiterzählen
     //    Wenn abgelaufen/neu → ab jetzt zählen
+    const limit = zahlung.plan ? maxMitarbeiterFuerPlan(zahlung.plan) : null;
     await q(
       `UPDATE restaurants
        SET abo_status = 'active',
            abo_plan = COALESCE($3, abo_plan),
+           max_mitarbeiter = COALESCE($4, max_mitarbeiter),
            abo_laeuft_bis = GREATEST(NOW(), COALESCE(abo_laeuft_bis, NOW())) + ($1 * INTERVAL '30 days')
        WHERE id = $2`,
-      [zahlung.monate, zahlung.restaurant_id, zahlung.plan],
+      [zahlung.monate, zahlung.restaurant_id, zahlung.plan, limit],
     );
   },
 

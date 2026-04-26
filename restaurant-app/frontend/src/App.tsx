@@ -38,6 +38,11 @@ import Erlebnisse from './pages/Erlebnisse';
 import ErlebnisDetail from './pages/ErlebnisDetail';
 import ErlebnisBestaetigung from './pages/ErlebnisBestaetigung';
 import PlanAuswaehlen from './pages/PlanAuswaehlen';
+import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
+import NewsletterWiderspruch from './pages/NewsletterWiderspruch';
+import AGB from './pages/AGB';
+import CookieBanner from './components/CookieBanner';
 
 // ─── Login-Guard: nur für eingeloggte User ───────────────────────────────────
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -107,48 +112,57 @@ export default function App() {
   }, [token, demo, laden, reset, setDemoPlan]);
 
   return (
-    <Routes>
-      {/* Öffentlich */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/registrieren" element={<Registrieren />} />
-      <Route path="/passwort-vergessen" element={<PasswortVergessen />} />
-      <Route path="/passwort-zuruecksetzen/:token" element={<PasswortZuruecksetzen />} />
-      <Route path="/einladung/:token" element={<Einladung />} />
-      <Route path="/email-verifizieren/:token" element={<EmailVerifizieren />} />
-      <Route path="/restaurant-email-bestaetigen/:token" element={<RestaurantEmailBestaetigen />} />
-      <Route path="/bestellen/:restaurantId/:tischId" element={<BestellenRouter />} />
-      <Route path="/bestellen-pro/:restaurantId/:tischId" element={<BestellenRouter />} />
-      <Route path="/bestellen-qr/:restaurantId/:tischId"  element={<BestellenQR />} />
-      <Route path="/buchen/:restaurantId" element={<Buchen />} />
-      <Route path="/reservierung/:token" element={<ReservierungDetail />} />
-      <Route path="/reservierung/:token/stornieren" element={<ReservierungStornieren />} />
-      <Route path="/reservierung/:token/aendern" element={<ReservierungUmbuchen />} />
-      <Route path="/bewertung/:token" element={<Bewertung />} />
-      <Route path="/erlebnis/:restaurantId/:erlebnisId" element={<ErlebnisDetail />} />
-      <Route path="/erlebnis-bestaetigung/:token" element={<ErlebnisBestaetigung />} />
+    <>
+      <CookieBanner />
+      <Routes>
+        {/* Rechtliche Pflicht-Seiten — immer erreichbar */}
+        <Route path="/impressum" element={<Impressum />} />
+        <Route path="/datenschutz" element={<Datenschutz />} />
+        <Route path="/agb" element={<AGB />} />
+        <Route path="/newsletter-widerspruch/:token" element={<NewsletterWiderspruch />} />
 
-      {/* Plan-Auswahl (nach Registrierung, ohne Layout) */}
-      <Route path="/plan-auswaehlen" element={<PrivateRoute><PlanAuswaehlen /></PrivateRoute>} />
+        {/* Öffentlich */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/registrieren" element={<Registrieren />} />
+        <Route path="/passwort-vergessen" element={<PasswortVergessen />} />
+        <Route path="/passwort-zuruecksetzen/:token" element={<PasswortZuruecksetzen />} />
+        <Route path="/einladung/:token" element={<Einladung />} />
+        <Route path="/email-verifizieren/:token" element={<EmailVerifizieren />} />
+        <Route path="/restaurant-email-bestaetigen/:token" element={<RestaurantEmailBestaetigen />} />
+        <Route path="/bestellen/:restaurantId/:tischId" element={<BestellenRouter />} />
+        <Route path="/bestellen-pro/:restaurantId/:tischId" element={<BestellenRouter />} />
+        <Route path="/bestellen-qr/:restaurantId/:tischId"  element={<BestellenQR />} />
+        <Route path="/buchen/:restaurantId" element={<Buchen />} />
+        <Route path="/reservierung/:token" element={<ReservierungDetail />} />
+        <Route path="/reservierung/:token/stornieren" element={<ReservierungStornieren />} />
+        <Route path="/reservierung/:token/aendern" element={<ReservierungUmbuchen />} />
+        <Route path="/bewertung/:token" element={<Bewertung />} />
+        <Route path="/erlebnis/:restaurantId/:erlebnisId" element={<ErlebnisDetail />} />
+        <Route path="/erlebnis-bestaetigung/:token" element={<ErlebnisBestaetigung />} />
 
-      {/* Geschützter Admin-Bereich — Plan-Guard prüft ob Abo aktiv */}
-      <Route element={<PrivateRoute><PlanGuard><Layout /></PlanGuard></PrivateRoute>}>
-        <Route path="/dashboard"      element={<Dashboard />} />
-        <Route path="/bestellungen"   element={<Bestellungen />} />
-        <Route path="/speisekarte"    element={<Speisekarte />} />
-        <Route path="/reservierungen" element={<Reservierungen />} />
-        <Route path="/tischplan"      element={<Tischplan />} />
-        <Route path="/dienstplan"     element={<Dienstplan />} />
-        <Route path="/mitarbeiter"    element={<Mitarbeiter />} />
-        <Route path="/gaeste"         element={<Gaeste />} />
-        <Route path="/bewertungen"    element={<Bewertungen />} />
-        <Route path="/inventur"       element={<Inventur />} />
-        <Route path="/warteliste"     element={<Warteliste />} />
-        <Route path="/erlebnisse"     element={<Erlebnisse />} />
-        <Route path="/statistiken"    element={<Statistiken />} />
-        <Route path="/einstellungen"  element={<Einstellungen />} />
-      </Route>
+        {/* Plan-Auswahl (nach Registrierung, ohne Layout) */}
+        <Route path="/plan-auswaehlen" element={<PrivateRoute><PlanAuswaehlen /></PrivateRoute>} />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        {/* Geschützter Admin-Bereich — Plan-Guard prüft ob Abo aktiv */}
+        <Route element={<PrivateRoute><PlanGuard><Layout /></PlanGuard></PrivateRoute>}>
+          <Route path="/dashboard"      element={<Dashboard />} />
+          <Route path="/bestellungen"   element={<Bestellungen />} />
+          <Route path="/speisekarte"    element={<Speisekarte />} />
+          <Route path="/reservierungen" element={<Reservierungen />} />
+          <Route path="/tischplan"      element={<Tischplan />} />
+          <Route path="/dienstplan"     element={<Dienstplan />} />
+          <Route path="/mitarbeiter"    element={<Mitarbeiter />} />
+          <Route path="/gaeste"         element={<Gaeste />} />
+          <Route path="/bewertungen"    element={<Bewertungen />} />
+          <Route path="/inventur"       element={<Inventur />} />
+          <Route path="/warteliste"     element={<Warteliste />} />
+          <Route path="/erlebnisse"     element={<Erlebnisse />} />
+          <Route path="/statistiken"    element={<Statistiken />} />
+          <Route path="/einstellungen"  element={<Einstellungen />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
   );
 }

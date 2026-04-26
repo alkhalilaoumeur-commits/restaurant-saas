@@ -37,8 +37,9 @@ export default function ErlebnisBestaetigung() {
     );
   }
 
-  const bezahlt  = buchung.status === 'bezahlt';
-  const datumStr = new Date(buchung.datum + 'T00:00:00').toLocaleDateString('de-DE', {
+  const storniert = buchung.status === 'storniert';
+  const bezahlt   = buchung.status === 'bezahlt';
+  const datumStr  = new Date(buchung.datum + 'T00:00:00').toLocaleDateString('de-DE', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   });
 
@@ -47,25 +48,27 @@ export default function ErlebnisBestaetigung() {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 max-w-md w-full p-8 text-center">
 
         {/* Icon */}
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 ${bezahlt ? 'bg-green-100' : 'bg-yellow-100'}`}>
-          {bezahlt ? (
-            <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 ${storniert ? 'bg-red-100' : 'bg-green-100'}`}>
+          {storniert ? (
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            <svg className="w-8 h-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           )}
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {bezahlt ? 'Buchung bestätigt!' : 'Zahlung ausstehend'}
+          {storniert ? 'Buchung storniert' : 'Buchung bestätigt!'}
         </h1>
         <p className="text-gray-500 text-sm mb-6">
-          {bezahlt
-            ? 'Wir freuen uns auf deinen Besuch. Eine Bestätigungs-E-Mail wird in Kürze verschickt.'
-            : 'Deine Buchung ist registriert, wartet aber noch auf die Zahlungsbestätigung.'}
+          {storniert
+            ? 'Diese Buchung wurde storniert. Bei Fragen wenden Sie sich bitte an das Restaurant.'
+            : bezahlt
+              ? 'Vielen Dank! Die Zahlung wurde erfasst. Wir freuen uns auf Ihren Besuch.'
+              : 'Wir freuen uns auf Ihren Besuch. Die Zahlung erfolgt direkt im Restaurant — bar oder mit Karte.'}
         </p>
 
         {/* Details */}
@@ -91,7 +94,9 @@ export default function ErlebnisBestaetigung() {
             <span className="text-sm font-medium text-gray-700">{buchung.gast_name}</span>
           </div>
           <div className="border-t border-gray-200 pt-3 flex justify-between">
-            <span className="text-sm font-semibold text-gray-700">Bezahlt</span>
+            <span className="text-sm font-semibold text-gray-700">
+              {bezahlt ? 'Bezahlt' : 'Vor Ort zu zahlen'}
+            </span>
             <span className="text-sm font-bold text-gray-900">{preisFormatieren(buchung.preis_cent)}</span>
           </div>
         </div>

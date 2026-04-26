@@ -4,11 +4,13 @@ import type Konva from 'konva';
 import { QRCodeSVG } from 'qrcode.react';
 import Topbar from '../components/layout/Topbar';
 import Modal from '../components/layout/Modal';
+import ReservierungsTimeline from '../components/tischplan/ReservierungsTimeline';
 import { useTische } from '../hooks/useTische';
 import { useBereiche } from '../hooks/useBereiche';
 import { useReservierungen } from '../hooks/useReservierungen';
+import { useDekorationen } from '../hooks/useDekorationen';
 import { useAuthStore } from '../store/auth';
-import { Tisch, TischStatus, TischForm, Reservierung } from '../types';
+import { Tisch, TischStatus, TischForm, Reservierung, Dekoration, DekoTyp } from '../types';
 import { TISCH_STATUS_LABEL, TISCH_STATUS_FARBE } from '../lib/utils';
 
 // ─── Konstanten ──────────────────────────────────────────────────────────────
@@ -17,17 +19,19 @@ const GRID_SIZE = 20;
 const CANVAS_W = 1200;
 const CANVAS_H = 800;
 
-/** Farben pro Tisch-Status (Canvas-Füllung + Rand) */
+/** Farben pro Tisch-Status (Canvas-Füllung + Rand) — DRVN Dark-Theme */
 const STATUS_FILL: Record<TischStatus, string> = {
-  frei: '#dcfce7',
-  besetzt: '#fee2e2',
-  wartet_auf_zahlung: '#fef9c3',
+  frei: '#0e1726',                  // Slate-900
+  besetzt: 'rgba(239, 68, 68, 0.2)', // Red transparent
+  wartet_auf_zahlung: 'rgba(234, 179, 8, 0.2)', // Yellow transparent
 };
 const STATUS_STROKE: Record<TischStatus, string> = {
-  frei: '#22c55e',
+  frei: '#1e3a5f',                  // Subtle Blue-700
   besetzt: '#ef4444',
   wartet_auf_zahlung: '#eab308',
 };
+/** Stuhl-Farbe (umlaufende kleine Kreise um den Tisch) */
+const STUHL_COLOR = '#334155'; // Slate-700
 
 /** Vorlagen für neue Tische (Seitenleiste) */
 const TISCH_VORLAGEN: { form: TischForm; label: string; breite: number; hoehe: number; kap: number }[] = [
@@ -37,6 +41,16 @@ const TISCH_VORLAGEN: { form: TischForm; label: string; breite: number; hoehe: n
   { form: 'rechteck', label: 'Rechteck (6er)', breite: 120, hoehe: 70,  kap: 6 },
   { form: 'rechteck', label: 'Rechteck (8er)', breite: 150, hoehe: 80,  kap: 8 },
   { form: 'bar',      label: 'Bar/Theke (2er)',breite: 100, hoehe: 40,  kap: 2 },
+];
+
+/** Vorlagen für Deko-Elemente (Sidebar Edit-Modus) */
+const DEKO_VORLAGEN: { typ: DekoTyp; label: string; breite: number; hoehe: number; icon: string }[] = [
+  { typ: 'pflanze',         label: 'Pflanze',     breite: 30,  hoehe: 30, icon: '🌿' },
+  { typ: 'theke',           label: 'Theke/Bar',   breite: 200, hoehe: 30, icon: '▭' },
+  { typ: 'eingang',         label: 'Eingang',     breite: 80,  hoehe: 24, icon: '⌐' },
+  { typ: 'servicestation',  label: 'Service',     breite: 80,  hoehe: 30, icon: '◌' },
+  { typ: 'wand',            label: 'Wand',        breite: 200, hoehe: 8,  icon: '─' },
+  { typ: 'tuer',            label: 'Tür',         breite: 50,  hoehe: 8,  icon: '┄' },
 ];
 
 // ─── Snap Helper ─────────────────────────────────────────────────────────────
@@ -57,12 +71,16 @@ function minutenBis(res: Reservierung, jetztMs: number): number {
 export default function Tischplan() {
   const { tische, laden, statusAendern, tischErstellen, tischAktualisieren, tischLoeschen } = useTische();
   const { bereiche, erstellen: bereichErstellen, loeschen: bereichLoeschen } = useBereiche();
+  const { dekorationen, erstellen: dekoErstellen, aktualisieren: dekoAktualisieren, loeschen: dekoLoeschen } = useDekorationen();
   const rolle = useAuthStore((s) => s.mitarbeiter?.rolle);
   const istAdmin = rolle === 'admin';
 
   // Heutige Reservierungen laden
   const heute = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const { reservierungen, tischZuweisen, statusAendern: resStatusAendern } = useReservierungen(heute);
+  const { reservierungen, tischZuweisen, statusAendern: resStatusAendern, tagsAendern: resTagsAendern } = useReservierungen(heute);
+
+  // Tags-Bearbeiten Modal-State
+  const [tagsBearbeitenRes, setTagsBearbeitenRes] = useState<Reservierung | null>(null);
 
   // Aktive Reservierungen — storniert/abgeschlossen/no_show werden nicht mehr angezeigt
   // (Gast weg oder erschienen nicht → Tisch ist wieder frei)
@@ -109,6 +127,10 @@ export default function Tischplan() {
     return () => clearInterval(timer);
   }, []);
 
+  // Counter — bei jedem Tick scrollt die Timeline auf "jetzt".
+  // Wird vom Header-Button "Auf jetzt wechseln" inkrementiert.
+  const [scrollAufJetztTick, setScrollAufJetztTick] = useState(0);
+
   // Warnung wenn Tisch mit baldiger Reservierung belegt werden soll
   const [warnungTisch, setWarnungTisch] = useState<{ tisch: Tisch; reservierungen: Reservierung[] } | null>(null);
 
@@ -124,8 +146,20 @@ export default function Tischplan() {
   // Editor State
   const [ausgewaehlt, setAusgewaehlt] = useState<string | null>(null);
   const [editModus, setEditModus] = useState(false);
-  const [aktiverBereich, setAktiverBereich] = useState<string | null>(null); // null = Alle
+  // null = noch nicht initialisiert (vor erstem Bereich-Laden) oder keine Bereiche vorhanden
+  const [aktiverBereich, setAktiverBereich] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+
+  // Beim ersten Laden der Bereiche: ersten Bereich auswählen.
+  // Wenn der aktuell ausgewählte Bereich gelöscht wurde → fallback auf ersten.
+  useEffect(() => {
+    if (bereiche.length === 0) {
+      if (aktiverBereich !== null) setAktiverBereich(null);
+      return;
+    }
+    const stillVorhanden = aktiverBereich && bereiche.some(b => b.id === aktiverBereich);
+    if (!stillVorhanden) setAktiverBereich(bereiche[0].id);
+  }, [bereiche, aktiverBereich]);
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
 
@@ -168,10 +202,21 @@ export default function Tischplan() {
     }
   }, [ausgewaehlt, editModus, istAdmin]);
 
-  // Gefilterte Tische nach aktivem Bereich
+  // Strikte Bereich-Filter: jeder Bereich ist sein eigener Floor Plan.
+  // Tische/Deko ohne bereich_id (Legacy-Daten) sind unsichtbar bis sie zugewiesen werden.
   const gefilterteTische = aktiverBereich
     ? tische.filter(t => t.bereich_id === aktiverBereich)
-    : tische;
+    : [];
+
+  const gefilterteDeko = aktiverBereich
+    ? dekorationen.filter(d => d.bereich_id === aktiverBereich)
+    : [];
+
+  // Anzahl Tische/Deko OHNE Bereich-Zuweisung (Legacy) — Hinweis im Edit-Modus
+  const tischeOhneBereich = tische.filter(t => !t.bereich_id).length;
+
+  // Ausgewählte Deko (Edit-Modus, getrennt von Tisch-Selektion)
+  const [ausgewaehlteDeko, setAusgewaehlteDeko] = useState<string | null>(null);
 
   // Status-Zusammenfassung
   const anzahl: Record<TischStatus, number> = { frei: 0, besetzt: 0, wartet_auf_zahlung: 0 };
@@ -309,7 +354,7 @@ export default function Tischplan() {
       : [];
     const hatBaldeRes = baldeRes.length > 0;
 
-    // Farb-Logik: Zeitbasiert — Tisch ist normal grün wenn keine baldige Reservierung
+    // Farb-Logik: Zeitbasiert — Dark-Theme (DRVN)
     let fill = STATUS_FILL[tisch.status];
     let stroke = STATUS_STROKE[tisch.status];
 
@@ -319,16 +364,16 @@ export default function Tischplan() {
 
       if (minBis <= 0) {
         // Startzeit vorbei, Gast noch nicht da → Orange (überfällig)
-        fill = '#fed7aa';   // orange-200
-        stroke = '#f97316';  // orange-500
+        fill = 'rgba(249, 115, 22, 0.18)';
+        stroke = '#f97316';
       } else if (minBis <= 60) {
-        // Innerhalb 1 Stunde → stärkeres Indigo
-        fill = '#c7d2fe';   // indigo-200
-        stroke = '#4f46e5';  // indigo-600
+        // Innerhalb 1 Stunde → kräftiges Cyan
+        fill = 'rgba(6, 182, 212, 0.22)';
+        stroke = '#06b6d4';
       } else {
-        // 1–2 Stunden → leichtes Indigo
-        fill = '#e0e7ff';   // indigo-100
-        stroke = '#6366f1';  // indigo-500
+        // 1–2 Stunden → leichtes Cyan
+        fill = 'rgba(6, 182, 212, 0.10)';
+        stroke = 'rgba(6, 182, 212, 0.6)';
       }
     }
 
@@ -340,11 +385,56 @@ export default function Tischplan() {
       && tisch.kapazitaet != null && tisch.kapazitaet < ausgewRes.personen;
 
     if (istPassend) {
-      fill = '#c7d2fe';   // indigo-200 — "passt!"
-      stroke = '#4f46e5';  // indigo-600
+      fill = 'rgba(59, 130, 246, 0.25)';
+      stroke = '#3b82f6';
     } else if (istZuKlein) {
-      fill = '#fef3c7';   // amber-100 — "zu klein"
-      stroke = '#f59e0b';  // amber-500
+      fill = 'rgba(245, 158, 11, 0.18)';
+      stroke = '#f59e0b';
+    }
+
+    // ─── Stuhl-Positionen berechnen (Resmio-Look) ───────────────────────────
+    const stuhlRadius = 5;
+    const stuhlAbstand = 7;
+    const kap = tisch.kapazitaet || 0;
+    const stuehle: Array<{ x: number; y: number }> = [];
+
+    if (tisch.form === 'rund') {
+      const r = Math.min(tisch.breite, tisch.hoehe) / 2 + stuhlAbstand + stuhlRadius;
+      const cx = tisch.breite / 2, cy = tisch.hoehe / 2;
+      for (let i = 0; i < kap; i++) {
+        const winkel = (2 * Math.PI * i) / kap - Math.PI / 2;
+        stuehle.push({ x: cx + r * Math.cos(winkel), y: cy + r * Math.sin(winkel) });
+      }
+    } else if (tisch.form === 'bar') {
+      // Bar/Theke: nur eine Reihe oben
+      for (let i = 0; i < kap; i++) {
+        const x = (tisch.breite / (kap + 1)) * (i + 1);
+        stuehle.push({ x, y: -(stuhlAbstand + stuhlRadius) });
+      }
+    } else {
+      // Quadrat / Rechteck: auf 4 Kanten verteilen
+      const oben = Math.ceil(kap / 4);
+      const unten = Math.ceil(kap / 4);
+      const seitlich = Math.max(0, kap - oben - unten);
+      const links = Math.ceil(seitlich / 2);
+      const rechts = seitlich - links;
+
+      for (let i = 0; i < oben; i++) {
+        const x = (tisch.breite / (oben + 1)) * (i + 1);
+        stuehle.push({ x, y: -(stuhlAbstand + stuhlRadius) });
+      }
+      for (let i = 0; i < unten; i++) {
+        const x = (tisch.breite / (unten + 1)) * (i + 1);
+        stuehle.push({ x, y: tisch.hoehe + stuhlAbstand + stuhlRadius });
+      }
+      for (let i = 0; i < links; i++) {
+        const y = (tisch.hoehe / (links + 1)) * (i + 1);
+        stuehle.push({ x: -(stuhlAbstand + stuhlRadius), y });
+      }
+      for (let i = 0; i < rechts; i++) {
+        const y = (tisch.hoehe / (rechts + 1)) * (i + 1);
+        stuehle.push({ x: tisch.breite + stuhlAbstand + stuhlRadius, y });
+      }
     }
 
     const istGewaehlt = ausgewaehlt === tisch.id;
@@ -379,6 +469,20 @@ export default function Tischplan() {
           y: snap(Math.max(0, Math.min(pos.y, CANVAS_H - tisch.hoehe))),
         })}
       >
+        {/* Stühle (kleine Kreise rund um Tisch) */}
+        {stuehle.map((s, i) => (
+          <Circle
+            key={`stuhl-${i}`}
+            x={s.x}
+            y={s.y}
+            radius={stuhlRadius}
+            fill={STUHL_COLOR}
+            stroke="rgba(0,0,0,0.3)"
+            strokeWidth={0.5}
+            listening={false}
+          />
+        ))}
+
         {/* Tisch-Form */}
         {tisch.form === 'rund' ? (
           <Circle
@@ -387,9 +491,9 @@ export default function Tischplan() {
             radius={Math.min(tisch.breite, tisch.hoehe) / 2}
             fill={fill}
             stroke={istGewaehlt ? '#3b82f6' : stroke}
-            strokeWidth={istGewaehlt ? 3 : 2}
-            shadowColor="rgba(0,0,0,0.1)"
-            shadowBlur={istGewaehlt ? 8 : 4}
+            strokeWidth={istGewaehlt ? 3 : 1.5}
+            shadowColor="rgba(0,0,0,0.4)"
+            shadowBlur={istGewaehlt ? 12 : 6}
             shadowOffsetY={2}
           />
         ) : (
@@ -398,10 +502,10 @@ export default function Tischplan() {
             height={tisch.hoehe}
             fill={fill}
             stroke={istGewaehlt ? '#3b82f6' : stroke}
-            strokeWidth={istGewaehlt ? 3 : 2}
-            cornerRadius={tisch.form === 'bar' ? 6 : 10}
-            shadowColor="rgba(0,0,0,0.1)"
-            shadowBlur={istGewaehlt ? 8 : 4}
+            strokeWidth={istGewaehlt ? 3 : 1.5}
+            cornerRadius={tisch.form === 'bar' ? 4 : 6}
+            shadowColor="rgba(0,0,0,0.4)"
+            shadowBlur={istGewaehlt ? 12 : 6}
             shadowOffsetY={2}
           />
         )}
@@ -412,10 +516,10 @@ export default function Tischplan() {
           y={tisch.hoehe / 2 - 14}
           width={tisch.breite}
           align="center"
-          text={`${tisch.nummer}`}
-          fontSize={16}
+          text={`T${tisch.nummer}`}
+          fontSize={14}
           fontStyle="bold"
-          fill="#374151"
+          fill="#e2e8f0"
         />
 
         {/* Kapazität */}
@@ -425,58 +529,147 @@ export default function Tischplan() {
           width={tisch.breite}
           align="center"
           text={tisch.kapazitaet ? `${tisch.kapazitaet}P` : ''}
-          fontSize={11}
-          fill="#9ca3af"
+          fontSize={10}
+          fill="#94a3b8"
         />
 
-        {/* Reservierungs-Info (Live-Modus): Zeitbasiert mit Countdown */}
+        {/* Resmio-Style Live-Badge oben rechts (Uhrzeit oder Countdown) */}
+        {!editModus && baldeRes.length > 0 && !istPassend && !istZuKlein && (() => {
+          const naechste = baldeRes[0];
+          const minBis = minutenBis(naechste, jetzt);
+          const uhrzeit = new Date(naechste.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+          // Badge-Inhalt: bei <60min Countdown, sonst Uhrzeit
+          let badgeText = uhrzeit;
+          if (minBis <= 0) badgeText = 'JETZT';
+          else if (minBis < 60) badgeText = `${Math.round(minBis)}m`;
+
+          const badgeFill = minBis <= 0 ? '#f97316' : '#06b6d4';
+          const badgeWidth = badgeText.length * 6 + 12;
+
+          return (
+            <Group x={tisch.breite - badgeWidth + 4} y={-8}>
+              <Rect width={badgeWidth} height={16} cornerRadius={3} fill={badgeFill} shadowColor="rgba(0,0,0,0.5)" shadowBlur={3} shadowOffsetY={1} />
+              <Text x={0} y={3} width={badgeWidth} align="center" text={badgeText} fontSize={10} fontStyle="bold" fill="#ffffff" />
+            </Group>
+          );
+        })()}
+
+        {/* Reservierungs-Info unter dem Tisch */}
         {!editModus && (() => {
           // Select-to-Assign Hinweise
           if (istPassend) {
             return (
-              <Text x={0} y={tisch.hoehe + 4} width={tisch.breite} align="center"
-                text="✓ Passt" fontSize={10} fill="#4f46e5" fontStyle="bold" />
+              <Text x={0} y={tisch.hoehe + 8} width={tisch.breite} align="center"
+                text="✓ Passt" fontSize={10} fill="#3b82f6" fontStyle="bold" />
             );
           }
           if (istZuKlein) {
             return (
-              <Text x={0} y={tisch.hoehe + 4} width={tisch.breite} align="center"
+              <Text x={0} y={tisch.hoehe + 8} width={tisch.breite} align="center"
                 text={`Nur ${tisch.kapazitaet}P`} fontSize={9} fill="#f59e0b" />
             );
           }
 
-          // Keine baldigen Reservierungen → nichts anzeigen
           if (baldeRes.length === 0) return null;
 
           const naechste = baldeRes[0];
+          const name = naechste.gast_name.length > 10 ? naechste.gast_name.slice(0, 9) + '…' : naechste.gast_name;
           const minBis = minutenBis(naechste, jetzt);
-          const uhrzeit = new Date(naechste.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-          const name = naechste.gast_name.length > 8 ? naechste.gast_name.slice(0, 7) + '…' : naechste.gast_name;
-
-          // Zeitinfo: "in 45 Min", "Überfällig!" oder Uhrzeit
-          let zeitInfo = uhrzeit;
-          if (minBis <= 0) {
-            zeitInfo = 'Überfällig!';
-          } else if (minBis <= 60) {
-            zeitInfo = `in ${Math.round(minBis)} Min`;
-          }
-
-          const farbe = minBis <= 0 ? '#f97316' : '#6366f1';
-          const subFarbe = minBis <= 0 ? '#fb923c' : '#818cf8';
+          const farbe = minBis <= 0 ? '#fb923c' : '#67e8f9';
 
           return (
             <>
-              <Text x={0} y={tisch.hoehe + 4} width={tisch.breite} align="center"
-                text={`${zeitInfo} · ${naechste.personen}P`} fontSize={10} fill={farbe} fontStyle="bold" />
-              <Text x={0} y={tisch.hoehe + 16} width={tisch.breite} align="center"
-                text={name} fontSize={9} fill={subFarbe} />
-              {baldeRes.length > 1 && (
-                <Text x={0} y={tisch.hoehe + 27} width={tisch.breite} align="center"
-                  text={`+${baldeRes.length - 1} weitere`} fontSize={8} fill="#a5b4fc" />
-              )}
+              <Text x={0} y={tisch.hoehe + 8} width={tisch.breite} align="center"
+                text={name} fontSize={10} fill={farbe} fontStyle="bold" />
+              <Text x={0} y={tisch.hoehe + 21} width={tisch.breite} align="center"
+                text={`${naechste.personen}P${baldeRes.length > 1 ? ` · +${baldeRes.length - 1}` : ''}`} fontSize={9} fill="#94a3b8" />
             </>
           );
         })()}
+      </Group>
+    );
+  }
+
+  // ─── Deko-Element auf Canvas zeichnen ───────────────────────────────────
+
+  function renderDeko(deko: Dekoration) {
+    const istGewaehlt = ausgewaehlteDeko === deko.id;
+    const draggable = editModus && istAdmin;
+
+    // Stilvorgaben pro Typ — DRVN-konform (gedeckte Slate-Töne)
+    const styleByType: Record<DekoTyp, { fill: string; stroke: string; corner: number }> = {
+      pflanze:        { fill: 'rgba(34, 197, 94, 0.18)',  stroke: 'rgba(34, 197, 94, 0.55)',  corner: 99 }, // grün-Kreis
+      theke:          { fill: 'rgba(217, 119, 6, 0.20)',  stroke: 'rgba(217, 119, 6, 0.7)',   corner: 4 },  // amber, holzig
+      eingang:        { fill: 'rgba(56, 189, 248, 0.18)', stroke: 'rgba(56, 189, 248, 0.7)',  corner: 2 },  // sky
+      servicestation: { fill: 'rgba(168, 85, 247, 0.18)', stroke: 'rgba(168, 85, 247, 0.6)',  corner: 4 },  // purple
+      wand:           { fill: 'rgba(100, 116, 139, 0.5)', stroke: 'rgba(100, 116, 139, 0.85)', corner: 0 }, // slate-500
+      tuer:           { fill: 'rgba(100, 116, 139, 0.0)', stroke: 'rgba(56, 189, 248, 0.85)', corner: 0 }, // dashed-look (wir zeichnen Linie)
+    };
+    const s = styleByType[deko.typ];
+
+    return (
+      <Group
+        key={deko.id}
+        id={`deko-${deko.id}`}
+        x={deko.pos_x}
+        y={deko.pos_y}
+        rotation={deko.rotation}
+        draggable={draggable}
+        onClick={() => {
+          if (editModus && istAdmin) setAusgewaehlteDeko(deko.id);
+        }}
+        onDragEnd={(e) => {
+          const x = snap(e.target.x());
+          const y = snap(e.target.y());
+          dekoAktualisieren(deko.id, { pos_x: x, pos_y: y });
+        }}
+        listening={editModus && istAdmin}
+      >
+        {deko.typ === 'pflanze' ? (
+          // Pflanze als Kreis mit "Blatt"-Pattern
+          <Circle
+            x={deko.breite / 2}
+            y={deko.hoehe / 2}
+            radius={Math.min(deko.breite, deko.hoehe) / 2}
+            fill={s.fill}
+            stroke={istGewaehlt ? '#3b82f6' : s.stroke}
+            strokeWidth={istGewaehlt ? 2.5 : 1.5}
+            dash={[2, 2]}
+          />
+        ) : deko.typ === 'tuer' ? (
+          // Tür als gestrichelte Linie
+          <Line
+            points={[0, deko.hoehe / 2, deko.breite, deko.hoehe / 2]}
+            stroke={istGewaehlt ? '#3b82f6' : s.stroke}
+            strokeWidth={2}
+            dash={[6, 4]}
+          />
+        ) : (
+          <Rect
+            width={deko.breite}
+            height={deko.hoehe}
+            fill={s.fill}
+            stroke={istGewaehlt ? '#3b82f6' : s.stroke}
+            strokeWidth={istGewaehlt ? 2.5 : 1.2}
+            cornerRadius={s.corner}
+          />
+        )}
+
+        {/* Optionales Label */}
+        {deko.label && (
+          <Text
+            x={0}
+            y={deko.hoehe / 2 - 6}
+            width={deko.breite}
+            align="center"
+            text={deko.label}
+            fontSize={10}
+            fontStyle="bold"
+            fill="#cbd5e1"
+            listening={false}
+          />
+        )}
       </Group>
     );
   }
@@ -515,6 +708,18 @@ export default function Tischplan() {
         titel="Tischplan"
         aktion={
           <div className="flex gap-2 items-center">
+            {/* Live-Uhr + 'Auf jetzt wechseln' */}
+            {ansicht === 'editor' && !editModus && (
+              <button
+                onClick={() => setScrollAufJetztTick(t => t + 1)}
+                title="Liste auf aktuelle Zeit scrollen"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-500/20 transition-colors"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="tabular-nums">{new Date(jetzt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="hidden sm:inline opacity-70">Auf jetzt</span>
+              </button>
+            )}
             {/* Ansicht: Grundriss / Liste */}
             <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-0.5">
               <button
@@ -563,70 +768,87 @@ export default function Tischplan() {
         }
       />
 
-      {/* Status-Zusammenfassung + Bereich-Filter */}
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        {/* Status-Badges */}
-        <div className="flex gap-2 flex-wrap items-center">
-          {(Object.keys(anzahl) as TischStatus[]).filter(s => anzahl[s] > 0).map((status) => (
-            <div key={status} className={`px-3 py-1.5 rounded-full text-xs font-medium ${TISCH_STATUS_FARBE[status]}`}>
-              {TISCH_STATUS_LABEL[status]}: {anzahl[status]}
-            </div>
-          ))}
-          <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-slate-300">
-            {gefilterteTische.length} Tische
+      {/* Status-Zusammenfassung */}
+      <div className="flex items-center gap-2 flex-wrap mb-4">
+        {(Object.keys(anzahl) as TischStatus[]).filter(s => anzahl[s] > 0).map((status) => (
+          <div key={status} className={`px-3 py-1.5 rounded-full text-xs font-medium ${TISCH_STATUS_FARBE[status]}`}>
+            {TISCH_STATUS_LABEL[status]}: {anzahl[status]}
           </div>
-          {aktiveReservierungen.length > 0 && (
-            <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400">
-              {aktiveReservierungen.length} Res. heute
-              {offeneReservierungen.length > 0 && (
-                <span className="ml-1 text-orange-600 dark:text-orange-400">· {offeneReservierungen.length} ohne Tisch</span>
-              )}
-            </div>
-          )}
-          {editModus && (
-            <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30">
-              Bearbeitungs-Modus
-            </div>
-          )}
+        ))}
+        <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-slate-300">
+          {gefilterteTische.length} Tische
         </div>
-
-        {/* Bereich-Filter (horizontal tabs) */}
-        {bereiche.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 shrink-0">
-            <button
-              onClick={() => setAktiverBereich(null)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                !aktiverBereich
-                  ? 'bg-gray-800 dark:bg-white/20 text-white'
-                  : 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10'
-              }`}
-            >
-              Alle ({tische.length})
-            </button>
-            {bereiche.map((b) => (
-              <button
-                key={b.id}
-                onClick={() => setAktiverBereich(b.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  aktiverBereich === b.id
-                    ? 'bg-gray-800 dark:bg-white/20 text-white'
-                    : 'bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10'
-                }`}
-              >
-                {b.name} ({tische.filter(t => t.bereich_id === b.id).length})
-              </button>
-            ))}
+        {aktiveReservierungen.length > 0 && (
+          <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400">
+            {aktiveReservierungen.length} Res. heute
+            {offeneReservierungen.length > 0 && (
+              <span className="ml-1 text-orange-600 dark:text-orange-400">· {offeneReservierungen.length} ohne Tisch</span>
+            )}
+          </div>
+        )}
+        {editModus && (
+          <div className="px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30">
+            Bearbeitungs-Modus
           </div>
         )}
       </div>
 
       {/* ═══════════ GRUNDRISS-ANSICHT ═══════════ */}
       {ansicht === 'editor' && (
-        <div className={`flex gap-4 ${editModus ? 'h-[calc(100vh-240px)]' : 'h-[calc(100vh-230px)]'}`}>
+        <div className={`flex gap-4 ${editModus ? 'h-[calc(100vh-240px)]' : 'h-[calc(100vh-200px)]'}`}>
+
+          {/* RESERVIERUNGS-TIMELINE — nur im Live-Modus, links neben Canvas */}
+          {!editModus && (
+            <div className="w-[340px] shrink-0 bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm flex flex-col overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/[0.07] flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold">Reservierungen heute</p>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">{aktiveReservierungen.length} aktiv</p>
+                </div>
+                {offeneReservierungen.length > 0 && (
+                  <span className="text-[10px] px-2 py-1 rounded-md bg-orange-500/15 text-orange-600 dark:text-orange-400 font-medium">
+                    {offeneReservierungen.length} ohne Tisch
+                  </span>
+                )}
+              </div>
+              <ReservierungsTimeline
+                reservierungen={aktiveReservierungen}
+                tische={tische}
+                jetzt={jetzt}
+                ausgewaehlteRes={ausgewaehlteRes}
+                onResAuswaehlen={setAusgewaehlteRes}
+                onTagsBearbeiten={setTagsBearbeitenRes}
+                scrollAufJetzt={scrollAufJetztTick}
+              />
+            </div>
+          )}
 
           {/* SIDEBAR — nur im Bearbeitungs-Modus (Admin) */}
           {editModus && istAdmin && (
             <div className="w-56 shrink-0 bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm p-4 overflow-y-auto flex flex-col gap-5">
+
+              {/* Hinweis: Legacy-Tische ohne Bereich */}
+              {tischeOhneBereich > 0 && aktiverBereich && (
+                <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2.5">
+                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 mb-1.5">
+                    {tischeOhneBereich} Tisch{tischeOhneBereich === 1 ? '' : 'e'} ohne Bereich
+                  </p>
+                  <p className="text-[10px] text-orange-600/80 dark:text-orange-300/70 mb-2 leading-snug">
+                    Diese Tische sind aktuell unsichtbar. Alle dem aktuellen Bereich „{bereiche.find(b => b.id === aktiverBereich)?.name}" zuweisen?
+                  </p>
+                  <button
+                    onClick={async () => {
+                      const ohneBereich = tische.filter(t => !t.bereich_id);
+                      for (const t of ohneBereich) {
+                        await tischAktualisieren(t.id, { bereich_id: aktiverBereich });
+                      }
+                    }}
+                    className="w-full text-[10px] px-2 py-1.5 rounded bg-orange-500/20 text-orange-700 dark:text-orange-300 font-semibold hover:bg-orange-500/30"
+                  >
+                    Alle zuweisen
+                  </button>
+                </div>
+              )}
 
               {/* Tisch hinzufügen */}
               <div>
@@ -654,6 +876,69 @@ export default function Tischplan() {
                   ))}
                 </div>
               </div>
+
+              {/* Deko hinzufügen */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold mb-2">Deko hinzufügen</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {DEKO_VORLAGEN.map((v) => (
+                    <button
+                      key={v.typ}
+                      onClick={() => dekoErstellen({
+                        typ: v.typ,
+                        breite: v.breite, hoehe: v.hoehe,
+                        pos_x: snap(80 + Math.random() * 300),
+                        pos_y: snap(80 + Math.random() * 300),
+                        bereich_id: aktiverBereich,
+                        label: ['eingang', 'theke', 'servicestation'].includes(v.typ) ? v.label : null,
+                      })}
+                      className="flex flex-col items-center gap-1 p-2 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 hover:border-cyan-200 dark:hover:border-cyan-500/30 transition-all text-center"
+                      title={`${v.label} platzieren`}
+                    >
+                      <span className="text-base leading-none">{v.icon}</span>
+                      <span className="text-[10px] text-gray-600 dark:text-slate-400 leading-tight">{v.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {dekorationen.length > 0 && (
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-2">
+                    {dekorationen.length} Element{dekorationen.length === 1 ? '' : 'e'} platziert
+                  </p>
+                )}
+              </div>
+
+              {/* Selektierte Deko: Aktionen */}
+              {ausgewaehlteDeko && (() => {
+                const deko = dekorationen.find(d => d.id === ausgewaehlteDeko);
+                if (!deko) return null;
+                return (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold mb-2">
+                      Deko: {deko.label || deko.typ}
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <input
+                        type="text"
+                        placeholder="Label (z.B. 'Eingang')"
+                        defaultValue={deko.label ?? ''}
+                        onBlur={(e) => dekoAktualisieren(deko.id, { label: e.target.value.trim() || null })}
+                        className="text-xs px-2.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 dark:text-slate-300"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => dekoAktualisieren(deko.id, { rotation: (deko.rotation - 15) % 360 })} className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-white/10">↺ -15°</button>
+                        <button onClick={() => dekoAktualisieren(deko.id, { rotation: (deko.rotation + 15) % 360 })} className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-white/10">↻ +15°</button>
+                      </div>
+                      <button
+                        onClick={() => { dekoLoeschen(deko.id); setAusgewaehlteDeko(null); }}
+                        className="text-xs px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 font-medium hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors text-left flex items-center gap-2"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Deko löschen
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Bereiche verwalten */}
               <div>
@@ -743,8 +1028,42 @@ export default function Tischplan() {
             </div>
           )}
 
-          {/* Canvas */}
-          <div ref={canvasContainerRef} className="flex-1 bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden relative">
+          {/* Canvas-Bereich (mit Bereich-Tabs darüber) */}
+          <div className="flex-1 flex flex-col gap-2 min-w-0">
+
+            {/* Bereich-Tabs (Resmio-Style: Gastraum / Terrasse / ...) */}
+            {bereiche.length > 0 && (
+              <div className="flex gap-1 overflow-x-auto pb-1 shrink-0">
+                {bereiche.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => setAktiverBereich(b.id)}
+                    className={`px-4 py-2 rounded-t-xl text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                      aktiverBereich === b.id
+                        ? 'border-cyan-400 text-cyan-600 dark:text-cyan-400 bg-cyan-50/50 dark:bg-cyan-500/5'
+                        : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {b.name} <span className="text-xs opacity-60 ml-1">({tische.filter(t => t.bereich_id === b.id).length})</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Canvas */}
+            <div
+              ref={canvasContainerRef}
+              className="flex-1 bg-white dark:bg-slate-950/40 dark:border dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden relative"
+              style={!editModus ? {
+                // DRVN Floor-Background: feines Punkt-Raster + leichter Vignette
+                backgroundImage: `
+                  radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.05), transparent 60%),
+                  radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px)
+                `,
+                backgroundSize: 'auto, 22px 22px',
+                backgroundPosition: 'center top, 0 0',
+              } : undefined}
+            >
 
             {/* Select-to-Assign Banner */}
             {ausgewaehlteRes && (() => {
@@ -769,22 +1088,42 @@ export default function Tischplan() {
               );
             })()}
 
-            {/* Empty state */}
-            {tische.length === 0 && istAdmin ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
+            {/* Empty State 1: Noch kein Bereich angelegt */}
+            {bereiche.length === 0 && istAdmin ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 px-6 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-base text-gray-700 dark:text-slate-200 font-semibold">Noch kein Bereich angelegt</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 max-w-xs">
+                  Jeder Bereich (z.B. <span className="text-cyan-500">Innenraum</span>, <span className="text-cyan-500">Terrasse</span>, <span className="text-cyan-500">Bar</span>) hat seinen eigenen Tischplan.
+                </p>
+                {!editModus && (
+                  <button onClick={() => setEditModus(true)} className="mt-2 text-sm bg-cyan-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-cyan-700 transition-colors">
+                    Ersten Bereich anlegen
+                  </button>
+                )}
+                {editModus && <p className="text-xs text-gray-400 dark:text-slate-500">Lege links unten in der Sidebar deinen ersten Bereich an</p>}
+              </div>
+            ) : /* Empty State 2: Bereich aktiv, aber keine Tische darin */
+            aktiverBereich && gefilterteTische.length === 0 && istAdmin ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 px-6 text-center pointer-events-none">
                 <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-white/10 flex items-center justify-center">
                   <svg className="w-8 h-8 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4z" />
                   </svg>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Noch keine Tische vorhanden</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
+                  Keine Tische in „{bereiche.find(b => b.id === aktiverBereich)?.name}"
+                </p>
                 {!editModus && (
-                  <button onClick={() => setEditModus(true)} className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                    Bearbeiten → Tische anlegen
+                  <button onClick={() => setEditModus(true)} className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline pointer-events-auto">
+                    Bearbeiten → Tische platzieren
                   </button>
                 )}
-                {editModus && <p className="text-xs text-gray-400 dark:text-slate-500">Wähle links eine Vorlage, um den Grundriss zu erstellen</p>}
+                {editModus && <p className="text-xs text-gray-400 dark:text-slate-500">Wähle links eine Vorlage, um Tische in diesem Bereich zu platzieren</p>}
               </div>
             ) : (
               <Stage
@@ -800,6 +1139,10 @@ export default function Tischplan() {
                     {renderGrid()}
                   </Layer>
                 )}
+                {/* Deko-Layer (unter Tischen) */}
+                <Layer>
+                  {gefilterteDeko.map(renderDeko)}
+                </Layer>
                 <Layer>
                   {gefilterteTische.map(renderTisch)}
                   {editModus && istAdmin && (
@@ -816,61 +1159,7 @@ export default function Tischplan() {
                 </Layer>
               </Stage>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Reservierungen ohne Tisch (Live-Modus) — Strip unter dem Canvas */}
-      {ansicht === 'editor' && !editModus && offeneReservierungen.length > 0 && (
-        <div className="mt-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
-                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{offeneReservierungen.length}</span>
-              </div>
-              <span className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">Reservierungen ohne Tisch</span>
-              <span className="text-xs text-indigo-500/70 dark:text-indigo-400/60">
-                {ausgewaehlteRes ? '→ Tisch im Plan anklicken' : 'Auswählen → Tisch im Plan anklicken'}
-              </span>
             </div>
-            {ausgewaehlteRes && (
-              <button onClick={() => setAusgewaehlteRes(null)} className="text-xs text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
-                Abbrechen
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {offeneReservierungen
-              .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime())
-              .map((r) => {
-                const uhrzeit = new Date(r.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                const minBis = minutenBis(r, jetzt);
-                const istAusgewaehlt = ausgewaehlteRes === r.id;
-                const istUeberfaellig = minBis <= 0;
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => setAusgewaehlteRes(istAusgewaehlt ? null : r.id)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all ${
-                      istAusgewaehlt
-                        ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-100 dark:bg-indigo-500/20 ring-1 ring-indigo-300 dark:ring-indigo-500/30'
-                        : istUeberfaellig
-                        ? 'border-orange-300 dark:border-orange-500/30 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 dark:hover:bg-orange-500/20'
-                        : 'border-indigo-100 dark:border-indigo-500/20 bg-white dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
-                    }`}
-                  >
-                    <span className="font-semibold text-gray-800 dark:text-slate-200">{r.gast_name}</span>
-                    <span className={`font-medium ${istUeberfaellig ? 'text-orange-600 dark:text-orange-400' : 'text-indigo-600 dark:text-indigo-400'}`}>{uhrzeit}</span>
-                    <span className="text-gray-500 dark:text-slate-400 text-xs">{r.personen}P</span>
-                    {istUeberfaellig && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 font-medium">Überfällig</span>
-                    )}
-                    {!istUeberfaellig && minBis <= 60 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">in {Math.round(minBis)} Min</span>
-                    )}
-                  </button>
-                );
-              })}
           </div>
         </div>
       )}
@@ -1356,6 +1645,139 @@ export default function Tischplan() {
           </div>
         ))}
       </div>
+
+      {/* Tags bearbeiten Modal */}
+      <TagsBearbeitenModal
+        res={tagsBearbeitenRes}
+        onSchliessen={() => setTagsBearbeitenRes(null)}
+        onSpeichern={async (tags) => {
+          if (!tagsBearbeitenRes) return;
+          await resTagsAendern(tagsBearbeitenRes.id, tags);
+          setTagsBearbeitenRes(null);
+        }}
+      />
     </div>
+  );
+}
+
+// ─── Tags-Bearbeiten Modal ───────────────────────────────────────────────────
+
+import { RESERVIERUNG_TAGS } from '../types';
+
+function TagsBearbeitenModal({
+  res,
+  onSchliessen,
+  onSpeichern,
+}: {
+  res: Reservierung | null;
+  onSchliessen: () => void;
+  onSpeichern: (tags: string[]) => Promise<void>;
+}) {
+  const [tags, setTags] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState('');
+
+  // Bei jedem Modal-Open die Tags aus der Reservierung übernehmen
+  useEffect(() => {
+    if (res) {
+      setTags(res.tags ?? []);
+      setCustomInput('');
+    }
+  }, [res]);
+
+  if (!res) return null;
+
+  const toggle = (tag: string) => {
+    setTags((prev) => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
+  const customHinzufuegen = () => {
+    const t = customInput.trim();
+    if (t && !tags.includes(t) && tags.length < 10) {
+      setTags([...tags, t]);
+      setCustomInput('');
+    }
+  };
+
+  const uhrzeit = new Date(res.datum).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <Modal offen={!!res} onSchliessen={onSchliessen} titel={`Tags · ${res.gast_name} · ${uhrzeit}`}>
+      <div className="space-y-4">
+        {/* Vordefinierte Tags */}
+        <div>
+          <p className="text-xs uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold mb-2">Vordefiniert</p>
+          <div className="flex flex-wrap gap-1.5">
+            {RESERVIERUNG_TAGS.map((tag) => {
+              const aktiv = tags.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => toggle(tag)}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                    aktiv
+                      ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-600 dark:text-cyan-300'
+                      : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-400 hover:border-cyan-300 dark:hover:border-cyan-500/30'
+                  }`}
+                >
+                  {aktiv && <span className="mr-1">✓</span>}{tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Custom-Tag */}
+        <div>
+          <p className="text-xs uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold mb-2">Eigener Tag</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); customHinzufuegen(); } }}
+              placeholder="z.B. Hund erlaubt"
+              maxLength={50}
+              className="flex-1 text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 dark:text-slate-200 placeholder:text-gray-400 dark:placeholder:text-slate-500"
+            />
+            <button
+              onClick={customHinzufuegen}
+              disabled={!customInput.trim() || tags.length >= 10}
+              className="text-sm px-3 py-2 rounded-lg bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 font-medium hover:bg-cyan-500/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Hinzufügen
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">{tags.length}/10 Tags</p>
+        </div>
+
+        {/* Aktive Tags */}
+        {tags.length > 0 && (
+          <div>
+            <p className="text-xs uppercase tracking-wider text-gray-400 dark:text-slate-500 font-semibold mb-2">Aktiv ({tags.length})</p>
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((t) => (
+                <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-300">
+                  {t}
+                  <button onClick={() => setTags(tags.filter(x => x !== t))} className="hover:text-red-400">×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Aktionen */}
+        <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-white/10">
+          <button onClick={onSchliessen} className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-sm font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-white/5">
+            Abbrechen
+          </button>
+          <button
+            onClick={() => onSpeichern(tags)}
+            className="flex-1 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-semibold hover:bg-cyan-700"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }

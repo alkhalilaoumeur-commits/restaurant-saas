@@ -10,6 +10,14 @@ import { smsSenden, smsTextVerifizierung } from '../services/sms';
 
 const router = Router();
 
+/**
+ * Aktuelle Versionen der Rechtsdokumente.
+ * Bei Änderung an `pages/AGB.tsx` oder `legal/avv-vertrag.md` muss die Version
+ * hier hochgezählt werden — alle bestehenden Restaurants müssen dann beim nächsten
+ * Login erneut akzeptieren (UI-Banner separat zu bauen).
+ */
+export const RECHTSDOKUMENT_VERSION = '2026-04-25';
+
 // ─── Hilfsfunktionen ────────────────────────────────────────────────────────
 
 interface Mitarbeiter {
@@ -299,6 +307,8 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
     anzahl_tische, anzahl_mitarbeiter, oeffnungszeiten,
     // Verifizierungstokens (beweisen dass Email + Telefon verifiziert wurden)
     email_verifizierung_token, telefon_verifizierung_token,
+    // Rechts-Akzeptanz: AGB + AVV müssen explizit akzeptiert werden (Art. 7 + Art. 28 DSGVO)
+    rechtsdokumente_akzeptiert,
   } = req.body;
 
   // ── Pflichtfelder prüfen ──
@@ -308,6 +318,10 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
   }
   if (!restaurant_name || !strasse || !plz || !stadt || !telefon) {
     res.status(400).json({ fehler: 'Alle Restaurant-Daten sind erforderlich' });
+    return;
+  }
+  if (rechtsdokumente_akzeptiert !== true) {
+    res.status(400).json({ fehler: 'AGB und Auftragsverarbeitungsvertrag müssen akzeptiert werden' });
     return;
   }
 
@@ -371,6 +385,15 @@ router.post('/registrieren', registrierungLimiter, async (req: Request, res: Res
         email: restaurant_email,
         waehrung,
       });
+
+      // 1a. AGB- und AVV-Akzeptanz protokollieren (Art. 7 Abs. 1 + Art. 28 DSGVO)
+      await client.query(
+        `UPDATE restaurants
+         SET agb_akzeptiert_am = NOW(), agb_version = $1,
+             avv_akzeptiert_am = NOW(), avv_version = $1
+         WHERE id = $2`,
+        [RECHTSDOKUMENT_VERSION, restaurant.id],
+      );
 
       // 2. Admin-Mitarbeiter anlegen (email_verifiziert = true, weil schon inline verifiziert)
       const passwortHash = await bcrypt.hash(passwort, 12);

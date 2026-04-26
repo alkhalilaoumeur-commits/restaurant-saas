@@ -101,16 +101,10 @@ export function useGastroTheme(input?: Theme | string | null): Theme {
         break;
     }
 
-    // ── Google Fonts dynamisch nachladen ─────────────────────────────────
-    const linkId = 'gastro-theme-fonts';
-    let link = document.getElementById(linkId) as HTMLLinkElement | null;
-    if (!link) {
-      link = document.createElement('link');
-      link.id = linkId;
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-    }
-    link.href = googleFontsUrl(theme);
+    // Google Fonts wurden entfernt (DSGVO/LG Muenchen 2022).
+    // Themes nutzen nun System-Font-Fallback. Falls ein Theme eine spezielle Schrift
+    // braucht, muss diese ueber @fontsource (npm) lokal eingebunden werden.
+    void googleFontsUrl;
 
     // ── Cleanup: CSS-Variablen entfernen wenn Komponente unmounted ──────
     return () => {

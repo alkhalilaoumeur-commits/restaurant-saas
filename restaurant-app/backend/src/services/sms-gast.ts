@@ -52,7 +52,8 @@ export async function gastSmsSenden(telefon: string, nachricht: string): Promise
     throw new Error(`seven.io SMS-Fehler (${response.status}): ${fehler}`);
   }
 
-  console.log(`[Gast-SMS] Gesendet an ${telefon} via seven.io`);
+  // DSGVO Art. 5(1)(e): Telefonnummer nicht in Production-Logs
+  console.log(`[Gast-SMS] Gesendet via seven.io (Empfaenger ${telefon.slice(0, 4)}***)`);
 }
 
 // ─── Vorgefertigte Nachrichten ────────────────────────────────────────────────

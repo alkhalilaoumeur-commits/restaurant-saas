@@ -5,6 +5,7 @@ import { api, ApiError } from '../lib/api';
 import { Mitarbeiter } from '../types';
 import { DEMO_MITARBEITER } from '../lib/demo-daten';
 import ServeFlowLogo from '../components/brand/ServeFlowLogo';
+import LegalLinks from '../components/LegalLinks';
 
 interface LoginResponse {
   token: string;
@@ -269,12 +270,15 @@ export default function Login() {
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-2 mt-5 text-[11px] text-gray-400 dark:text-slate-500">
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0110 0v4" />
-          </svg>
-          <span>Sicher verschlüsselt · ServeFlow</span>
+        <div className="flex flex-col items-center gap-2 mt-5">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-gray-400 dark:text-slate-500">
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+            <span>Sicher verschlüsselt · ServeFlow</span>
+          </div>
+          <LegalLinks />
         </div>
       </div>
     </div>

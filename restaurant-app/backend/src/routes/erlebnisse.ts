@@ -1,18 +1,9 @@
 import { Router, Request, Response } from 'express';
-import Stripe from 'stripe';
 import { requireAuth, requireRolle, AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ErlebnisModel } from '../models/ErlebnisModel';
 
 const router = Router();
-
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error('STRIPE_SECRET_KEY fehlt in .env');
-  return new Stripe(key, { apiVersion: '2026-03-25.dahlia' as never });
-}
 
 // ─── Admin: Erlebnisse CRUD ────────────────────────────────────────────────
 
@@ -113,7 +104,7 @@ router.get(
   }),
 );
 
-// ─── Public: Buchen + Stripe Checkout starten ─────────────────────────────
+// ─── Public: Buchen (Zahlung erfolgt vor Ort im Restaurant) ───────────────
 
 router.post(
   '/:id/buchen',
@@ -130,7 +121,8 @@ router.post(
     const erlebnis = await ErlebnisModel.nachIdPublic(req.params.id);
     if (!erlebnis) { res.status(404).json({ fehler: 'Erlebnis nicht gefunden' }); return; }
 
-    // Buchung erstellen (Status: ausstehend — wird nach Zahlung auf bezahlt gesetzt)
+    // Buchung erstellen — Status 'ausstehend' = Vor-Ort-Zahlung offen.
+    // Restaurant-Admin setzt nach Bezahlung im Lokal manuell auf 'bezahlt'.
     const buchung = await ErlebnisModel.buchungErstellen({
       restaurant_id: erlebnis.restaurant_id, erlebnis_id: erlebnis.id,
       gast_name: gast_name.trim(), gast_email: gast_email.trim().toLowerCase(),
@@ -138,36 +130,7 @@ router.post(
     });
     if (!buchung) { res.status(500).json({ fehler: 'Buchung konnte nicht erstellt werden' }); return; }
 
-    const datumFormatiert = new Date(datum + 'T00:00:00').toLocaleDateString('de-DE', {
-      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-    });
-
-    const stripe = getStripe();
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{
-        price_data: {
-          currency: 'eur',
-          unit_amount: erlebnis.preis_cent,
-          product_data: {
-            name: erlebnis.name,
-            description: `${personen} Person${personen > 1 ? 'en' : ''} · ${datumFormatiert} · ${uhrzeit.slice(0, 5)} Uhr`,
-          },
-        },
-        quantity: 1,
-      }],
-      success_url: `${FRONTEND_URL}/erlebnis-bestaetigung/${buchung.token}`,
-      cancel_url:  `${FRONTEND_URL}/erlebnis/${erlebnis.restaurant_id}/${erlebnis.id}?abgebrochen=1`,
-      customer_email: gast_email.trim().toLowerCase(),
-      metadata: {
-        typ:        'erlebnis',
-        buchung_id: buchung.id,
-      },
-    });
-
-    await ErlebnisModel.buchungStripeSessionSetzen(buchung.id, session.id);
-
-    res.json({ checkout_url: session.url, buchung_token: buchung.token });
+    res.json({ buchung_token: buchung.token });
   }),
 );
 

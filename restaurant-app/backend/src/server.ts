@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import { createServer } from 'http';
@@ -31,6 +32,7 @@ import aboRoutes from './routes/abo';
 import inventurRoutes from './routes/inventur';
 import wartelisteRoutes from './routes/warteliste';
 import erlebnisseRoutes from './routes/erlebnisse';
+import dekorationenRoutes from './routes/dekorationen';
 import { errorHandler } from './middleware/errorHandler';
 import { starteErinnerungen } from './services/erinnerungen';
 import { starteNoShowCron } from './services/no-show';
@@ -47,6 +49,38 @@ const socketOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(B
 export const io = new Server(httpServer, {
   cors: { origin: socketOrigins.length ? socketOrigins : '*', methods: ['GET', 'POST'] },
 });
+
+// Security-Headers via helmet (Art. 32 DSGVO).
+// - frameguard: AUS, damit das Buchungs-Widget per <iframe> auf Restaurant-Webseiten eingebettet werden kann.
+// - crossOriginResourcePolicy: 'cross-origin', damit Bilder aus /uploads in iframe-Widgets ladbar sind.
+// - CSP: nur in Production aktiv (Vite-HMR im Dev braucht eval/inline-script).
+//   In Production strikt: keine externen Skripte, frame-ancestors '*' für Widget-Einbettung.
+const istProd = process.env.NODE_ENV === 'production';
+app.use(
+  helmet({
+    contentSecurityPolicy: istProd
+      ? {
+          useDefaults: true,
+          directives: {
+            'default-src':     ["'self'"],
+            'script-src':      ["'self'"],
+            'style-src':       ["'self'", "'unsafe-inline'"],   // Tailwind injected, React inline styles
+            'img-src':         ["'self'", 'data:', 'blob:', 'https:'], // Restaurant-Bilder von beliebigen Quellen
+            'font-src':        ["'self'", 'data:'],
+            'connect-src':     ["'self'", 'ws:', 'wss:'],       // Socket.io
+            'form-action':     ["'self'", 'https://*.stripe.com'], // Stripe-Redirect-Form
+            'frame-ancestors': ['*'],                           // Widget-Einbettung
+            'object-src':      ["'none'"],
+            'base-uri':        ["'self'"],
+            'upgrade-insecure-requests': [],
+          },
+        }
+      : false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    frameguard: false,
+  }),
+);
 
 // CORS: Im Development localhost erlauben, zusätzlich ngrok-Domain wenn gesetzt
 const allowedOrigins = [process.env.FRONTEND_URL, process.env.NGROK_URL].filter(Boolean) as string[];
@@ -94,6 +128,7 @@ app.use('/api/abo', aboRoutes);
 app.use('/api/inventur', inventurRoutes);
 app.use('/api/warteliste', wartelisteRoutes);
 app.use('/api/erlebnisse', erlebnisseRoutes);
+app.use('/api/dekorationen', dekorationenRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', zeit: new Date().toISOString() });

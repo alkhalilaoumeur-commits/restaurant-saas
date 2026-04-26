@@ -28,7 +28,7 @@ Eine **All-in-One Restaurant-Management-Plattform** als SaaS, die alles abdeckt,
 ## Preismodell
 
 - **Monatliches Abo** mit verschiedenen Paketen (Details werden noch definiert)
-- Zahlungsanbieter: Mollie (geplant)
+- Zahlungsanbieter: Stripe (aktiv seit 2026-04-16)
 
 ---
 

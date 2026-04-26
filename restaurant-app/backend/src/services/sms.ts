@@ -50,7 +50,8 @@ export async function smsSenden(telefon: string, nachricht: string): Promise<voi
     to: telefon,
   });
 
-  console.log(`[Intern-SMS] Gesendet an ${telefon} via Twilio`);
+  // DSGVO Art. 5(1)(e): Telefonnummer nicht in Production-Logs
+  console.log(`[Intern-SMS] Gesendet via Twilio (Empfaenger ${telefon.slice(0, 4)}***)`);
 }
 
 // ─── Interne Nachrichten-Templates ───────────────────────────────────────────

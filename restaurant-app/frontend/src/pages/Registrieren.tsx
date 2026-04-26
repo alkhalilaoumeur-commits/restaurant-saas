@@ -63,6 +63,7 @@ export default function Registrieren() {
   const [anzahlTische, setAnzahlTische] = useState('10');
   const [anzahlMitarbeiter, setAnzahlMitarbeiter] = useState('5');
   const [oeffnungszeiten, setOeffnungszeiten] = useState<Oeffnungszeit[]>(DEFAULT_OEFFNUNGSZEITEN);
+  const [rechtAkzeptiert, setRechtAkzeptiert] = useState(false);
 
   // Status
   const [fehler, setFehler] = useState('');
@@ -220,6 +221,10 @@ export default function Registrieren() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setFehler('');
+    if (!rechtAkzeptiert) {
+      setFehler('Bitte AGB und Auftragsverarbeitungsvertrag akzeptieren, um die Registrierung abzuschließen.');
+      return;
+    }
     setLaden(true);
     try {
       const res = await api.post<RegistrierungResponse>('/auth/registrieren', {
@@ -239,6 +244,7 @@ export default function Registrieren() {
         oeffnungszeiten: oeffnungszeiten.filter((oz) => !oz.geschlossen),
         email_verifizierung_token: emailVerifToken,
         telefon_verifizierung_token: telefonVerifToken,
+        rechtsdokumente_akzeptiert: rechtAkzeptiert,
       });
 
       setRestaurantCode(res.restaurantCode);
@@ -575,6 +581,39 @@ export default function Registrieren() {
                 </div>
               </div>
 
+              {/* Rechtliche Zustimmung — Pflicht für Vertragsschluss */}
+              <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50/60 dark:bg-white/5 hover:bg-gray-100/60 dark:hover:bg-white/10 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rechtAkzeptiert}
+                  onChange={(e) => setRechtAkzeptiert(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded shrink-0"
+                />
+                <span className="text-xs text-gray-700 dark:text-slate-300 leading-relaxed">
+                  Ich akzeptiere die{' '}
+                  <Link to="/agb" target="_blank" className="text-brand-primary underline">AGB</Link>,{' '}
+                  die <Link to="/datenschutz" target="_blank" className="text-brand-primary underline">Datenschutzerklärung</Link>{' '}
+                  und schließe den{' '}
+                  <a
+                    href="/legal/avv-vertrag.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-primary underline"
+                  >
+                    Auftragsverarbeitungsvertrag (AVV)
+                  </a>{' '}
+                  nach Art. 28 DSGVO ab. Ich bestätige, dass ich Unternehmer i.&nbsp;S.&nbsp;d. § 14 BGB bin.
+                </span>
+              </label>
+
+              {/* § 7 Abs. 3 UWG / EuGH C-654/23: Hinweis bei Datenerhebung — kein Opt-In, nur Info */}
+              <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-relaxed px-1">
+                Wir informieren Sie gelegentlich per E-Mail über ähnliche eigene Produkte (§&nbsp;7 Abs.&nbsp;3 UWG).
+                Sie können dieser Verwendung jederzeit widersprechen — ohne andere als die Übermittlungskosten —
+                über den Abmelde-Link in jeder Werbe-E-Mail oder per Mail an{' '}
+                <a href="mailto:kontakt@serve-flow.org" className="text-brand-primary underline">kontakt@serve-flow.org</a>.
+              </p>
+
               {fehler && <FehlerAnzeige text={fehler} />}
 
               <div className="flex gap-3">
@@ -583,10 +622,10 @@ export default function Registrieren() {
                 </button>
                 <button
                   type="submit"
-                  disabled={laden}
+                  disabled={laden || !rechtAkzeptiert}
                   className="flex-1 h-11 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity inline-flex items-center justify-center"
                 >
-                  {laden ? <Spinner text="Wird registriert..." /> : 'Kostenlos registrieren'}
+                  {laden ? <Spinner text="Wird registriert..." /> : 'Kostenpflichtig registrieren'}
                 </button>
               </div>
             </form>

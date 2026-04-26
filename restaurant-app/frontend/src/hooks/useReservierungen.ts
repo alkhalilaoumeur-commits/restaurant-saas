@@ -56,6 +56,15 @@ export function useReservierungen(datum?: string) {
     await laden_();
   }, [demo, laden_]);
 
+  const tagsAendern = useCallback(async (id: string, tags: string[]) => {
+    if (demo) {
+      setReservierungen((prev) => prev.map((r) => r.id === id ? { ...r, tags } : r));
+      return;
+    }
+    await api.patch(`/reservierungen/${id}/tags`, { tags });
+    await laden_();
+  }, [demo, laden_]);
+
   const tischZuweisen = useCallback(async (id: string, tischId: string | null) => {
     if (demo) {
       setReservierungen((prev) => prev.map((r) => r.id === id ? { ...r, tisch_id: tischId } : r));
@@ -85,5 +94,5 @@ export function useReservierungen(datum?: string) {
     }
   }, [demo, laden_]);
 
-  return { reservierungen, laden, fehler, laden_, statusAendern, tischZuweisen, loeschen, autoZuweisen };
+  return { reservierungen, laden, fehler, laden_, statusAendern, tagsAendern, tischZuweisen, loeschen, autoZuweisen };
 }

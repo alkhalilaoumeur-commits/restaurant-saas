@@ -55,15 +55,22 @@ router.post('/', requireAuth, requireRolle('admin'), asyncHandler(async (req: Au
     return;
   }
 
-  // Mitarbeiter-Limit prüfen
+  // Mitarbeiter-Limit prüfen (gespiegelt aus dem Plan via plan-limits.ts)
   const restaurant = await RestaurantModel.nachId(req.auth!.restaurantId);
   if (restaurant) {
     const aktive = await RestaurantModel.aktiveMitarbeiterAnzahl(req.auth!.restaurantId);
     if (aktive >= restaurant.max_mitarbeiter) {
+      const planLabel = restaurant.abo_plan === 'basis' ? 'Basis' : restaurant.abo_plan === 'standard' ? 'Standard' : 'Pro';
+      const upgradeHinweis = restaurant.abo_plan === 'basis'
+        ? ' Upgrade auf Standard (10 Mitarbeiter) oder Pro (unbegrenzt) im Abo-Tab.'
+        : restaurant.abo_plan === 'standard'
+        ? ' Upgrade auf Pro (unbegrenzt) im Abo-Tab.'
+        : '';
       res.status(403).json({
-        fehler: `Mitarbeiter-Limit erreicht (${restaurant.max_mitarbeiter}). Bitte Lizenz upgraden.`,
+        fehler: `Mitarbeiter-Limit erreicht: Ihr ${planLabel}-Plan erlaubt max. ${restaurant.max_mitarbeiter} Mitarbeiter.${upgradeHinweis}`,
         limit: restaurant.max_mitarbeiter,
         aktuell: aktive,
+        plan: restaurant.abo_plan,
       });
       return;
     }

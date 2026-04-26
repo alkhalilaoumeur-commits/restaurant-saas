@@ -7,9 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0A0F1A" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Playfair+Display+SC:wght@400;700&display=swap" rel="stylesheet" />
+    <!-- Fonts werden lokal via @fontsource in main.tsx geladen (DSGVO-Konform, kein Google CDN) -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
     <title>ServeFlow — Restaurant Management</title>
@@ -21,8 +19,9 @@
         if (theme === 'dark') document.documentElement.classList.add('dark');
       } catch (e) {}
     </script>
-    <!-- Google model-viewer: 3D-Modelle im Browser (Premium-Feature) -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <!-- model-viewer (Google CDN) bewusst entfernt — DSGVO Drittlandtransfer.
+         Wenn 3D-Showcase aktiv: model-viewer per npm bundeln (npm i @google/model-viewer) und im Showcase-Layout dynamisch importieren. -->
+
   </head>
   <body>
     <div id="root"></div>

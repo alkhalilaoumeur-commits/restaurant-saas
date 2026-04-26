@@ -23,6 +23,8 @@ export interface Restaurant {
   buchungsintervall_min: number;
   tisch_dauer_min: number;
   max_gleichzeitige_reservierungen: number | null;
+  newsletter_aktiv: boolean;
+  newsletter_widerspruch_am: string | null;
   erstellt_am: string;
 }
 
@@ -110,9 +112,10 @@ export const RestaurantModel = {
   ): Promise<Restaurant> {
     const lizenzCode = genLizenzCode();
     const restaurantCode = genRestaurantCode();
+    // Neue Restaurants starten im Basis-Plan (3 Mitarbeiter) — angepasst beim ersten Plan-Upgrade
     const res = await client.query(
-      `INSERT INTO restaurants (name, strasse, plz, stadt, telefon, email, waehrung, lizenz_code, restaurant_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO restaurants (name, strasse, plz, stadt, telefon, email, waehrung, lizenz_code, restaurant_code, max_mitarbeiter, abo_plan)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 3, 'basis')
        RETURNING *`,
       [data.name, data.strasse, data.plz, data.stadt, data.telefon, data.email, data.waehrung || 'EUR', lizenzCode, restaurantCode],
     );

@@ -187,6 +187,20 @@
 |---|---|---|
 | TischKarte | `TischKarte.tsx` | Tisch-Karte mit Status-Farbe, Klick fuer Status-Wechsel, QR/Bearbeiten/Loeschen-Buttons |
 | TischFormular | `TischFormular.tsx` | Formular zum Anlegen oder Bearbeiten (Nummer, Kapazitaet) |
+| **ReservierungsTimeline** | `ReservierungsTimeline.tsx` | **(NEU 2026-04-26)** Chronologische Reservierungs-Liste links neben Floor Plan im Live-Modus. Zeigt pro Eintrag Uhrzeit, Name, Personen, Tisch, Status-Icon, Tags (Anlass/Sitzplatz/CRM-Tags/Reservierungs-Tags), Gast-Stats (Besuche/No-Shows). Inkl. "Jetzt"-Marker (Cyan-Linie zwischen Vergangenheit und Zukunft) und Auto-Scroll via `scrollAufJetzt`-Tick |
+
+**Tischplan v2 (Resmio-Style, 2026-04-26):**
+- Strikte Bereich-Trennung: jeder Bereich (Innen, Terrasse, Bar) ist eigener Floor Plan, kein "Alle"-View mehr
+- Split-View im Live-Modus: ReservierungsTimeline (340px links) + Floor Plan Canvas (rechts)
+- Live-Uhr in Topbar mit "Auf jetzt wechseln" (Cyan-Pulse, scrollt Timeline)
+- Bereich-Tabs direkt am Canvas mit Cyan-Underline für aktiven Tab
+- Diamond-Tische mit Stuhl-Indikatoren (kleine Kreise rund um Tisch je nach Form/Kapazität)
+- Live-Zeit-Badges auf Tischen: "19:00" (Cyan, >60min), "5m" (Cyan, <60min), "JETZT" (Orange, überfällig)
+- Deko-Layer mit 6 Typen (Pflanze, Theke, Eingang, Servicestation, Wand, Tür) — eigener Konva-Layer unter Tischen
+- DRVN Floor-Background im Live-Modus: 22px Punkt-Raster + Cyan-Vignette
+- Tags-Bearbeiten Modal: 14 vordefinierte Reservierungs-Tags + Custom-Eingabe (max 10 Tags pro Reservierung)
+- Empty States: "Noch kein Bereich angelegt" + "Keine Tische in <Bereichsname>"
+- Migrations-Banner für Legacy-Tische ohne `bereich_id` (Quick-Action: alle dem aktuellen Bereich zuweisen)
 
 ### Reservierungen (`src/components/reservierungen/`)
 | Komponente | Datei | Beschreibung |

@@ -159,7 +159,24 @@
 | dsgvo_einwilligung | BOOLEAN | Einwilligungsflag (Pflicht bei Online-Buchung) |
 | erinnerung_gesendet | JSONB | Tracking gesendeter Erinnerungen (z.B. {"24h": true, "3h": true}) |
 | verweilzeit_min | INTEGER | Geschätzte Tischbelegung in Minuten (Standard: 90) |
+| tags | TEXT[] | (NEU: 2026-04-26) Ad-hoc Reservierungs-Tags wie "Vegan", "Geburtstag", "Allergie", "Fensterplatz" — max 10 pro Reservierung, max 50 Zeichen pro Tag |
 | erstellt_am | TIMESTAMP | |
+
+### dekorationen (NEU: 2026-04-26)
+Statische Floor-Plan-Elemente (Pflanze, Theke, Eingang, Servicestation, Wand, Tür) — eigene Konva-Layer unter den Tischen.
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| id | UUID (PK) | |
+| restaurant_id | UUID (FK → restaurants) | Multi-Tenant |
+| bereich_id | UUID (FK → bereiche, NULLable) | Pro Bereich getrennt (jeder Bereich ist eigener Floor Plan) |
+| typ | VARCHAR(30) | CHECK: pflanze / theke / eingang / servicestation / wand / tuer |
+| pos_x, pos_y | INTEGER | Position auf Canvas |
+| breite, hoehe | INTEGER | Größe |
+| rotation | INTEGER | 0–360° |
+| label | VARCHAR(50) | Optional: "Eingang", "Bar", "Damen-WC" — bei Eingang/Theke/Servicestation default gesetzt |
+| erstellt_am | TIMESTAMPTZ | |
+
+Indexe: `idx_dekorationen_restaurant`, `idx_dekorationen_bereich` (partiell, nur wenn bereich_id gesetzt).
 
 ### mitarbeiter
 | Feld | Typ | Beschreibung |

@@ -442,12 +442,13 @@ PORT=3001
 JWT_EXPIRES_IN=7d
 
 # Email/SMTP (ohne = Dev-Modus, Emails in Konsole)
+# Versand via Resend (3000/Monat gratis), Empfang via Cloudflare Email Routing
 SMTP_HOST=smtp.resend.com
-SMTP_PORT=587
-SMTP_SECURE=false
+SMTP_PORT=465
+SMTP_SECURE=true
 SMTP_USER=resend
 SMTP_PASS=re_xxxxx
-EMAIL_FROM=noreply@restaurant-app.de
+EMAIL_FROM=ServeFlow <noreply@serve-flow.org>
 
 # Storage/S3 (noch nicht implementiert)
 S3_ENDPOINT=https://fsn1.your-objectstorage.com
