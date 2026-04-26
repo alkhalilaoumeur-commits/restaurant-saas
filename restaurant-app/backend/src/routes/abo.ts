@@ -9,6 +9,7 @@
  *   POST /api/abo/checkout        — Stripe Checkout Session erstellen
  *   POST /api/abo/rabattcode/pruefen — Code prüfen via Stripe API
  *   POST /api/abo/kuendigen        — Abo zum Periodenende kündigen
+ *   POST /api/abo/portal          — Stripe Customer Portal Session (Self-Service)
  */
 
 import { Router, Request, Response } from 'express';
@@ -18,6 +19,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { AboModel } from '../models/Abo';
 import { RestaurantModel } from '../models/Restaurant';
 import { q } from '../models/db';
+import { maxMitarbeiterFuerPlan } from '../services/plan-limits';
 
 const router = Router();
 
@@ -50,16 +52,19 @@ async function aboPerSubscriptionAktualisieren(
   status: 'active' | 'cancelled' | 'expired',
   plan?: string,
 ): Promise<void> {
+  // Wenn Plan mit-uebergeben → max_mitarbeiter spiegeln
+  const limit = plan ? maxMitarbeiterFuerPlan(plan) : null;
   await q(
     `UPDATE restaurants
      SET abo_status = $1,
          abo_plan   = COALESCE($2, abo_plan),
+         max_mitarbeiter = COALESCE($4, max_mitarbeiter),
          abo_laeuft_bis = CASE
            WHEN $1 = 'active' THEN NOW() + INTERVAL '32 days'
            ELSE abo_laeuft_bis
          END
      WHERE stripe_subscription_id = $3`,
-    [status, plan ?? null, subscriptionId],
+    [status, plan ?? null, subscriptionId, limit],
   );
 }
 
@@ -96,15 +101,17 @@ router.post(
           const plan = meta.plan ?? 'basis';
 
           // subscription_id + customer_id am Restaurant speichern
+          // max_mitarbeiter wird aus dem Plan abgeleitet (Single Source of Truth: plan-limits.ts)
           await q(
             `UPDATE restaurants
              SET stripe_subscription_id = $1,
                  stripe_customer_id     = $2,
                  abo_status             = 'active',
                  abo_plan               = $3,
+                 max_mitarbeiter        = $5,
                  abo_laeuft_bis         = NOW() + INTERVAL '32 days'
              WHERE id = $4`,
-            [subscriptionId, session.customer, plan, meta.restaurant_id],
+            [subscriptionId, session.customer, plan, meta.restaurant_id, maxMitarbeiterFuerPlan(plan)],
           );
 
           await AboModel.zahlungAnlegen({
@@ -161,15 +168,15 @@ router.post(
         break;
       }
 
-      // Plan-Wechsel (Upgrade/Downgrade)
+      // Plan-Wechsel (Upgrade/Downgrade) — Mitarbeiter-Limit gleich mitziehen
       case 'customer.subscription.updated': {
         const sub = event.data.object as unknown as { id: string; items?: { data?: Array<{ price?: { id?: string } }> } };
         const priceId = sub.items?.data?.[0]?.price?.id;
         const neuerPlan = Object.entries(PLAN_PRICE_IDS).find(([, id]) => id === priceId)?.[0];
         if (neuerPlan) {
           await q(
-            `UPDATE restaurants SET abo_plan = $1 WHERE stripe_subscription_id = $2`,
-            [neuerPlan, sub.id],
+            `UPDATE restaurants SET abo_plan = $1, max_mitarbeiter = $2 WHERE stripe_subscription_id = $3`,
+            [neuerPlan, maxMitarbeiterFuerPlan(neuerPlan), sub.id],
           );
         }
         break;
@@ -212,23 +219,46 @@ router.post(
     const planPreis = PLAN_PREISE[plan].cent;
 
     const stripe = getStripe();
+    // Stripe v2026: Coupon liegt unter promotion.coupon, muss explizit expandiert werden
     const promoCodes = await stripe.promotionCodes.list({
       code: code.trim().toUpperCase(),
       active: true,
       limit: 1,
+      expand: ['data.promotion.coupon'],
     });
 
-    type PromoEntry = { id: string; code: string; coupon: { valid: boolean; percent_off: number | null; metadata: Record<string, string> } };
+    type PromoEntry = {
+      id: string;
+      code: string;
+      promotion: {
+        coupon: {
+          valid: boolean;
+          percent_off: number | null;
+          amount_off: number | null;
+          duration: 'forever' | 'once' | 'repeating';
+          duration_in_months: number | null;
+        };
+      };
+    };
     const promoEntry = promoCodes.data[0] as unknown as PromoEntry | undefined;
 
-    if (!promoEntry || !promoEntry.coupon.valid) {
+    if (!promoEntry || !promoEntry.promotion?.coupon?.valid) {
       res.status(404).json({ fehler: 'Ungültiger oder abgelaufener Code' });
       return;
     }
 
-    const coupon = promoEntry.coupon;
+    const coupon = promoEntry.promotion.coupon;
     const rabattProzent = coupon.percent_off ?? 0;
-    const monate = coupon.metadata?.monate ? parseInt(coupon.metadata.monate) : 1;
+
+    // Monate-Anzahl direkt aus Stripe ableiten (statt Custom-Metadata):
+    //   once      → einmalig (1 Monat)
+    //   repeating → so viele Monate wie im Coupon hinterlegt
+    //   forever   → unbegrenzt (zeigen wir als 0 = "dauerhaft")
+    const monate =
+      coupon.duration === 'once'      ? 1 :
+      coupon.duration === 'repeating' ? (coupon.duration_in_months ?? 1) :
+      0;
+
     const rabattBetrag = Math.floor(planPreis * (rabattProzent / 100));
 
     res.json({
@@ -236,6 +266,7 @@ router.post(
       code:           promoEntry.code,
       rabatt_prozent: rabattProzent,
       monate,
+      dauer:          coupon.duration,
       original_cent:  planPreis,
       rabatt_cent:    rabattBetrag,
       endpreis_cent:  planPreis - rabattBetrag,
@@ -270,12 +301,17 @@ router.post(
         code: codeInput.trim().toUpperCase(),
         active: true,
         limit: 1,
+        expand: ['data.promotion.coupon'],
       });
 
-      type PromoEntry2 = { id: string; code: string; coupon: { valid: boolean } };
+      type PromoEntry2 = {
+        id: string;
+        code: string;
+        promotion: { coupon: { valid: boolean } };
+      };
       const promoCode = promoCodes.data[0] as unknown as PromoEntry2 | undefined;
 
-      if (!promoCode || !promoCode.coupon.valid) {
+      if (!promoCode || !promoCode.promotion?.coupon?.valid) {
         res.status(400).json({ fehler: 'Ungültiger oder abgelaufener Rabattcode' });
         return;
       }
@@ -286,25 +322,75 @@ router.post(
 
     const stripe = getStripe();
 
-    // Bestehenden Stripe Customer wiederverwenden (falls vorhanden)
+    // Bestehenden Stripe Customer wiederverwenden — oder neu anlegen mit product-Tag
     const restaurantRaw = restaurant as unknown as Record<string, unknown>;
-    const existingCustomerId = restaurantRaw.stripe_customer_id as string | undefined;
+    let customerId = restaurantRaw.stripe_customer_id as string | undefined;
+
+    if (!customerId) {
+      const newCustomer = await stripe.customers.create({
+        name: restaurant.name,
+        metadata: {
+          product:       'serveflow',
+          restaurant_id: req.auth!.restaurantId,
+        },
+      });
+      customerId = newCustomer.id;
+      await q(
+        `UPDATE restaurants SET stripe_customer_id = $1 WHERE id = $2`,
+        [customerId, req.auth!.restaurantId],
+      );
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
+      customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${FRONTEND_URL}/einstellungen?abo=success`,
       cancel_url:  `${FRONTEND_URL}/einstellungen?abo=cancelled`,
-      ...(existingCustomerId ? { customer: existingCustomerId } : {}),
       metadata: {
         restaurant_id: req.auth!.restaurantId,
         plan,
         rabattcode:    verwendeterCode ?? '',
+        product:       'serveflow',
+      },
+      subscription_data: {
+        metadata: {
+          product:       'serveflow',
+          restaurant_id: req.auth!.restaurantId,
+          plan,
+        },
       },
       ...(promoCodeId
         ? { discounts: [{ promotion_code: promoCodeId }] }
         : { allow_promotion_codes: true }),
     } as Parameters<typeof stripe.checkout.sessions.create>[0]);
+
+    res.json({ redirect_url: session.url });
+  }),
+);
+
+// ─── 6. Customer Portal — Self-Service für Kunden ────────────────────────────
+router.post(
+  '/portal',
+  requireAuth,
+  requireRolle('admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const restaurant = await RestaurantModel.nachId(req.auth!.restaurantId);
+    if (!restaurant) { res.status(404).json({ fehler: 'Restaurant nicht gefunden' }); return; }
+
+    const restaurantRaw = restaurant as unknown as Record<string, unknown>;
+    const customerId = restaurantRaw.stripe_customer_id as string | undefined;
+
+    if (!customerId) {
+      res.status(400).json({ fehler: 'Kein Stripe-Kunde — bitte erst Abo abschließen' });
+      return;
+    }
+
+    const stripe = getStripe();
+    const session = await stripe.billingPortal.sessions.create({
+      customer:   customerId,
+      return_url: `${FRONTEND_URL}/einstellungen?tab=abo`,
+    });
 
     res.json({ redirect_url: session.url });
   }),

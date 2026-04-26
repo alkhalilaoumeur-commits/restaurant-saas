@@ -88,6 +88,11 @@ export function useAbo() {
     await laden_();
   }, [laden_]);
 
+  const portal = useCallback(async (): Promise<void> => {
+    const data = await api.post<{ redirect_url: string }>('/abo/portal', {});
+    window.location.href = data.redirect_url;
+  }, []);
+
   return {
     aboStatus:   status?.abo_status ?? null,
     aboPlan:     status?.abo_plan ?? 'basis',
@@ -99,6 +104,7 @@ export function useAbo() {
     checkout,
     codePruefen,
     kuendigen,
+    portal,
     neu: laden_,
   };
 }

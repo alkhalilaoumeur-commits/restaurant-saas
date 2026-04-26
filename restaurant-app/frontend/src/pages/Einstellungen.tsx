@@ -91,7 +91,7 @@ const PLAN_FEATURES: Record<string, string[]> = {
 };
 
 function AboKarte() {
-  const { aboStatus, aboPlan, laeuftBis, planPreise, zahlungen, laden, checkout, codePruefen, kuendigen, neu } = useAbo();
+  const { aboStatus, aboPlan, laeuftBis, planPreise, zahlungen, laden, checkout, codePruefen, kuendigen, portal, neu } = useAbo();
   const [gewaehlterPlan, setGewaehlterPlan] = useState<string>('');
   const [codeInput, setCodeInput]           = useState('');
   const [codeInfo, setCodeInfo]             = useState<RabattcodeInfo | null>(null);
@@ -195,15 +195,26 @@ function AboKarte() {
           </p>
         )}
         {aboStatus === 'active' && (
-          <button
-            onClick={async () => {
-              if (!confirm('Abo wirklich zum Ende der Periode kündigen?')) return;
-              try { await kuendigen(); } catch { alert('Kündigung fehlgeschlagen. Bitte erneut versuchen.'); }
-            }}
-            className="mt-3 text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 underline"
-          >
-            Abo kündigen
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              onClick={async () => {
+                try { await portal(); }
+                catch { alert('Portal konnte nicht geöffnet werden. Bitte erneut versuchen.'); }
+              }}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              Abo & Rechnungen verwalten
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirm('Abo wirklich zum Ende der Periode kündigen?')) return;
+                try { await kuendigen(); } catch { alert('Kündigung fehlgeschlagen. Bitte erneut versuchen.'); }
+              }}
+              className="text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 underline"
+            >
+              Abo kündigen
+            </button>
+          </div>
         )}
       </div>
 
@@ -481,6 +492,7 @@ export default function Einstellungen() {
           { id: 'bestellseite',   label: 'Bestellseite' },
           { id: 'reservierungen', label: 'Reservierungen' },
           { id: 'abo',            label: 'Abo & Kasse' },
+          { id: 'datenschutz',    label: 'Datenschutz' },
         ] as const).map(tab => (
           <button
             key={tab.id}
@@ -1272,8 +1284,129 @@ export default function Einstellungen() {
 
         </>}
 
+        {aktivTab === 'datenschutz' && <DatenschutzKarten />}
+
       </div>
     </div>
+  );
+}
+
+// ─── Datenschutz-Tab: Datenexport + Löschungsanfrage (Art. 15/17/20 DSGVO) ──
+
+function DatenschutzKarten() {
+  const [exportLaden, setExportLaden] = useState(false);
+  const [loeschungLaden, setLoeschungLaden] = useState(false);
+  const [loeschungBegruendung, setLoeschungBegruendung] = useState('');
+  const [loeschungBestaetigt, setLoeschungBestaetigt] = useState(false);
+  const [meldung, setMeldung] = useState<{ typ: 'ok' | 'fehler'; text: string } | null>(null);
+  const token = useAuthStore((s) => s.token);
+
+  async function datenexport() {
+    setExportLaden(true);
+    setMeldung(null);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/restaurant/datenexport`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `serveflow-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMeldung({ typ: 'ok', text: 'Datenexport heruntergeladen.' });
+    } catch (err) {
+      setMeldung({ typ: 'fehler', text: 'Export fehlgeschlagen: ' + (err as Error).message });
+    } finally {
+      setExportLaden(false);
+    }
+  }
+
+  async function loeschungAnfragen() {
+    if (!loeschungBestaetigt) {
+      setMeldung({ typ: 'fehler', text: 'Bitte bestätigen Sie, dass Sie die Konsequenzen verstanden haben.' });
+      return;
+    }
+    if (!confirm('Konto-Löschung wirklich beantragen? Sie erhalten eine Bestätigung per E-Mail.')) return;
+    setLoeschungLaden(true);
+    setMeldung(null);
+    try {
+      await api.post('/restaurant/loeschungs-anfrage', { begruendung: loeschungBegruendung });
+      setMeldung({ typ: 'ok', text: 'Löschungsanfrage übermittelt. Wir bestätigen die Löschung innerhalb von 30 Tagen per E-Mail.' });
+      setLoeschungBegruendung('');
+      setLoeschungBestaetigt(false);
+    } catch (err) {
+      setMeldung({ typ: 'fehler', text: (err as Error).message });
+    } finally {
+      setLoeschungLaden(false);
+    }
+  }
+
+  return (
+    <>
+      {/* Datenexport — Art. 15 + 20 DSGVO */}
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+        <div className="mb-3">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Daten exportieren</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Auskunfts- und Datenübertragbarkeitsrecht (Art. 15, 20 DSGVO)</p>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-4">
+          Lädt alle Daten Ihres Restaurants als strukturiertes JSON herunter — Stammdaten, Mitarbeiter, Reservierungen, Bestellungen, Speisekarte, Statistiken. Passwort-Hashes werden aus Sicherheitsgründen nicht exportiert.
+        </p>
+        <button
+          onClick={datenexport}
+          disabled={exportLaden}
+          className="h-10 px-4 rounded-lg bg-brand-primary text-white text-sm font-medium cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+        >
+          {exportLaden ? 'Wird vorbereitet…' : 'Datenexport (JSON) herunterladen'}
+        </button>
+      </div>
+
+      {/* Konto-Löschung — Art. 17 DSGVO */}
+      <div className="bg-white dark:bg-white/[0.04] dark:border dark:border-white/[0.07] rounded-2xl p-5 shadow-sm">
+        <div className="mb-3">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Konto löschen</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">Recht auf Löschung (Art. 17 DSGVO)</p>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed mb-3">
+          Beantragt die vollständige Löschung Ihres Kontos und aller damit verbundenen personenbezogenen Daten innerhalb von 30 Tagen.
+          Rechnungsdaten werden gemäß § 147 AO für 10 Jahre anonymisiert aufbewahrt.
+        </p>
+        <textarea
+          value={loeschungBegruendung}
+          onChange={(e) => setLoeschungBegruendung(e.target.value)}
+          rows={3}
+          placeholder="Optionale Begründung (z.B. Geschäftsaufgabe, Anbieterwechsel)…"
+          className="w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 resize-none"
+        />
+        <label className="flex items-start gap-2.5 cursor-pointer mb-3">
+          <input
+            type="checkbox"
+            checked={loeschungBestaetigt}
+            onChange={(e) => setLoeschungBestaetigt(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded shrink-0"
+          />
+          <span className="text-xs text-gray-600 dark:text-slate-400 leading-relaxed">
+            Ich verstehe, dass mein Konto unwiderruflich gelöscht wird, ein laufendes Abo gekündigt wird und Rechnungsdaten gemäß gesetzlicher Aufbewahrungspflicht 10 Jahre archiviert bleiben.
+          </span>
+        </label>
+        <button
+          onClick={loeschungAnfragen}
+          disabled={loeschungLaden || !loeschungBestaetigt}
+          className="h-10 px-4 rounded-lg bg-red-600 text-white text-sm font-medium cursor-pointer hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {loeschungLaden ? 'Wird gesendet…' : 'Konto-Löschung beantragen'}
+        </button>
+      </div>
+
+      {meldung && (
+        <div className={`lg:col-span-2 p-3 rounded-lg text-sm ${meldung.typ === 'ok' ? 'bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400'}`}>
+          {meldung.text}
+        </div>
+      )}
+    </>
   );
 }
 
